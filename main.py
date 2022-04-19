@@ -7,6 +7,8 @@ from gdpc import worldLoader as WL
 
 from utils import Block, get_block_at
 
+INTF.setBuffering = True
+
 STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = INTF.requestBuildArea()
 
 WORLDSLICE = WL.WorldSlice(STARTX, STARTZ, ENDX + 1, ENDZ + 1)
@@ -58,16 +60,19 @@ if __name__ == '__main__':
             block = get_block_at(STARTX + x, h - 1, STARTZ + z, WORLDSLICE)
             surface_blocks.append(block)
 
-    wood_blocks = Block.filter(['leaves', 'log'], surface_blocks)
+    unwanted_blocks = Block.filter(['leaves', 'log'], surface_blocks)
 
-    while wood_blocks:
-        block = wood_blocks.pop(0)
+    deleted_blocks = set()
+    while unwanted_blocks:
+        block = unwanted_blocks.pop(0)
 
         for coordinates in block.neighbouring_coordinates():
-            block_below = get_block_at(*coordinates, WORLDSLICE)
+            if coordinates not in deleted_blocks and coordinates.is_in_area(STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ):
+                block_around = get_block_at(*coordinates, WORLDSLICE)
 
-            if block_below.is_one_of(['leaves', 'log']):
-                wood_blocks.append(block_below)
+                if block_around.is_one_of(['leaves', 'log']):
+                    unwanted_blocks.append(block_around)
 
         INTF.placeBlock(*block.coordinates, 'air')
+        deleted_blocks.add(block.coordinates)
         print(f'Deleted block {block}')

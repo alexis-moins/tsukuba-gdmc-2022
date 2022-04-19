@@ -26,6 +26,10 @@ class Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
         return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
 
+    def is_in_area(self, x1, y1, z1, x2, y2, z2) -> bool:
+        """Return true if the current coordinates are in the given area"""
+        return x1 <= self.x <= x2 and y1 <= self.y <= y2 and z1 <= self.z <= z2
+
     def __iter__(self) -> Iterator:
         """Return an iterator over the current coordinates"""
         coordinates = astuple(self)
