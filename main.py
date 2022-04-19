@@ -138,6 +138,8 @@ if __name__ == '__main__':
     # NOTE: It is a good idea to keep this bit of the code as simple as
     #     possible so you can find mistakes more easily
 
+    INTF.setBuffering(True)
+
     try:
 
         height = heightmap[(STARTX, STARTY)]
@@ -158,17 +160,25 @@ if __name__ == '__main__':
 
         unwanted_blocks = Block.filter(['leaves', 'log'], surface_blocks)
 
+        amount = 0
+        treated = set()
         while unwanted_blocks:
             block = unwanted_blocks.pop(0)
 
             for coordinates in block.neighbouring_coordinates():
                 block_around = get_block_at(*coordinates, WORLDSLICE)
 
-                if block_around.is_one_of(['leaves', 'log']):
+                if block_around.is_one_of(['leaves', 'log']) and block not in treated:
                     unwanted_blocks.append(block_around)
 
             INTF.placeBlock(*block.coordinates, 'air')
-            print(f'Deleted block {block}')
+            treated.add(block)
+            amount += 1
+            if amount % 10000 == 0:
+                print(f'Progress {amount}, to delete : {len(unwanted_blocks)}')
+
+        print(f'Deleted {amount} blocs')
+            # print(f'Deleted block {block}')
 
         main_building_block = str(most_used_block)
         if 'log' in most_used_block:
