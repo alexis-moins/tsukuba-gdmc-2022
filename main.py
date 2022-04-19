@@ -99,7 +99,7 @@ def build_simple_house(main_bloc, start: tuple[int, int, int], size: tuple[int, 
     # Todo : finish the simple houses
     # body
     GEO.placeCuboid(start[0], start[1], start[2], start[0] + size[0] - 1, start[1] + size[1] - 1, start[2] + size[2] - 1,
-                    "oak_planks", hollow=True)
+                    main_bloc, hollow=True)
     INTF.sendBlocks()
     # Todo : add direction
     # Door
@@ -161,34 +161,30 @@ if __name__ == '__main__':
         unwanted_blocks = Block.filter(['leaves', 'log'], surface_blocks)
 
         amount = 0
-        treated = set()
+        deleted_blocks = set()
         while unwanted_blocks:
             block = unwanted_blocks.pop(0)
 
             for coordinates in block.neighbouring_coordinates():
-                block_around = get_block_at(*coordinates, WORLDSLICE)
+                if coordinates not in deleted_blocks and coordinates.is_in_area(STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ):
+                    block_around = get_block_at(*coordinates, WORLDSLICE)
 
-                if block_around.is_one_of(['leaves', 'log']) and block not in treated:
-                    unwanted_blocks.append(block_around)
+                    if block_around.is_one_of(['leaves', 'log']):
+                        unwanted_blocks.append(block_around)
 
             INTF.placeBlock(*block.coordinates, 'air')
-            treated.add(block)
+            deleted_blocks.add(block.coordinates)
             amount += 1
             if amount % 10000 == 0:
                 print(f'Progress {amount}, to delete : {len(unwanted_blocks)}')
 
         print(f'Deleted {amount} blocs')
-            # print(f'Deleted block {block}')
 
         main_building_block = str(most_used_block)
         if 'log' in most_used_block:
             main_building_block = main_building_block.replace('log', 'planks')
 
         place_houses(main_building_block)
-
-        # buildPerimeter()
-        # buildRoads()
-        # buildCity()
 
         print("Done!")
     except KeyboardInterrupt:   # useful for aborting a run-away program
