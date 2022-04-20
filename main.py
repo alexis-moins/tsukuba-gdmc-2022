@@ -1,17 +1,10 @@
-from __future__ import annotations
-
-
 from typing import Dict
 
-
-from gdpc import interface as INTF
 from gdpc import toolbox as TB
-from gdpc import worldLoader as WL
+from gdpc import interface as INTF
 
 from build_area import BuildArea
-from house_placer import place_houses
-
-from utils import Block, Coordinates
+from utils import Coordinates
 
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
@@ -25,8 +18,7 @@ def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str 
     return max(dicti, key=dicti.get)
 
 
-def test_areas(main_area):
-
+def test_areas():
 
     plot1 = BuildArea(Coordinates(10, 0, 10), Coordinates(110, 255, 35))
     plot2 = BuildArea(Coordinates(10, 0, 40), Coordinates(110, 255, 75))
@@ -56,13 +48,7 @@ if __name__ == '__main__':
         INTF.runCommand(command)
         print(f'/{command}')
 
-        test_areas(build_area)
-
-        # main_building_block = str(most_used_block)
-        # if 'log' in most_used_block:
-        #     main_building_block = main_building_block.replace('log', 'planks')
-
-        # place_houses(main_building_block)
+        test_areas()
 
         print("Done!")
     except KeyboardInterrupt:   # useful for aborting a run-away program

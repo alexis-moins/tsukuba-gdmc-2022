@@ -12,7 +12,7 @@ class BuildArea:
     """Represents a build area"""
     # Just to unpack them with one requestBuildArea call
     start, end = (lambda x: (Coordinates(*x[:3]), Coordinates(*x[3:])))(INTF.requestBuildArea())
-    world = WL.WorldSlice(start.x, start.z, end.x + 1, end.z + 1)
+    _world = WL.WorldSlice(start.x, start.z, end.x + 1, end.z + 1)
 
     def __init__(self, start: Coordinates, end: Coordinates) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
@@ -21,10 +21,14 @@ class BuildArea:
         self.offset = start - BuildArea.start, end - BuildArea.start
         print(self.offset)
 
+    def update(self) -> None:
+        """Update the world slice and most importantly the heightmaps"""
+        self._world = WL.WorldSlice(self.start.x, self.start.z, self.end.x + 1, self.end.z + 1)
+
     def get_heightmap(self, heightmap: str) -> np.array:
         """Return the desired heightmap of the given type"""
-        if heightmap in self.world.heightmaps.keys():
-            return self.world.heightmaps[heightmap][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
+        if heightmap in self._world.heightmaps.keys():
+            return self._world.heightmaps[heightmap][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
         return list()
 
     def get_blocks_at_surface(self, heightmap_type: str) -> Dict[Coordinates, Block]:
@@ -41,12 +45,13 @@ class BuildArea:
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the world"""
-        name = self.world.getBlockAt(x, y, z)
+        name = self._world.getBlockAt(x, y, z)
         return Block(name, Coordinates(x, y, z))
 
     def remove_trees(self) -> None:
         """"""
-        remove_filter = ['leaves', 'log', 'vine']
+        remove_filter = ['leaves', 'log', 'vine', 'stern', 'cocoa', 'bush']
+        surface_blocks = self.get_blocks_at_surface('WORLD_SURFACE')
 
         amount = 0
         unwanted_blocks = Block.filter(remove_filter, surface_blocks.values())
@@ -56,8 +61,8 @@ class BuildArea:
             block = unwanted_blocks.pop()
 
             for coordinates in block.neighbouring_coordinates():
-                if coordinates not in deleted_blocks and coordinates.is_in_area(build_area):
-                    block_around = build_area.get_block_at(*coordinates)
+                if coordinates not in deleted_blocks and coordinates.is_in_area(self):
+                    block_around = self.get_block_at(*coordinates)
 
                     if block_around in unwanted_blocks:
                         continue
@@ -74,3 +79,4 @@ class BuildArea:
 
         INTF.sendBlocks()
         print(f'Deleted {amount} blocs')
+        self.update()
