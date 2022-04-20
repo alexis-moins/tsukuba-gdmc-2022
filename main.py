@@ -27,8 +27,6 @@ def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str 
     return max(dicti, key=dicti.get)
 
 
-
-
 def get_surface_blocks_count(world: WORLDSLICE) -> Dict[str, int]:
     """"""
     surface_blocks = dict()
@@ -52,7 +50,7 @@ if __name__ == '__main__':
     try:
 
         height = heightmap[(STARTX, STARTY)]
-        INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
+        INTF.runCommand(f"tp @a {STARTX} {height + 50} {STARTZ}")
         print(f"/tp @a {STARTX} {height} {STARTZ}")
 
         global most_used_block
@@ -67,27 +65,33 @@ if __name__ == '__main__':
                 block = get_block_at(STARTX + x, h - 1, STARTZ + z, WORLDSLICE)
                 surface_blocks.append(block)
 
+        amount = 0
         unwanted_blocks = Block.filter(['leaves', 'log'], surface_blocks)
 
-        amount = 0
         deleted_blocks = set()
         while unwanted_blocks:
-            block = unwanted_blocks.pop(0)
+            block = unwanted_blocks.pop()
 
             for coordinates in block.neighbouring_coordinates():
                 if coordinates not in deleted_blocks and coordinates.is_in_area(STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ):
                     block_around = get_block_at(*coordinates, WORLDSLICE)
 
+                    if block_around in unwanted_blocks:
+                        continue
+
                     if block_around.is_one_of(['leaves', 'log']):
-                        unwanted_blocks.append(block_around)
+                        unwanted_blocks.add(block_around)
+                        INTF.placeBlock(*block_around.coordinates, 'tnt')
 
             INTF.placeBlock(*block.coordinates, 'air')
             deleted_blocks.add(block.coordinates)
-            amount += 1
-            if amount % 10000 == 0:
-                print(f'Progress {amount}, to delete : {len(unwanted_blocks)}')
 
+            amount += 1
+            print(f'Deleted {amount} blocks, still {len(unwanted_blocks)} to delete')
+
+        INTF.sendBlocks()
         print(f'Deleted {amount} blocs')
+        input()
 
         main_building_block = str(most_used_block)
         if 'log' in most_used_block:
