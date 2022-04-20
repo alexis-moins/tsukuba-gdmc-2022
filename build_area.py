@@ -1,4 +1,5 @@
-from typing import Dict, List
+from __future__ import annotations
+from typing import Dict, Tuple
 
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
@@ -8,22 +9,43 @@ import numpy as np
 from utils import Block, Coordinates
 
 
-class BuildArea:
-    """Represents a build area"""
-    # Just to unpack them with one requestBuildArea call
-    start, end = (lambda x: (Coordinates(*x[:3]), Coordinates(*x[3:])))(INTF.requestBuildArea())
-    _world = WL.WorldSlice(start.x, start.z, end.x + 1, end.z + 1)
+def default_build_area_coordinates() -> Tuple[Coordinates]:
+    """Return a tuple of the starting and end coordinates of the requested build area"""
+    x1, y1, z1, x2, y2, z2 = INTF.requestBuildArea()
+    return Coordinates(x1, y1, z1), Coordinates(x2, y2, z2)
 
-    def __init__(self, start: Coordinates, end: Coordinates) -> None:
+
+class Plot:
+    """Represents a build area"""
+    default_start, default_end = default_build_area_coordinates()
+    _world = WL.WorldSlice(default_start.x, default_start.z, default_end.x + 1, default_end.z + 1)
+
+    def __init__(self, x: int, z: int, size: Tuple[int]) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
-        self.start = start
-        self.end = end
-        self.offset = start - BuildArea.start, end - BuildArea.start
-        print(self.offset)
+        self.start = Coordinates(x, 0, z)
+        self.end = Coordinates(x + size[0], 255, z + size[1])
+
+    @staticmethod
+    def get_build_area() -> Plot:
+        """Return the plot of the default build area"""
+        coord_a, coord_b = default_build_area_coordinates()
+        distance = abs(coord_a - coord_b)
+        return Plot(x=coord_a.x, z=coord_a.z, size=(distance.x, distance.z))
+
+    @property
+    def offset(self) -> int:
+        """Return the offset in x and z of the current plot compared to the general building area"""
+        return self.start - Plot.default_start, self.end - Plot.default_start
 
     def update(self) -> None:
         """Update the world slice and most importantly the heightmaps"""
-        self._world = WL.WorldSlice(self.start.x, self.start.z, self.end.x + 1, self.end.z + 1)
+        self._world = WL.WorldSlice(self.default_start.x, self.default_start.z,
+                                    self.default_end.x + 1, self.default_end.z + 1)
+
+    def get_block_at(self, x: int, y: int, z: int) -> Block:
+        """Return the block found at the given x, y, z coordinates in the world"""
+        name = self._world.getBlockAt(x, y, z)
+        return Block(name, Coordinates(x, y, z))
 
     def get_heightmap(self, heightmap: str) -> np.array:
         """Return the desired heightmap of the given type"""
@@ -42,11 +64,6 @@ class BuildArea:
                 surface_blocks[coordinates] = self.get_block_at(*coordinates)
 
         return surface_blocks
-
-    def get_block_at(self, x: int, y: int, z: int) -> Block:
-        """Return the block found at the given x, y, z coordinates in the world"""
-        name = self._world.getBlockAt(x, y, z)
-        return Block(name, Coordinates(x, y, z))
 
     def remove_trees(self) -> None:
         """"""
