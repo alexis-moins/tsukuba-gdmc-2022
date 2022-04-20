@@ -14,12 +14,6 @@ from house_placer import place_houses
 from utils import Block, Coordinates
 
 
-build_area = BuildArea(BuildArea.start, BuildArea.end)
-plot = BuildArea(Coordinates(0, 0, 0), Coordinates(10, 10, 10))
-
-plot_one = Plot(Coordinates(0, 0, 0), Coordinates(10, 10, 10))
-
-
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
     """Return the block of the given type most represented in the given frequency dict"""
     iterator = filter(lambda k: block_type in k, blocks.keys())
@@ -37,8 +31,18 @@ if __name__ == '__main__':
 
     try:
         # Retreive the build area
-        build_area = BuildArea()
+        main_build_area = BuildArea(BuildArea.start, BuildArea.end)
+        plot = BuildArea(Coordinates(-6, 0, -7), Coordinates(0, 255, 0))
+        b1 = main_build_area.get_blocks_at_surface('MOTION_BLOCKING')
 
+        for k in b1.keys():
+            INTF.placeBlock(*b1[k].coordinates, 'lime_stained_glass')
+
+        b1 = plot.get_blocks_at_surface('MOTION_BLOCKING')
+        for k in b1.keys():
+            INTF.placeBlock(*b1[k].coordinates, 'orange_stained_glass')
+
+        exit()
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
         print(f'/{command}')

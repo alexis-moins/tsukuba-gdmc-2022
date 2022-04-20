@@ -3,25 +3,28 @@ from typing import Dict, List
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
 
+import numpy as np
+
 from utils import Block, Coordinates
 
 
 class BuildArea:
     """Represents a build area"""
-    area_coordinates = INTF.requestBuildArea()
-    start = Coordinates(*area_coordinates[:3])
-    end = Coordinates(*area_coordinates[3:])
+    # Just to unpack them with one requestBuildArea call
+    start, end = (lambda x: (Coordinates(*x[:3]), Coordinates(*x[3:])))(INTF.requestBuildArea())
     world = WL.WorldSlice(start.x, start.z, end.x + 1, end.z + 1)
 
     def __init__(self, start: Coordinates, end: Coordinates) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
         self.start = start
         self.end = end
+        self.offset = start - BuildArea.start, end - BuildArea.start
+        print(self.offset)
 
-    def get_heightmap(self, heightmap: str) -> List[List[int]]:
+    def get_heightmap(self, heightmap: str) -> np.array:
         """Return the desired heightmap of the given type"""
         if heightmap in self.world.heightmaps.keys():
-            return self.world.heightmaps[heightmap]
+            return self.world.heightmaps[heightmap][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
         return list()
 
     def get_blocks_at_surface(self, heightmap_type: str) -> Dict[Coordinates, Block]:
@@ -45,12 +48,3 @@ class BuildArea:
         """"""
         pass
 
-
-class Plot(BuildArea):
-    """Class representing a plot inside the general build area"""
-
-    def __init__(self, start: Coordinates, end: Coordinates) -> None:
-        """Parameterised constructor creating a new plot inside the build area"""
-        self.start = start
-        self.end = end
-        self.build_area = BuildArea()
