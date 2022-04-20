@@ -5,9 +5,11 @@ import random
 import time
 
 
-def get_best_area(heightmap, coords, center, occupied_coord, size, speed: int = 4, roof: int = 200):
+def get_best_area(heightmap, coords: list[tuple[int, int]], center, occupied_coord, size, speed: int = 4, roof: int = 200):
     """Return the best coordinates to place a building of a certain size, minimizing its score.
-    Score is defined by get_score function
+    Score is defined by get_score function.
+
+    heightmap
     """
     # Init best score, the lower the better, so we put it quite big at the start (normal scores should stay lower than 1000)
     best_score = 100_000_000
@@ -21,10 +23,13 @@ def get_best_area(heightmap, coords, center, occupied_coord, size, speed: int = 
             best_score = score
             best_coord = coord
 
+    # Return the minimal score
     return best_coord
 
 
 def get_score(coord, center, heightmap, occupied_coord, size, roof):
+    """Return a score evaluating the fitness of a building in an area.
+    The lower the score, the better it fits"""
     height, width = size
     x, z = coord
     coord_high = heightmap[coord]
@@ -56,7 +61,8 @@ def distance(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
-def build_simple_house(main_bloc, start: tuple[int, int, int], size: tuple[int, int, int]):
+def build_simple_house(main_bloc: str, start: tuple[int, int, int], size: tuple[int, int, int]):
+    """Build a 'house' of the main_bloc given, with north-west bottom corner as starting point, with the given size"""
     # Todo : finish the simple houses
     # body
     GEO.placeCuboid(start[0], start[1], start[2], start[0] + size[0] - 1, start[1] + size[1] - 1, start[2] + size[2] - 1,
@@ -69,6 +75,10 @@ def build_simple_house(main_bloc, start: tuple[int, int, int], size: tuple[int, 
 
 
 def place_houses(buildArea, main_block):
+    """More of a test function.
+    Place a certain amount (20 at the moment) of randomly sized house in the build area, at the most convenient spots
+    possible
+    """
     occupied_spots = set()
     h_map = buildArea.WORLDSLICE.heightmaps['MOTION_BLOCKING_NO_LEAVES']
     OFFSETX = buildArea.ENDX - buildArea.STARTX
