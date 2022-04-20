@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Iterator, List
+from typing import Iterator, List, Set
 from dataclasses import astuple, dataclass
 
 
@@ -54,13 +54,13 @@ class Block:
         return False
 
     @staticmethod
-    def filter(pattern: str | List[str], blocks: List[Block]) -> List[Block]:
+    def filter(pattern: str | List[str], blocks: List[Block]) -> Set[Block]:
         """Filter the given list of block and return the ones that contain the given pattern"""
         if type(pattern) == str:
             pattern = [pattern]
 
         iterator = filter(lambda block: block.is_one_of(pattern), blocks)
-        return list(iterator)
+        return set(iterator)
 
 
 def get_block_at(x: int, y: int, z: int, world) -> Block:

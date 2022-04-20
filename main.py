@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import random
 import time
+import random
 from typing import Dict
 
 from gdpc import geometry as GEO
@@ -28,8 +28,6 @@ def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str 
     return max(dicti, key=dicti.get)
 
 
-
-
 def get_surface_blocks_count(world: WORLDSLICE) -> Dict[str, int]:
     """"""
     surface_blocks = dict()
@@ -41,9 +39,6 @@ def get_surface_blocks_count(world: WORLDSLICE) -> Dict[str, int]:
             surface_blocks[block] += 1
 
     return surface_blocks
-
-
-
 
 
 def get_best_area(heightmap, coords, center, occupied_coord, size, speed=4, roof=200):
@@ -103,8 +98,10 @@ def build_simple_house(main_bloc, start: tuple[int, int, int], size: tuple[int, 
     INTF.sendBlocks()
     # Todo : add direction
     # Door
-    INTF.placeBlock(start[0] + size[0] // 2, start[1] + 1, start[2], "oak_door")
-    INTF.placeBlock(start[0] + size[0] // 2, start[1] + 2, start[2], "oak_door[half=upper]")
+    INTF.placeBlock(start[0] + size[0] // 2,
+                    start[1] + 1, start[2], "oak_door")
+    INTF.placeBlock(start[0] + size[0] // 2, start[1] +
+                    2, start[2], "oak_door[half=upper]")
 
 
 def place_houses(main_block):
@@ -118,10 +115,12 @@ def place_houses(main_block):
 
     for i in range(20):
         iter_start = time.time()
-        build_size = random.randint(5, 20), random.randint(4, 15), random.randint(5, 20)
+        build_size = random.randint(5, 20), random.randint(
+            4, 15), random.randint(5, 20)
 
         speed_factor = max(build_size) // 5
-        best = get_best_area(h_map, coords_indices, center, occupied_spots, (build_size[0], build_size[2]), speed=speed_factor)
+        best = get_best_area(h_map, coords_indices, center, occupied_spots,
+                             (build_size[0], build_size[2]), speed=speed_factor)
         best = (best[0] + STARTX, best[1] + STARTZ)
 
         house_start = (best[0], h_map[best], best[1])
@@ -131,7 +130,8 @@ def place_houses(main_block):
                 occupied_spots.add((house_start[0] + x, house_start[2] + z))
 
         build_simple_house(main_block, house_start, build_size)
-        print(f"Placed house of size {build_size} at {best} in {time.time() - iter_start:.2f}s with speed {speed_factor}")
+        print(
+            f"Placed house of size {build_size} at {best} in {time.time() - iter_start:.2f}s with speed {speed_factor}")
 
 
 if __name__ == '__main__':
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     try:
 
         height = heightmap[(STARTX, STARTY)]
-        INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
+        INTF.runCommand(f"tp @a {STARTX} {height + 50} {STARTZ}")
         print(f"/tp @a {STARTX} {height} {STARTZ}")
 
         global most_used_block
@@ -158,27 +158,33 @@ if __name__ == '__main__':
                 block = get_block_at(STARTX + x, h - 1, STARTZ + z, WORLDSLICE)
                 surface_blocks.append(block)
 
+        amount = 0
         unwanted_blocks = Block.filter(['leaves', 'log'], surface_blocks)
 
-        amount = 0
         deleted_blocks = set()
         while unwanted_blocks:
-            block = unwanted_blocks.pop(0)
+            block = unwanted_blocks.pop()
 
             for coordinates in block.neighbouring_coordinates():
                 if coordinates not in deleted_blocks and coordinates.is_in_area(STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ):
                     block_around = get_block_at(*coordinates, WORLDSLICE)
 
+                    if block_around in unwanted_blocks:
+                        continue
+
                     if block_around.is_one_of(['leaves', 'log']):
-                        unwanted_blocks.append(block_around)
+                        unwanted_blocks.add(block_around)
+                        INTF.placeBlock(*block_around.coordinates, 'tnt')
 
             INTF.placeBlock(*block.coordinates, 'air')
             deleted_blocks.add(block.coordinates)
-            amount += 1
-            if amount % 10000 == 0:
-                print(f'Progress {amount}, to delete : {len(unwanted_blocks)}')
 
+            amount += 1
+            print(f'Deleted {amount} blocks, still {len(unwanted_blocks)} to delete')
+
+        INTF.sendBlocks()
         print(f'Deleted {amount} blocs')
+        input()
 
         main_building_block = str(most_used_block)
         if 'log' in most_used_block:
