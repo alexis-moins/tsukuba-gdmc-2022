@@ -37,6 +37,13 @@ class Coordinates:
         coordinates = astuple(self)
         return iter(coordinates)
 
+    def __sub__(self, other):
+        return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __add__(self, other):
+        return Coordinates(self.x + other.x, self.y + other.y, self.z + other.z)
+
+
 
 @dataclass(frozen=True)
 class Block:
