@@ -25,6 +25,25 @@ def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str 
     return max(dicti, key=dicti.get)
 
 
+def test_areas(main_area):
+
+
+    plot1 = BuildArea(Coordinates(10, 0, 10), Coordinates(110, 255, 35))
+    plot2 = BuildArea(Coordinates(10, 0, 40), Coordinates(110, 255, 75))
+    plot3 = BuildArea(Coordinates(10, 0, 80), Coordinates(110, 255, 105))
+
+    b1 = plot1.get_blocks_at_surface('MOTION_BLOCKING')
+    for coordinates in b1.keys():
+        INTF.placeBlock(*coordinates, 'lime_stained_glass')
+
+    plot2.remove_trees()
+
+    plot3.remove_trees()
+    b1 = plot3.get_blocks_at_surface('MOTION_BLOCKING')
+    for coordinates in b1.keys():
+        INTF.placeBlock(*coordinates, 'orange_stained_glass')
+
+
 if __name__ == '__main__':
 
     INTF.setBuffering(True)
@@ -32,20 +51,12 @@ if __name__ == '__main__':
     try:
         # Retreive the build area
         build_area = BuildArea(BuildArea.start, BuildArea.end)
-        plot = BuildArea(Coordinates(10, 0, 10), Coordinates(20, 255, 20))
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
         print(f'/{command}')
 
-        b1 = build_area.get_blocks_at_surface('MOTION_BLOCKING')
-
-        for coordinates in b1.keys():
-            INTF.placeBlock(*coordinates, 'lime_stained_glass')
-
-        b1 = plot.get_blocks_at_surface('MOTION_BLOCKING')
-        for coordinates in b1.keys():
-            INTF.placeBlock(*coordinates, 'orange_stained_glass')
+        test_areas(build_area)
 
         # main_building_block = str(most_used_block)
         # if 'log' in most_used_block:
