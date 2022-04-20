@@ -8,12 +8,16 @@ from gdpc import interface as INTF
 from gdpc import toolbox as TB
 from gdpc import worldLoader as WL
 
-from utils import Block, get_block_at
+from build_area import BuildArea
+from house_placer import place_houses
 
-STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = INTF.requestBuildArea()
+from utils import Block, Coordinates
 
-WORLDSLICE = WL.WorldSlice(STARTX, STARTZ, ENDX + 1, ENDZ + 1)
-heightmap = WORLDSLICE.heightmaps["MOTION_BLOCKING"]
+
+build_area = BuildArea(BuildArea.start, BuildArea.end)
+plot = BuildArea(Coordinates(0, 0, 0), Coordinates(10, 10, 10))
+
+plot_one = Plot(Coordinates(0, 0, 0), Coordinates(10, 10, 10))
 
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
@@ -27,59 +31,42 @@ def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str 
     return max(dicti, key=dicti.get)
 
 
-def get_surface_blocks_count(world: WORLDSLICE) -> Dict[str, int]:
-    """"""
-    surface_blocks = dict()
-    for x, rest in enumerate(world.heightmaps['MOTION_BLOCKING_NO_LEAVES']):
-        for z, h in enumerate(rest):
-            block = world.getBlockAt(STARTX + x, h - 1, STARTZ + z)
-            if not block in surface_blocks.keys():
-                surface_blocks[block] = 0
-            surface_blocks[block] += 1
-
-    return surface_blocks
-
-
-
 if __name__ == '__main__':
-    # NOTE: It is a good idea to keep this bit of the code as simple as
-    #     possible so you can find mistakes more easily
 
     INTF.setBuffering(True)
 
     try:
+        # Retreive the build area
+        build_area = BuildArea()
 
-        height = heightmap[(STARTX, STARTY)]
-        INTF.runCommand(f"tp @a {STARTX} {height + 50} {STARTZ}")
-        print(f"/tp @a {STARTX} {height} {STARTZ}")
+        command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
+        INTF.runCommand(command)
+        print(f'/{command}')
 
-        global most_used_block
-        surface_blocks = get_surface_blocks_count(WORLDSLICE)
-        most_used_block = get_most_used_block_of_type('log', surface_blocks)
+        surface_blocks = build_area.get_blocks_at_surface('MOTION_BLOCKING')
 
-        print(f'most used wood: {most_used_block}')
+        # counter = Block.group_by_name(Block.filter('log', surface_blocks.values()))
+        # most_used_block = get_most_used_block_of_type('log', surface_blocks)
 
-        surface_blocks = list()
-        for x, rest in enumerate(WORLDSLICE.heightmaps['MOTION_BLOCKING']):
-            for z, h in enumerate(rest):
-                block = get_block_at(STARTX + x, h - 1, STARTZ + z, WORLDSLICE)
-                surface_blocks.append(block)
+        # print(f'most used wood: {most_used_block}')
+
+        remove_filter = ['leaves', 'log', 'vine']
 
         amount = 0
-        unwanted_blocks = Block.filter(['leaves', 'log'], surface_blocks)
+        unwanted_blocks = Block.filter(remove_filter, surface_blocks.values())
 
         deleted_blocks = set()
         while unwanted_blocks:
             block = unwanted_blocks.pop()
 
             for coordinates in block.neighbouring_coordinates():
-                if coordinates not in deleted_blocks and coordinates.is_in_area(STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ):
-                    block_around = get_block_at(*coordinates, WORLDSLICE)
+                if coordinates not in deleted_blocks and coordinates.is_in_area(build_area):
+                    block_around = build_area.get_block_at(*coordinates)
 
                     if block_around in unwanted_blocks:
                         continue
 
-                    if block_around.is_one_of(['leaves', 'log']):
+                    if block_around.is_one_of(remove_filter):
                         unwanted_blocks.add(block_around)
                         INTF.placeBlock(*block_around.coordinates, 'tnt')
 
@@ -91,13 +78,12 @@ if __name__ == '__main__':
 
         INTF.sendBlocks()
         print(f'Deleted {amount} blocs')
-        input()
 
-        main_building_block = str(most_used_block)
-        if 'log' in most_used_block:
-            main_building_block = main_building_block.replace('log', 'planks')
+        # main_building_block = str(most_used_block)
+        # if 'log' in most_used_block:
+        #     main_building_block = main_building_block.replace('log', 'planks')
 
-        place_houses(main_building_block)
+        # place_houses(main_building_block)
 
         print("Done!")
     except KeyboardInterrupt:   # useful for aborting a run-away program
