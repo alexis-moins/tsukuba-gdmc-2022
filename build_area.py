@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
@@ -9,7 +9,7 @@ import numpy as np
 from utils import Block, Coordinates
 
 
-def default_build_area_coordinates() -> Tuple[Coordinates]:
+def default_build_area_coordinates() -> tuple[Coordinates, Coordinates]:
     """Return a tuple of the starting and end coordinates of the requested build area"""
     x1, y1, z1, x2, y2, z2 = INTF.requestBuildArea()
     return Coordinates(x1, y1, z1), Coordinates(x2, y2, z2)
@@ -20,22 +20,20 @@ class Plot:
     default_start, default_end = default_build_area_coordinates()
     _world = WL.WorldSlice(default_start.x, default_start.z, default_end.x + 1, default_end.z + 1)
 
-    def __init__(self, x: int, z: int, size: Tuple[int]) -> None:
+    def __init__(self, x: int, z: int, size: Tuple[int, int]) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
         self.start = Coordinates(x, 0, z)
+        self.size = size
         self.end = Coordinates(x + size[0], 255, z + size[1])
+        self.center = self.start.x + self.size[0] // 2, self.start.z + self.size[1] // 2
+        self.offset = self.start - Plot.default_start, self.end - Plot.default_start
 
     @staticmethod
     def get_build_area() -> Plot:
         """Return the plot of the default build area"""
         coord_a, coord_b = default_build_area_coordinates()
-        distance = abs(coord_a - coord_b)
-        return Plot(x=coord_a.x, z=coord_a.z, size=(distance.x, distance.z))
-
-    @property
-    def offset(self) -> int:
-        """Return the offset in x and z of the current plot compared to the general building area"""
-        return self.start - Plot.default_start, self.end - Plot.default_start
+        size = abs(coord_a - coord_b)
+        return Plot(x=coord_a.x, z=coord_a.z, size=(size.x, size.z))
 
     def update(self) -> None:
         """Update the world slice and most importantly the heightmaps"""

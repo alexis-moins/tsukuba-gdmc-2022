@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections import Counter
 from enum import Enum
-from typing import Collection, Counter, Dict, Iterator, List, Set
+from typing import Collection, Counter, Dict, Iterator, List, Set, Any, Type
 from dataclasses import astuple, dataclass
 
 
@@ -49,6 +50,17 @@ class Coordinates:
         """Return the absolute value of the coordinates"""
         return Coordinates(abs(self.x), abs(self.y), abs(self.z))
 
+    def distance(self, other) -> int:
+        """Return the Manhattan distance between two points"""
+        difference = abs(self - other)
+        return difference.x + difference.y + difference.z
+
+    def shift(self, x: int, y: int, z: int) -> Coordinates:
+        return Coordinates(self.x + x, self.y + y, self.z + z)
+
+    def with_y(self, y: int) -> Coordinates:
+        return Coordinates(self.x, y, self.z)
+
 
 @dataclass(frozen=True)
 class Block:
@@ -77,7 +89,7 @@ class Block:
         return set(iterator)
 
     @staticmethod
-    def group_by_name(blocks: List[Block]) -> Counter:
+    def group_by_name(blocks: List[Block]) -> Type[Counter[Any]]:
         """Return a counter of the blocks in the given list"""
         block_names = (block.name for block in blocks)
-        return Counter(block_names)
+        return Counter[block_names]

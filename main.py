@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Dict
 
 from gdpc import toolbox as TB
