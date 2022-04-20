@@ -38,11 +38,16 @@ class Coordinates:
         return iter(coordinates)
 
     def __sub__(self, other):
+        """"""
         return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
 
     def __add__(self, other):
+        """"""
         return Coordinates(self.x + other.x, self.y + other.y, self.z + other.z)
 
+    def __abs__(self) -> Coordinates:
+        """Return the absolute value of the coordinates"""
+        return Coordinates(abs(self.x), abs(self.y), abs(self.z))
 
 
 @dataclass(frozen=True)
