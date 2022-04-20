@@ -46,5 +46,31 @@ class BuildArea:
 
     def remove_trees(self) -> None:
         """"""
-        pass
+        remove_filter = ['leaves', 'log', 'vine']
 
+        amount = 0
+        unwanted_blocks = Block.filter(remove_filter, surface_blocks.values())
+
+        deleted_blocks = set()
+        while unwanted_blocks:
+            block = unwanted_blocks.pop()
+
+            for coordinates in block.neighbouring_coordinates():
+                if coordinates not in deleted_blocks and coordinates.is_in_area(build_area):
+                    block_around = build_area.get_block_at(*coordinates)
+
+                    if block_around in unwanted_blocks:
+                        continue
+
+                    if block_around.is_one_of(remove_filter):
+                        unwanted_blocks.add(block_around)
+                        INTF.placeBlock(*block_around.coordinates, 'tnt')
+
+            INTF.placeBlock(*block.coordinates, 'air')
+            deleted_blocks.add(block.coordinates)
+
+            amount += 1
+            print(f'Deleted {amount} blocks, still {len(unwanted_blocks)} to delete')
+
+        INTF.sendBlocks()
+        print(f'Deleted {amount} blocs')

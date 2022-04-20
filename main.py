@@ -31,57 +31,21 @@ if __name__ == '__main__':
 
     try:
         # Retreive the build area
-        main_build_area = BuildArea(BuildArea.start, BuildArea.end)
-        plot = BuildArea(Coordinates(-6, 0, -7), Coordinates(0, 255, 0))
-        b1 = main_build_area.get_blocks_at_surface('MOTION_BLOCKING')
+        build_area = BuildArea(BuildArea.start, BuildArea.end)
+        plot = BuildArea(Coordinates(10, 0, 10), Coordinates(20, 255, 20))
 
-        for k in b1.keys():
-            INTF.placeBlock(*b1[k].coordinates, 'lime_stained_glass')
-
-        b1 = plot.get_blocks_at_surface('MOTION_BLOCKING')
-        for k in b1.keys():
-            INTF.placeBlock(*b1[k].coordinates, 'orange_stained_glass')
-
-        exit()
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
         print(f'/{command}')
 
-        surface_blocks = build_area.get_blocks_at_surface('MOTION_BLOCKING')
+        b1 = build_area.get_blocks_at_surface('MOTION_BLOCKING')
 
-        # counter = Block.group_by_name(Block.filter('log', surface_blocks.values()))
-        # most_used_block = get_most_used_block_of_type('log', surface_blocks)
+        for coordinates in b1.keys():
+            INTF.placeBlock(*coordinates, 'lime_stained_glass')
 
-        # print(f'most used wood: {most_used_block}')
-
-        remove_filter = ['leaves', 'log', 'vine']
-
-        amount = 0
-        unwanted_blocks = Block.filter(remove_filter, surface_blocks.values())
-
-        deleted_blocks = set()
-        while unwanted_blocks:
-            block = unwanted_blocks.pop()
-
-            for coordinates in block.neighbouring_coordinates():
-                if coordinates not in deleted_blocks and coordinates.is_in_area(build_area):
-                    block_around = build_area.get_block_at(*coordinates)
-
-                    if block_around in unwanted_blocks:
-                        continue
-
-                    if block_around.is_one_of(remove_filter):
-                        unwanted_blocks.add(block_around)
-                        INTF.placeBlock(*block_around.coordinates, 'tnt')
-
-            INTF.placeBlock(*block.coordinates, 'air')
-            deleted_blocks.add(block.coordinates)
-
-            amount += 1
-            print(f'Deleted {amount} blocks, still {len(unwanted_blocks)} to delete')
-
-        INTF.sendBlocks()
-        print(f'Deleted {amount} blocs')
+        b1 = plot.get_blocks_at_surface('MOTION_BLOCKING')
+        for coordinates in b1.keys():
+            INTF.placeBlock(*coordinates, 'orange_stained_glass')
 
         # main_building_block = str(most_used_block)
         # if 'log' in most_used_block:
