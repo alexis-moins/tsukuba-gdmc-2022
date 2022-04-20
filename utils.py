@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Iterator, List, Set
+from typing import Collection, Counter, Dict, Iterator, List, Set
 from dataclasses import astuple, dataclass
 
 
@@ -26,14 +26,23 @@ class Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
         return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
 
-    def is_in_area(self, x1, y1, z1, x2, y2, z2) -> bool:
+    def is_in_area(self, build_area) -> bool:
         """Return true if the current coordinates are in the given area"""
+        x1, y1, z1 = build_area.start
+        x2, y2, z2 = build_area.end
         return x1 <= self.x <= x2 and y1 <= self.y <= y2 and z1 <= self.z <= z2
 
     def __iter__(self) -> Iterator:
         """Return an iterator over the current coordinates"""
         coordinates = astuple(self)
         return iter(coordinates)
+
+    def __sub__(self, other):
+        return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __add__(self, other):
+        return Coordinates(self.x + other.x, self.y + other.y, self.z + other.z)
+
 
 
 @dataclass(frozen=True)
@@ -62,8 +71,8 @@ class Block:
         iterator = filter(lambda block: block.is_one_of(pattern), blocks)
         return set(iterator)
 
-
-def get_block_at(x: int, y: int, z: int, world) -> Block:
-    """Return the block found at the given x, y, z coordinates in the world"""
-    name = world.getBlockAt(x, y, z)
-    return Block(name, Coordinates(x, y, z))
+    @staticmethod
+    def group_by_name(blocks: List[Block]) -> Counter:
+        """Return a counter of the blocks in the given list"""
+        block_names = (block.name for block in blocks)
+        return Counter(block_names)
