@@ -30,15 +30,15 @@ class ConstructionPlot(Plot):
         """Build a 'house' of the main_bloc given, with north-west bottom corner as starting point, with the given size"""
         # Todo : finish the simple house
 
-        start_y = self.get
+        self.build_foundation(self.build_start.y - 1)
 
         # body
-        GEO.placeCuboid(self.start.x, self.start.y, self.start.z, self.start.x + self.size[0] - 1,
-                        self.start.y + height - 1, self.start.z + self.size[2] - 1,
+        GEO.placeCuboid(self.build_start.x, self.build_start.y, self.build_start.z, self.build_start.x + self.size[0] - 1,
+                        self.build_start.y + height - 1, self.build_start.z + self.size[1] - 1,
                         main_bloc, hollow=True)
 
         # Todo : add direction
         # Door
-        INTF.placeBlock(self.start.x + self.size[0] // 2, self.start.y + 1, self.start.z, "oak_door")
-        INTF.placeBlock(self.start.x + self.size[0] // 2, self.start.y + 2, self.start.z, "oak_door[half=upper]")
+        INTF.placeBlock(self.build_start.x + self.size[0] // 2, self.build_start.y + 1, self.build_start.z, "oak_door")
+        INTF.placeBlock(self.build_start.x + self.size[0] // 2, self.build_start.y + 2, self.build_start.z, "oak_door[half=upper]")
         INTF.sendBlocks()
