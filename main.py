@@ -9,7 +9,7 @@ from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
 from plots.plot import Plot
-from plots.construction_plot import SuburbPlot
+from plots.suburb_plot import SuburbPlot
 
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
