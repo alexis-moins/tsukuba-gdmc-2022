@@ -99,6 +99,13 @@ class Plot:
         self.surface_blocks[criteria] = surface
         return surface
 
+    def get_most_used(self, pattern: str) -> str:
+        """Return the most used block of the given type"""
+        surface = self.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        counter = Block.group_by_name(surface)
+
+        return next(filter(lambda block: pattern in block, counter.keys()), None)
+
     def remove_trees(self) -> None:
         """Remove all vegetation at the surface of the current plot"""
         remove_filter = ['leaves', 'log', 'vine', 'stern', 'cocoa', 'bush', 'mushroom']
@@ -109,7 +116,7 @@ class Plot:
         deleted_blocks = set()
         unwanted_blocks = Block.filter(remove_filter, surface_blocks)
 
-        print(f'=> Removing surface vegetation on plot at {self.start}')
+        print(f'\n=> Removing vegetation on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
             block = unwanted_blocks.pop()
 
@@ -129,5 +136,5 @@ class Plot:
             amount += 1
 
         INTF.sendBlocks()
-        print(f'=> Deleted {amount} blocs')
+        print(f'=> Deleted {amount} blocs\n')
         self.update()

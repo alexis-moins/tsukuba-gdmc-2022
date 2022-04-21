@@ -11,9 +11,6 @@ from gdpc import interface as INTF
 from plots.plot import Plot
 from plots.construction_plot import ConstructionPlot, build_simple_house
 
-from utils.block import Block
-from utils.criteria import Criteria
-
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
     """Return the block of the given type most represented in the given frequency dict"""
@@ -38,13 +35,10 @@ if __name__ == '__main__':
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
-        print(f'=> /{command}\n')
+        print(f'\n=> /{command}')
 
-        surface = build_area.get_blocks_at_surface(Criteria.MOTION_BLOCKING)
-        counter = Block.group_by_name(surface)
-
-        print(f'{counter}')
-        print(counter.keys())
+        most_used_wood = build_area.get_most_used('log')
+        print(f'=> Most used wood: {most_used_wood}')
 
         # build_area.remove_trees()
         build_area.visualize()
