@@ -3,9 +3,10 @@ from typing import Dict, Set, Tuple
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
-from build_area import Plot
+from plots.plot import Plot
 from utils.block import Block
 from utils.coordinates import Coordinates
+from utils.criteria import Criteria
 
 
 class ConstructionPlot(Plot):
@@ -21,7 +22,7 @@ class ConstructionPlot(Plot):
 
     def _build_foundation_blocks(self) -> None:
         surface_blocks = dict()
-        heightmap = self.get_heightmap("MOTION_BLOCKING_NO_LEAVES")
+        heightmap = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         for x, rest in enumerate(heightmap):
             for z, h in enumerate(rest):

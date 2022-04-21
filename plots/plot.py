@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import time
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
 
-import numpy as np
+from numpy import ndarray
 from nbt.nbt import MalformedFileError
 
 from utils.block import Block
 from utils.coordinates import Coordinates
+from utils.criteria import Criteria
 
 
 def default_build_area_coordinates() -> tuple[Coordinates, Coordinates]:
@@ -42,6 +43,8 @@ class Plot:
         self.end = Coordinates(x + size[0], 255, z + size[1])
         self.size = size
 
+        self.surface_blocks: Dict[Criteria, ndarray] = dict()
+
         self.center = self.start.x + self.size[0] // 2, self.start.z + self.size[1] // 2
         self.offset = self.start - Plot.default_start, self.end - Plot.default_start
 
@@ -59,46 +62,54 @@ class Plot:
         size = abs(coord_a - coord_b)
         return Plot(x=coord_a.x, z=coord_a.z, size=(size.x, size.z))
 
-    @staticmethod
-    def update() -> None:
+    def update(self) -> None:
         """Update the world slice and most importantly the heightmaps"""
         Plot._world = get_world_slice()
+        self.surface_blocks = dict()
+
+    def visualize(self, ground: str = 'blue_stained_glass') -> None:
+        """Change the blocks at the surface of the plot to visualize it"""
+        for block in self.get_blocks_at_surface(Criteria.MOTION_BLOCKING):
+            INTF.placeBlock(*block.coordinates, ground)
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the world"""
         name = self._world.getBlockAt(x, y, z)
         return Block(name, Coordinates(x, y, z))
 
-    def get_heightmap(self, heightmap: str) -> np.array:
+    def get_heightmap(self, criteria: Criteria) -> ndarray:
         """Return the desired heightmap of the given type"""
-        if heightmap in self._world.heightmaps.keys():
-            return self._world.heightmaps[heightmap][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
+        if criteria.name in self._world.heightmaps.keys():
+            return self._world.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
         return list()
 
-    def get_blocks_at_surface(self, heightmap_type: str) -> Dict[Coordinates, Block]:
-        """"""
-        surface_blocks = dict()
-        heightmap = self.get_heightmap(heightmap_type)
+    def get_blocks_at_surface(self, criteria: Criteria) -> List[Block]:
+        """Return a list of the blocks at the surface of the plot, using the given criteria"""
+        if criteria in self.surface_blocks.keys():
+            return self.surface_blocks[criteria]
+
+        surface = list()
+        heightmap = self.get_heightmap(criteria)
 
         for x, rest in enumerate(heightmap):
             for z, h in enumerate(rest):
                 coordinates = Coordinates(self.start.x + x, h - 1, self.start.z + z)
-                surface_blocks[coordinates] = self.get_block_at(*coordinates)
+                surface.append(self.get_block_at(*coordinates))
 
-        return surface_blocks
-
-    def get_block_usage():
-        pass
+        self.surface_blocks[criteria] = surface
+        return surface
 
     def remove_trees(self) -> None:
-        """"""
+        """Remove all vegetation at the surface of the current plot"""
         remove_filter = ['leaves', 'log', 'vine', 'stern', 'cocoa', 'bush', 'mushroom']
-        surface_blocks = self.get_blocks_at_surface('WORLD_SURFACE')
+
+        surface_blocks = self.get_blocks_at_surface(Criteria.WORLD_SURFACE)
 
         amount = 0
-        unwanted_blocks = Block.filter(remove_filter, surface_blocks.values())
-
         deleted_blocks = set()
+        unwanted_blocks = Block.filter(remove_filter, surface_blocks)
+
+        print(f'=> Removing surface vegetation on plot at {self.start}')
         while unwanted_blocks:
             block = unwanted_blocks.pop()
 
@@ -115,15 +126,8 @@ class Plot:
 
             INTF.placeBlock(*block.coordinates, 'air')
             deleted_blocks.add(block.coordinates)
-
             amount += 1
-            print(f'Deleted {amount} blocks, still {len(unwanted_blocks)} to delete')
 
         INTF.sendBlocks()
-        print(f'Deleted {amount} blocs')
+        print(f'=> Deleted {amount} blocs')
         self.update()
-
-    def visualize(self, block: str = 'blue_stained_glass') -> None:
-        """Change the blocks at the surface of the plot to visualize it"""
-        for coordinates in self.get_blocks_at_surface('MOTION_BLOCKING').keys():
-            INTF.placeBlock(*coordinates, block)
