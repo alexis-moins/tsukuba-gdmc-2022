@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from typing import Dict, Tuple, Set
 
@@ -42,7 +44,7 @@ class ConstructionPlot(Plot):
 
         self.foundation_blocks_surface = surface_blocks
 
-    def get_construction_spot(self, size: Tuple[int, int], speed: int = None) -> Coordinates:
+    def get_construction_spot(self, size: Tuple[int, int], speed: int = None) -> Coordinates | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
             Score is defined by get_score function.
 
@@ -82,6 +84,9 @@ class ConstructionPlot(Plot):
                 min_score = coord_score
 
         print(f'Best score : {min_score}')
+
+        if min_score == ConstructionPlot._WORST_SCORE:
+            return None
 
         return self.foundation_blocks_surface[best_coord_2d].coordinates
 
