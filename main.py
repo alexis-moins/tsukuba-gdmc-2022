@@ -60,6 +60,9 @@ if __name__ == '__main__':
             house_area = (house_size[0], house_size[2])
             house_construction_coord = construction_area_1.get_construction_spot(house_area)
 
+            if house_construction_coord is None:
+                continue
+
             build_simple_house("oak_planks", house_construction_coord, house_size)
             construction_area_1.occupy_area(house_construction_coord, house_area, 3)
 
