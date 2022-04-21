@@ -1,3 +1,4 @@
+import random
 from typing import Dict, Tuple, Set
 
 import numpy as np
@@ -16,9 +17,9 @@ class ConstructionPlot(Plot):
         super().__init__(x, z, size)
 
         self.construction_roof = construction_roof
-        self.occupied_coords: Set[Coordinates] = set()
-        self._construction_heightmap: np.array = None
-        self.foundation_blocks: Dict[Coordinates, Block] = dict()
+        # Surface word here is to precise that we are working
+        self.occupied_coords_surface: Set[Coordinates] = set()
+        self.foundation_blocks_surface: Dict[Coordinates, Block] = dict()
 
     def _build_foundation_blocks(self) -> None:
         surface_blocks = dict()
@@ -28,7 +29,7 @@ class ConstructionPlot(Plot):
             for z, h in enumerate(rest):
                 coordinates = Coordinates(self.start.x + x, h - 1, self.start.z + z)
 
-                if coordinates in self.occupied_coords:
+                if coordinates.as_2D() in self.occupied_coords_surface:
                     continue
 
                 block = self.get_block_at(*coordinates)
@@ -36,9 +37,9 @@ class ConstructionPlot(Plot):
                 # We don't want to be on water or too high in the sky
                 if not block.is_one_of(["water"]) and block.coordinates.y < self.construction_roof:
 
-                    surface_blocks[coordinates] = self.get_block_at(*coordinates)
+                    surface_blocks[coordinates.as_2D()] = self.get_block_at(*coordinates)
 
-        self.foundation_blocks = surface_blocks
+        self.foundation_blocks_surface = surface_blocks
 
     def get_construction_spot(self, size: Tuple[int, int], speed: int = None) -> Coordinates:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
@@ -57,30 +58,37 @@ class ConstructionPlot(Plot):
         self._build_foundation_blocks()
 
         # DEBUG
-        print(len(self.occupied_coords))
+        print(len(self.occupied_coords_surface))
 
-        for coord in self.foundation_blocks:
-            INTF.placeBlock(*coord, 'red_wool')
+        colors = ['green', 'pink', 'magenta', 'lime', 'yellow', 'orange', 'purple', 'gray', 'white']
+        random.shuffle(colors)
+        for coord_2d in self.foundation_blocks_surface:
+            INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, colors[0] + '_wool')
+
         INTF.sendBlocks()
+
+
         input("Press a key to continue")
         # END DEBUG
 
-        keys_list = list(self.foundation_blocks.keys())
+        keys_list = list(self.foundation_blocks_surface.keys())
 
         # >Get the minimal score in the coordinate list
         min_score = ConstructionPlot._WORST_SCORE
-        best_spot = keys_list[0]
-        for coord in keys_list[::speed]:
-            coord_score = self._get_score(coord, size)
+        best_coord_2d = keys_list[0]
+
+        for coord_2d in keys_list[::speed]:
+            coord_score = self._get_score(coord_2d, size)
+
             if coord_score < min_score:
-                best_spot = coord
+                best_coord_2d = coord_2d
                 min_score = coord_score
 
         print(f'Best score : {min_score}')
 
-        return best_spot
+        return self.foundation_blocks_surface[best_coord_2d].coordinates
 
-    def _get_score(self, coord: Coordinates, size: Tuple[int, int]) -> float:
+    def _get_score(self, coord_2d: Coordinates, size: Tuple[int, int]) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -90,18 +98,19 @@ class ConstructionPlot(Plot):
             """
         # apply malus to score depending on the distance to the 'center'
         # Todo : Maybe improve this notation, quite not beautiful, set center as a coordinate ? Would be great
-        score = coord.with_y(0).distance(Coordinates(self.center[0], 0, self.center[1])) * .1
+        score = coord_2d.distance(Coordinates(self.center[0], 0, self.center[1])) * .1
+
+        evaluated_coord_y = self.foundation_blocks_surface[coord_2d].coordinates.y
 
         # Score = sum of difference between the first point's altitude and the other
         for x in range(size[0]):
             for z in range(size[1]):
                 try:
-                    current = coord.shift(x, 0, z)
-                    if current in self:
-                        score += abs(coord.y - self._get_y(current.x, current.y))
-                    else:
-                        # Out of bound :3
-                        return ConstructionPlot._WORST_SCORE
+                    current = coord_2d.shift(x, 0, z)
+                    current_y = self.foundation_blocks_surface[current].coordinates.y
+
+                    score += abs(evaluated_coord_y - current_y)
+
                 except KeyError:
                     # Out of bound :3
                     return ConstructionPlot._WORST_SCORE
@@ -112,12 +121,18 @@ class ConstructionPlot(Plot):
         unusable as foundations for other constructions"""
         for x in range(-padding, size[0] + padding):
             for z in range(-padding, size[1] + padding):
-                self.occupied_coords.add(origin.shift(size[0] + x, 0, size[1] + z).with_y(0))
 
-    def _get_y(self, x: int, z: int) -> int:
-        relative_x = x - self.start.x
-        relative_z = z - self.start.z
-        return self._construction_heightmap[relative_x, relative_z]
+                coord_2d = origin.shift(x, 0, z).as_2D()
+                if coord_2d in self:
+                    self.occupied_coords_surface.add(coord_2d)
+
+        for coord_2d in self.occupied_coords_surface:
+            try:
+                INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, 'red_wool')
+            except KeyError:
+                pass
+        INTF.sendBlocks()
+
 
 def build_simple_house(main_bloc: str, start: Coordinates, size: tuple[int, int, int]):
     """Build a 'house' of the main_bloc given, with north-west bottom corner as starting point, with the given size"""
@@ -125,8 +140,9 @@ def build_simple_house(main_bloc: str, start: Coordinates, size: tuple[int, int,
     # body
     GEO.placeCuboid(start.x, start.y, start.z, start.x + size[0] - 1, start.y + size[1] - 1, start.z + size[2] - 1,
                     main_bloc, hollow=True)
-    INTF.sendBlocks()
+
     # Todo : add direction
     # Door
     INTF.placeBlock(start.x + size[0] // 2, start.y + 1, start.z, "oak_door")
     INTF.placeBlock(start.x + size[0] // 2, start.y + 2, start.z, "oak_door[half=upper]")
+    INTF.sendBlocks()

@@ -48,9 +48,9 @@ class Plot:
     def __contains__(self, coordinates: Coordinates) -> bool:
         """Return true if the current plot contains the given coordinates"""
         return \
-            self.start.x <= coordinates.x <= self.end.x and \
-            self.start.y <= coordinates.y <= self.end.y and \
-            self.start.z <= coordinates.z <= self.end.z
+            self.start.x <= coordinates.x < self.end.x and \
+            self.start.y <= coordinates.y < self.end.y and \
+            self.start.z <= coordinates.z < self.end.z
 
     @staticmethod
     def get_build_area() -> Plot:

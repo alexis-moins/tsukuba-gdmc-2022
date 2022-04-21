@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
         # build_area.get_block_usage()
 
-        build_area.remove_trees()
+        # build_area.remove_trees()
         build_area.visualize()
 
         construction_area_1 = ConstructionPlot(x=10, z=10, size=(50, 50))
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         for i in range(5):
             iter_start = time.time()
             house_size = random.randint(5, 20), random.randint(4, 15), random.randint(5, 20)
-            house_area = (house_size[0], house_size[1])
+            house_area = (house_size[0], house_size[2])
             house_construction_coord = construction_area_1.get_construction_spot(house_area)
 
             build_simple_house("oak_planks", house_construction_coord, house_size)
