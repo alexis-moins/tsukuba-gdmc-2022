@@ -46,7 +46,6 @@ if __name__ == '__main__':
 
         # Retrieve the default build area
         build_area = Plot.get_build_area()
-        build_area.remove_trees()
         build_area.visualize()
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"

@@ -1,5 +1,6 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Set
 
+import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
@@ -17,27 +18,27 @@ class ConstructionPlot(Plot):
         super().__init__(x, z, size)
 
         self.construction_roof = construction_roof
-        self.occupied_coords: set[Coordinates] = set()
-
-        self.foundation_blocks: dict[Coordinates, Block] = dict()
+        self.occupied_coords: Set[Coordinates] = set()
+        self._construction_heightmap: np.array = None
+        self.foundation_blocks: Dict[Coordinates, Block] = dict()
 
     def _build_foundation_blocks(self) -> None:
         surface_blocks = dict()
-        heightmap = self.get_heightmap("MOTION_BLOCKING_NO_LEAVES")
+        self._construction_heightmap = self.get_heightmap("MOTION_BLOCKING_NO_LEAVES")
 
-        for x, rest in enumerate(heightmap):
+        for x, rest in enumerate(self._construction_heightmap):
             for z, h in enumerate(rest):
                 coordinates = Coordinates(self.start.x + x, h - 1, self.start.z + z)
-                # Little hack : we don't care about Y here, so we use with_y = 0
-                if coordinates.with_y(0) in self.occupied_coords:
+
+                if coordinates in self.occupied_coords:
                     continue
 
                 block = self.get_block_at(*coordinates)
 
                 # We don't want to be on water or too high in the sky
                 if not block.is_one_of(["water"]) and block.coordinates.y < self.construction_roof:
-                    # We 'cancel' the Y in the dict, so we can access the neighbouring blocks later without knowing their Y
-                    surface_blocks[coordinates.with_y(0)] = self.get_block_at(*coordinates)
+
+                    surface_blocks[coordinates] = self.get_block_at(*coordinates)
 
         self.foundation_blocks = surface_blocks
 
@@ -54,8 +55,17 @@ class ConstructionPlot(Plot):
             # print(f"Auto determined speed {speed} for house of size {size}")
             speed = 1
 
-        # This will update the foundation_block dict
+        # This will update the foundation_block dict, as well as the _construction_heightmap
         self._build_foundation_blocks()
+
+        # DEBUG
+        print(len(self.occupied_coords))
+
+        for coord in self.foundation_blocks:
+            INTF.placeBlock(*coord, 'red_wool')
+        INTF.sendBlocks()
+        input("Press a key to continue")
+        # END DEBUG
 
         keys_list = list(self.foundation_blocks.keys())
 
@@ -69,8 +79,8 @@ class ConstructionPlot(Plot):
                 min_score = coord_score
 
         print(f'Best score : {min_score}')
-        # Remember, because of the Y hack we did, we would get y = 0 if we just returned best_spot
-        return self.foundation_blocks[best_spot].coordinates
+
+        return best_spot
 
     def _get_score(self, coord: Coordinates, size: Tuple[int, int]) -> float:
         """Return a score evaluating the fitness of a building in an area.
@@ -89,8 +99,11 @@ class ConstructionPlot(Plot):
             for z in range(size[1]):
                 try:
                     current = coord.shift(x, 0, z)
-
-                    score += abs(coord.y - self.foundation_blocks[current].coordinates.y)
+                    if current in self:
+                        score += abs(coord.y - self._get_y(current.x, current.y))
+                    else:
+                        # Out of bound :3
+                        return ConstructionPlot._WORST_SCORE
                 except KeyError:
                     # Out of bound :3
                     return ConstructionPlot._WORST_SCORE
@@ -103,6 +116,10 @@ class ConstructionPlot(Plot):
             for z in range(-padding, size[1] + padding):
                 self.occupied_coords.add(origin.shift(size[0] + x, 0, size[1] + z).with_y(0))
 
+    def _get_y(self, x: int, z: int) -> int:
+        relative_x = x - self.start.x
+        relative_z = z - self.start.z
+        return self._construction_heightmap[relative_x, relative_z]
 
 
 def build_simple_house(main_bloc: str, start: Coordinates, size: tuple[int, int, int]):
