@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Iterator, List, Set
+from collections import Counter
 from dataclasses import astuple, dataclass
+from typing import Counter, Iterator, List, Set, Any, Type
 
 
 class Direction(Enum):
@@ -26,14 +27,57 @@ class Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
         return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
 
-    def is_in_area(self, x1, y1, z1, x2, y2, z2) -> bool:
+    def is_in_area(self, build_area) -> bool:
         """Return true if the current coordinates are in the given area"""
+        x1, y1, z1 = build_area.start
+        x2, y2, z2 = build_area.end
         return x1 <= self.x <= x2 and y1 <= self.y <= y2 and z1 <= self.z <= z2
 
     def __iter__(self) -> Iterator:
         """Return an iterator over the current coordinates"""
         coordinates = astuple(self)
         return iter(coordinates)
+
+    def __sub__(self, other: Any):
+        """Return the substraction between the current coordinates and the given ones"""
+        if not isinstance(other, Coordinates):
+            raise Exception(f'Cannot substract Coordinates and {type(other)}')
+
+        return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __add__(self, other: Any):
+        """Return the addition between the current coordinates and the given ones"""
+        if not isinstance(other, Coordinates):
+            raise Exception(f'Cannot add Coordinates and {type(other)}')
+
+        return Coordinates(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __abs__(self) -> Coordinates:
+        """Return the absolute value of the coordinates"""
+        return Coordinates(abs(self.x), abs(self.y), abs(self.z))
+
+    def distance(self, other: Any) -> int:
+        """Return the Manhattan distance between two coordinates"""
+        if not isinstance(other, Coordinates):
+            raise Exception(f'Cannot compute distance between Coordinates and {type(other)}')
+
+        difference = abs(self - other)
+        return difference.x + difference.y + difference.z
+
+    def shift(self, x: int, y: int, z: int) -> Coordinates:
+        """Return a new coordinates formed with the current coordinates whose values where shifted"""
+        return Coordinates(self.x + x, self.y + y, self.z + z)
+
+    def with_y(self, y: int) -> Coordinates:
+        """"""
+        return Coordinates(self.x, y, self.z)
+
+    def __eq__(self, other: Any) -> bool:
+        """Return true if the given coordinates are equals to the current ones"""
+        if not isinstance(other, Coordinates):
+            raise Exception(f'Cannot compare Coordinates and {type(other)}')
+
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
 
 @dataclass(frozen=True)
@@ -62,8 +106,8 @@ class Block:
         iterator = filter(lambda block: block.is_one_of(pattern), blocks)
         return set(iterator)
 
-
-def get_block_at(x: int, y: int, z: int, world) -> Block:
-    """Return the block found at the given x, y, z coordinates in the world"""
-    name = world.getBlockAt(x, y, z)
-    return Block(name, Coordinates(x, y, z))
+    @staticmethod
+    def group_by_name(blocks: List[Block]) -> Type[Counter[Any]]:
+        """Return a counter of the blocks in the given list"""
+        block_names = (block.name for block in blocks)
+        return Counter[block_names]
