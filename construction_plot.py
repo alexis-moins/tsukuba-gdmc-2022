@@ -4,11 +4,9 @@ import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
-import random
-import time
-
 from build_area import Plot
-from utils import Coordinates, Block
+from utils.block import Block
+from utils.coordinates import Coordinates
 
 
 class ConstructionPlot(Plot):
@@ -121,7 +119,6 @@ class ConstructionPlot(Plot):
         relative_z = z - self.start.z
         return self._construction_heightmap[relative_x, relative_z]
 
-
 def build_simple_house(main_bloc: str, start: Coordinates, size: tuple[int, int, int]):
     """Build a 'house' of the main_bloc given, with north-west bottom corner as starting point, with the given size"""
     # Todo : finish the simple houses
@@ -133,7 +130,3 @@ def build_simple_house(main_bloc: str, start: Coordinates, size: tuple[int, int,
     # Door
     INTF.placeBlock(start.x + size[0] // 2, start.y + 1, start.z, "oak_door")
     INTF.placeBlock(start.x + size[0] // 2, start.y + 2, start.z, "oak_door[half=upper]")
-
-
-
-

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple
 
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
@@ -9,7 +9,8 @@ from gdpc import worldLoader as WL
 import numpy as np
 from nbt.nbt import MalformedFileError
 
-from utils import Block, Coordinates
+from utils.block import Block
+from utils.coordinates import Coordinates
 
 
 def default_build_area_coordinates() -> tuple[Coordinates, Coordinates]:
@@ -38,10 +39,18 @@ class Plot:
     def __init__(self, x: int, z: int, size: Tuple[int, int]) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
         self.start = Coordinates(x, 0, z)
-        self.size = size
         self.end = Coordinates(x + size[0], 255, z + size[1])
+        self.size = size
+
         self.center = self.start.x + self.size[0] // 2, self.start.z + self.size[1] // 2
         self.offset = self.start - Plot.default_start, self.end - Plot.default_start
+
+    def __contains__(self, coordinates: Coordinates) -> bool:
+        """Return true if the current plot contains the given coordinates"""
+        return \
+            self.start.x <= coordinates.x <= self.end.x and \
+            self.start.y <= coordinates.y <= self.end.y and \
+            self.start.z <= coordinates.z <= self.end.z
 
     @staticmethod
     def get_build_area() -> Plot:
@@ -78,9 +87,12 @@ class Plot:
 
         return surface_blocks
 
+    def get_block_usage():
+        pass
+
     def remove_trees(self) -> None:
         """"""
-        remove_filter = ['leaves', 'log', 'vine', 'stern', 'cocoa', 'bush']
+        remove_filter = ['leaves', 'log', 'vine', 'stern', 'cocoa', 'bush', 'mushroom']
         surface_blocks = self.get_blocks_at_surface('WORLD_SURFACE')
 
         amount = 0
@@ -91,7 +103,7 @@ class Plot:
             block = unwanted_blocks.pop()
 
             for coordinates in block.neighbouring_coordinates():
-                if coordinates not in deleted_blocks and coordinates.is_in_area(self):
+                if coordinates not in deleted_blocks and coordinates in self:
                     block_around = self.get_block_at(*coordinates)
 
                     if block_around in unwanted_blocks:
@@ -111,7 +123,7 @@ class Plot:
         print(f'Deleted {amount} blocs')
         self.update()
 
-    def visualize(self, block: str = 'lime_stained_glass'):
+    def visualize(self, block: str = 'blue_stained_glass') -> None:
+        """Change the blocks at the surface of the plot to visualize it"""
         for coordinates in self.get_blocks_at_surface('MOTION_BLOCKING').keys():
             INTF.placeBlock(*coordinates, block)
-
