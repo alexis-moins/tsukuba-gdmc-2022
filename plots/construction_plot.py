@@ -7,13 +7,14 @@ import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+from plots.building_plot import ConstructionPlot
 from plots.plot import Plot
 from utils.block import Block
 from utils.coordinates import Coordinates
 from utils.criteria import Criteria
 
 
-class ConstructionPlot(Plot):
+class SuburbPlot(Plot):
     _WORST_SCORE = 100_000_000
 
     def __init__(self, x: int, z: int, size: Tuple[int, int], construction_roof: int = 200):
@@ -25,26 +26,15 @@ class ConstructionPlot(Plot):
         self.foundation_blocks_surface: Dict[Coordinates, Block] = dict()
 
     def _build_foundation_blocks(self) -> None:
-        surface_blocks = dict()
-        self._construction_heightmap = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        self.foundation_blocks_surface = {b.coordinates.as_2D(): b for b in filter(self._is_block_valid,
+                                                                                   self.get_blocks_at_surface(
+                                                                                       Criteria.MOTION_BLOCKING_NO_LEAVES))}
 
-        for x, rest in enumerate(self._construction_heightmap):
-            for z, h in enumerate(rest):
-                coordinates = Coordinates(self.start.x + x, h - 1, self.start.z + z)
+    def _is_block_valid(self, b):
+        return b.coordinates.y < self.construction_roof and not b.is_one_of(
+            ["water"]) and b.coordinates.as_2D() not in self.occupied_coords_surface
 
-                if coordinates.as_2D() in self.occupied_coords_surface:
-                    continue
-
-                block = self.get_block_at(*coordinates)
-
-                # We don't want to be on water or too high in the sky
-                if not block.is_one_of(["water"]) and block.coordinates.y < self.construction_roof:
-
-                    surface_blocks[coordinates.as_2D()] = self.get_block_at(*coordinates)
-
-        self.foundation_blocks_surface = surface_blocks
-
-    def get_construction_spot(self, size: Tuple[int, int], speed: int = None) -> Coordinates | None:
+    def get_construction_plot(self, size: Tuple[int, int], speed: int = None) -> ConstructionPlot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
             Score is defined by get_score function.
 
@@ -69,11 +59,10 @@ class ConstructionPlot(Plot):
         INTF.sendBlocks()
         # END DEBUG
 
-
         keys_list = list(self.foundation_blocks_surface.keys())
 
         # >Get the minimal score in the coordinate list
-        min_score = ConstructionPlot._WORST_SCORE
+        min_score = SuburbPlot._WORST_SCORE
         best_coord_2d = keys_list[0]
 
         for coord_2d in keys_list[::speed]:
@@ -85,10 +74,11 @@ class ConstructionPlot(Plot):
 
         print(f'Best score : {min_score}')
 
-        if min_score == ConstructionPlot._WORST_SCORE:
+        if min_score == SuburbPlot._WORST_SCORE:
             return None
 
-        return self.foundation_blocks_surface[best_coord_2d].coordinates
+        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=size,
+                                build_start=self.foundation_blocks_surface[best_coord_2d].coordinates)
 
     def _get_score(self, coord_2d: Coordinates, size: Tuple[int, int]) -> float:
         """Return a score evaluating the fitness of a building in an area.
@@ -115,7 +105,7 @@ class ConstructionPlot(Plot):
 
                 except KeyError:
                     # Out of bound :3
-                    return ConstructionPlot._WORST_SCORE
+                    return SuburbPlot._WORST_SCORE
         return score
 
     def occupy_area(self, origin: Coordinates, size: Tuple[int, int], padding: int = 0) -> None:
@@ -136,15 +126,3 @@ class ConstructionPlot(Plot):
         INTF.sendBlocks()
 
 
-def build_simple_house(main_bloc: str, start: Coordinates, size: tuple[int, int, int]):
-    """Build a 'house' of the main_bloc given, with north-west bottom corner as starting point, with the given size"""
-    # Todo : finish the simple houses
-    # body
-    GEO.placeCuboid(start.x, start.y, start.z, start.x + size[0] - 1, start.y + size[1] - 1, start.z + size[2] - 1,
-                    main_bloc, hollow=True)
-
-    # Todo : add direction
-    # Door
-    INTF.placeBlock(start.x + size[0] // 2, start.y + 1, start.z, "oak_door")
-    INTF.placeBlock(start.x + size[0] // 2, start.y + 2, start.z, "oak_door[half=upper]")
-    INTF.sendBlocks()
