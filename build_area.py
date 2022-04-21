@@ -1,10 +1,13 @@
 from __future__ import annotations
+
+import time
 from typing import Dict, Tuple, Any
 
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
 
 import numpy as np
+from nbt.nbt import MalformedFileError
 
 from utils import Block, Coordinates
 
@@ -15,10 +18,22 @@ def default_build_area_coordinates() -> tuple[Coordinates, Coordinates]:
     return Coordinates(x1, y1, z1), Coordinates(x2, y2, z2)
 
 
+def get_world_slice(retry_amount: int = 10, retry_wait_time: int = 1):
+    default_start, default_end = default_build_area_coordinates()
+    while retry_amount:
+        try:
+            return WL.WorldSlice(default_start.x, default_start.z, default_end.x + 1, default_end.z + 1)
+        except MalformedFileError:
+            retry_amount -= 1
+            time.sleep(retry_wait_time)
+    print(f'[ERROR] : Could not get a world slice in {retry_amount} try')
+
+
 class Plot:
     """Represents a build area"""
     default_start, default_end = default_build_area_coordinates()
-    _world = WL.WorldSlice(default_start.x, default_start.z, default_end.x + 1, default_end.z + 1)
+
+    _world = get_world_slice()
 
     def __init__(self, x: int, z: int, size: Tuple[int, int]) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
@@ -37,8 +52,7 @@ class Plot:
 
     def update(self) -> None:
         """Update the world slice and most importantly the heightmaps"""
-        self._world = WL.WorldSlice(self.default_start.x, self.default_start.z,
-                                    self.default_end.x + 1, self.default_end.z + 1)
+        self._world = get_world_slice()
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the world"""
@@ -95,3 +109,8 @@ class Plot:
         INTF.sendBlocks()
         print(f'Deleted {amount} blocs')
         self.update()
+
+    def visualize(self, block: str = 'lime_stained_glass'):
+        for coordinates in self.get_blocks_at_surface('MOTION_BLOCKING').keys():
+            INTF.placeBlock(*coordinates, block)
+

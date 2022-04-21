@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+import time
 from typing import Dict
 
 from gdpc import toolbox as TB
@@ -7,6 +9,7 @@ from gdpc import interface as INTF
 from gdpc import geometry as GEO
 
 from build_area import Plot
+from construction_plot import ConstructionPlot, build_simple_house
 from utils import Coordinates
 
 
@@ -27,16 +30,12 @@ def test_areas():
     plot2 = Plot(Coordinates(10, 0, 40), Coordinates(110, 255, 75))
     plot3 = Plot(Coordinates(10, 0, 80), Coordinates(110, 255, 105))
 
-    b1 = plot1.get_blocks_at_surface('MOTION_BLOCKING')
-    for coordinates in b1.keys():
-        INTF.placeBlock(*coordinates, 'lime_stained_glass')
+    plot1.visualize()
 
     plot2.remove_trees()
 
     plot3.remove_trees()
-    b1 = plot3.get_blocks_at_surface('MOTION_BLOCKING')
-    for coordinates in b1.keys():
-        INTF.placeBlock(*coordinates, 'orange_stained_glass')
+    plot3.visualize('orange_stained_glass')
 
 
 if __name__ == '__main__':
@@ -45,22 +44,36 @@ if __name__ == '__main__':
 
     try:
 
-        # Retreive the default build area
+        # Retrieve the default build area
         build_area = Plot.get_build_area()
+        build_area.remove_trees()
+        build_area.visualize()
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
         print(f'/{command}')
 
-        build_area.remove_trees()
+        construction_area_1 = ConstructionPlot(10, 10, (50, 50))
+        construction_area_1.remove_trees()
+        construction_area_1.visualize('orange_stained_glass')
+        # get_most_used_block_of_type("log", )
 
-        plot1 = Plot(x=10, z=10, size=(10, 10))
+        for i in range(5):
+            iter_start = time.time()
+            house_size = random.randint(5, 20), random.randint(4, 15), random.randint(5, 20)
+            house_area = (house_size[0], house_size[1])
+            house_construction_coord = construction_area_1.get_construction_spot(house_area)
 
-        for coordinates in plot1.get_blocks_at_surface('MOTION_BLOCKING').keys():
-            INTF.placeBlock(*coordinates, 'lime_stained_glass')
+            build_simple_house("oak_planks", house_construction_coord, house_size)
+            construction_area_1.occupy_area(house_construction_coord, house_area, 3)
+
+            print(f"Placed house of size {house_size} at {house_construction_coord} in {time.time() - iter_start:.2f}s")
+
         INTF.sendBlocks()
-
         print("Done!")
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")
+
+
+

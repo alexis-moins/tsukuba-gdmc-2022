@@ -61,6 +61,9 @@ class Coordinates:
     def with_y(self, y: int) -> Coordinates:
         return Coordinates(self.x, y, self.z)
 
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y and self.z == other.z
+
 
 @dataclass(frozen=True)
 class Block:
