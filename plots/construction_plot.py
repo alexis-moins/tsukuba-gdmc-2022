@@ -34,7 +34,7 @@ class SuburbPlot(Plot):
         return b.coordinates.y < self.construction_roof and not b.is_one_of(
             ["water"]) and b.coordinates.as_2D() not in self.occupied_coords_surface
 
-    def get_construction_plot(self, size: Tuple[int, int], speed: int = None) -> ConstructionPlot | None:
+    def get_construction_plot(self, size: Tuple[int, int], padding: int = 3, speed: int = None) -> ConstructionPlot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
             Score is defined by get_score function.
 
@@ -77,8 +77,11 @@ class SuburbPlot(Plot):
         if min_score == SuburbPlot._WORST_SCORE:
             return None
 
-        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=size,
-                                build_start=self.foundation_blocks_surface[best_coord_2d].coordinates)
+        best_coord = self.foundation_blocks_surface[best_coord_2d].coordinates
+
+        self.occupy_area(best_coord, size, padding)
+
+        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=size, build_start=best_coord)
 
     def _get_score(self, coord_2d: Coordinates, size: Tuple[int, int]) -> float:
         """Return a score evaluating the fitness of a building in an area.
@@ -118,6 +121,7 @@ class SuburbPlot(Plot):
                 if coord_2d in self:
                     self.occupied_coords_surface.add(coord_2d)
 
+        # ONLY FOR DEBUG :D
         for coord_2d in self.occupied_coords_surface:
             try:
                 INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, 'red_wool')

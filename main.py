@@ -9,7 +9,7 @@ from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
 from plots.plot import Plot
-from plots.construction_plot import SuburbPlot, build_simple_house
+from plots.construction_plot import SuburbPlot
 
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
@@ -48,19 +48,20 @@ if __name__ == '__main__':
 
         for i in range(5):
             iter_start = time.time()
-            house_size = random.randint(5, 20), random.randint(4, 15), random.randint(5, 20)
+            house_size = random.randint(10, 30), random.randint(4, 15), random.randint(10, 30)
             house_area = (house_size[0], house_size[2])
-            house_construction_coord = construction_area_1.get_construction_plot(house_area)
+            house_construction_plot = construction_area_1.get_construction_plot(house_area)
 
-            if house_construction_coord is None:
+            if house_construction_plot is None:
                 continue
-
+            if most_used_wood is None:
+                most_used_wood = 'minecraft:oak_log'
             most_used_wood = most_used_wood.replace('minecraft:', '').replace('log', 'planks')
-            build_simple_house(most_used_wood, house_construction_coord, house_size)
-            construction_area_1.occupy_area(house_construction_coord, house_area, 3)
+
+            house_construction_plot.build_simple_house(most_used_wood,house_size[1])
 
             print(
-                f'=> Built house of size {house_size} at {house_construction_coord} in {time.time() - iter_start: .2f}s\n')
+                f'=> Built house of size {house_size} at {house_construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
 
         INTF.sendBlocks()
         print('Done!')
