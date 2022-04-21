@@ -50,9 +50,10 @@ class Plot:
         size = abs(coord_a - coord_b)
         return Plot(x=coord_a.x, z=coord_a.z, size=(size.x, size.z))
 
-    def update(self) -> None:
+    @staticmethod
+    def update() -> None:
         """Update the world slice and most importantly the heightmaps"""
-        self._world = get_world_slice()
+        Plot._world = get_world_slice()
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the world"""
