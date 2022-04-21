@@ -52,9 +52,9 @@ class Coordinates:
         """Return a new coordinates formed with the current coordinates whose values where shifted"""
         return Coordinates(self.x + x, self.y + y, self.z + z)
 
-    def with_y(self, y: int) -> Coordinates:
-        """"""
-        return Coordinates(self.x, y, self.z)
+    def as_2D(self) -> Coordinates:
+        """Return a new coordinates with y = 0"""
+        return Coordinates(self.x, 0, self.z)
 
     def __eq__(self, other: Any) -> bool:
         """Return true if the given coordinates are equals to the current ones"""
