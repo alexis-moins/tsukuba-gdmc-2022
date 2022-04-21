@@ -10,7 +10,8 @@ from gdpc import geometry as GEO
 
 from build_area import Plot
 from construction_plot import ConstructionPlot, build_simple_house
-from utils import Coordinates
+
+from utils.coordinates import Coordinates
 
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
@@ -51,12 +52,18 @@ if __name__ == '__main__':
         INTF.runCommand(command)
         print(f'/{command}')
 
+        # build_area.get_blocks_at_surface('MOTION_BLOCKING')
+
+        # build_area.get_block_usage()
+
         build_area.remove_trees()
         build_area.visualize()
 
         construction_area_1 = ConstructionPlot(x=10, z=10, size=(50, 50))
+
         construction_area_1.remove_trees()
-        construction_area_1.visualize('orange_wool')
+        construction_area_1.visualize(block='orange_stained_glass')
+
         # get_most_used_block_of_type("log", )
 
         for i in range(5):
