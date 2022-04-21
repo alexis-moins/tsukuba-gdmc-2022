@@ -46,16 +46,17 @@ if __name__ == '__main__':
 
         # Retrieve the default build area
         build_area = Plot.get_build_area()
-        build_area.remove_trees()
-        build_area.visualize()
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
         print(f'/{command}')
 
-        construction_area_1 = ConstructionPlot(10, 10, (50, 50))
+        build_area.remove_trees()
+        build_area.visualize()
+
+        construction_area_1 = ConstructionPlot(x=10, z=10, size=(50, 50))
         construction_area_1.remove_trees()
-        construction_area_1.visualize('orange_stained_glass')
+        construction_area_1.visualize('orange_wool')
         # get_most_used_block_of_type("log", )
 
         for i in range(5):
@@ -74,6 +75,3 @@ if __name__ == '__main__':
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")
-
-
-

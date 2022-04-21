@@ -38,8 +38,9 @@ class Plot:
     def __init__(self, x: int, z: int, size: Tuple[int, int]) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
         self.start = Coordinates(x, 0, z)
-        self.size = size
         self.end = Coordinates(x + size[0], 255, z + size[1])
+        self.size = size
+
         self.center = self.start.x + self.size[0] // 2, self.start.z + self.size[1] // 2
         self.offset = self.start - Plot.default_start, self.end - Plot.default_start
 
@@ -114,4 +115,3 @@ class Plot:
     def visualize(self, block: str = 'lime_stained_glass'):
         for coordinates in self.get_blocks_at_surface('MOTION_BLOCKING').keys():
             INTF.placeBlock(*coordinates, block)
-
