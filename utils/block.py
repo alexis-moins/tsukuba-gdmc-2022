@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Counter, List, Set
+from typing import Any, Collection, Counter, List, Set
 
 from utils.direction import Direction
 from utils.coordinates import Coordinates
@@ -34,7 +34,7 @@ class Block:
         return set(iterator)
 
     @staticmethod
-    def group_by_name(blocks: List[Block]) -> Counter[Any]:
-        """Return a counter of the blocks in the given list"""
+    def group_by_name(blocks: Collection[Block]) -> Counter[Any]:
+        """Return a counter of the blocks in the given collection"""
         block_names = (block.name for block in blocks)
-        return Counter[block_names]
+        return Counter(block_names)
