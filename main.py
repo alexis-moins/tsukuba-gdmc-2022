@@ -28,19 +28,17 @@ if __name__ == '__main__':
     INTF.setBuffering(True)
 
     try:
-
         # Retrieve the default build area
         build_area = Plot.get_build_area()
         build_area.visualize()
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
-        print(f'\n=> /{command}')
+        print(f'=> /{command}')
 
-        most_used_wood = build_area.get_most_used('log')
+        most_used_wood = build_area.filter_most_used_blocks('log')
         print(f'=> Most used wood: {most_used_wood}')
 
-        # build_area.remove_trees()
         build_area.visualize()
 
         construction_area_1 = ConstructionPlot(x=10, z=10, size=(50, 50))
@@ -57,13 +55,15 @@ if __name__ == '__main__':
             if house_construction_coord is None:
                 continue
 
-            build_simple_house("oak_planks", house_construction_coord, house_size)
+            most_used_wood = most_used_wood.replace('minecraft:', '').replace('log', 'planks')
+            build_simple_house(most_used_wood, house_construction_coord, house_size)
             construction_area_1.occupy_area(house_construction_coord, house_area, 3)
 
-            print(f"Placed house of size {house_size} at {house_construction_coord} in {time.time() - iter_start:.2f}s")
+            print(
+                f'=> Built house of size {house_size} at {house_construction_coord} in {time.time() - iter_start: .2f}s\n')
 
         INTF.sendBlocks()
-        print("Done!")
+        print('Done!')
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

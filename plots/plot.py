@@ -99,8 +99,8 @@ class Plot:
         self.surface_blocks[criteria] = surface
         return surface
 
-    def get_most_used(self, pattern: str) -> str:
-        """Return the most used block of the given type"""
+    def filter_most_used_blocks(self, pattern: str) -> str:
+        """Return the most used block containing the given pattern"""
         surface = self.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
         counter = Block.group_by_name(surface)
 
