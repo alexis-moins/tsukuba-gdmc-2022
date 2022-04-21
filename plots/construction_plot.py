@@ -5,9 +5,10 @@ import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
-from build_area import Plot
+from plots.plot import Plot
 from utils.block import Block
 from utils.coordinates import Coordinates
+from utils.criteria import Criteria
 
 
 class ConstructionPlot(Plot):
@@ -23,7 +24,7 @@ class ConstructionPlot(Plot):
 
     def _build_foundation_blocks(self) -> None:
         surface_blocks = dict()
-        self._construction_heightmap = self.get_heightmap("MOTION_BLOCKING_NO_LEAVES")
+        self._construction_heightmap = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         for x, rest in enumerate(self._construction_heightmap):
             for z, h in enumerate(rest):
@@ -58,18 +59,14 @@ class ConstructionPlot(Plot):
         self._build_foundation_blocks()
 
         # DEBUG
-        print(len(self.occupied_coords_surface))
-
         colors = ['green', 'pink', 'magenta', 'lime', 'yellow', 'orange', 'purple', 'gray', 'white']
         random.shuffle(colors)
         for coord_2d in self.foundation_blocks_surface:
             INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, colors[0] + '_wool')
 
         INTF.sendBlocks()
-
-
-        input("Press a key to continue")
         # END DEBUG
+
 
         keys_list = list(self.foundation_blocks_surface.keys())
 
