@@ -47,15 +47,18 @@ if __name__ == '__main__':
 
         structures = dict()
         structures['house1'] = Structure.parse_nbt_file('house1')
+        structures['house2'] = Structure.parse_nbt_file('house2')
 
         suburb = SuburbPlot(x=10 + build_area.start.x, z=10 + build_area.start.z, size=(50, 50))
         suburb.remove_trees()
 
-        house = structures['house1']
+        houses = [structures['house1'], structures['house2']]
 
         #  Move the following code into a method in SuburbPlot
         for i in range(5):
             iter_start = time.time()
+            random.shuffle(houses)
+            house = houses[0]
 
             area = (house.size[0], house.size[2])
             construction_plot = suburb.get_construction_plot(area)
