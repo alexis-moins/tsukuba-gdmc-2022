@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from nbt.nbt import TAG_List
 from typing import Any, Iterator
 from dataclasses import astuple, dataclass
 
@@ -16,6 +17,13 @@ class Coordinates:
     def towards(self, direction: Direction) -> Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
         return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
+
+    @staticmethod
+    def parse_nbt(position: TAG_List) -> Coordinates:
+        """Return the coordinates cooresponding to the given NBT tag list"""
+        return Coordinates(x=int(position[0].valuestr()),
+                           y=int(position[1].valuestr()),
+                           z=int(position[2].valuestr()))
 
     def __iter__(self) -> Iterator:
         """Return an iterator over the current coordinates"""

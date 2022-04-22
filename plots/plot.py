@@ -107,8 +107,10 @@ class Plot:
         return next(filter(lambda block: pattern in block, counter.keys()), None)
 
     def remove_trees(self) -> None:
-        """Remove all vegetation at the surface of the current plot"""
-        remove_filter = ['leaves', 'log', 'vine', 'stern', 'cocoa', 'bush', 'mushroom']
+        """Remove all plants at the surface of the current plot"""
+
+        from gdpc.lookup import LEAVES, VINES
+        remove_filter = LEAVES + VINES + ('log',)
 
         surface_blocks = self.get_blocks_at_surface(Criteria.WORLD_SURFACE)
 
@@ -116,7 +118,7 @@ class Plot:
         deleted_blocks = set()
         unwanted_blocks = Block.filter(remove_filter, surface_blocks)
 
-        print(f'\n=> Removing vegetation on plot at {self.start} with size {self.size}')
+        print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
             block = unwanted_blocks.pop()
 
@@ -129,9 +131,9 @@ class Plot:
 
                     if block_around.is_one_of(remove_filter):
                         unwanted_blocks.add(block_around)
-                        INTF.placeBlock(*block_around.coordinates, 'tnt')
+                        INTF.placeBlock(*block_around.coordinates, 'minecraft:glowstone')
 
-            INTF.placeBlock(*block.coordinates, 'air')
+            INTF.placeBlock(*block.coordinates, 'minecraft:air')
             deleted_blocks.add(block.coordinates)
             amount += 1
 
