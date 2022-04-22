@@ -11,6 +11,7 @@ from gdpc import interface as INTF
 from plots import construction_plot
 from plots.plot import Plot
 from plots.suburb_plot import SuburbPlot
+from utils.structure import Structure
 
 
 def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str | None:
@@ -27,30 +28,45 @@ def get_most_used_block_of_type(block_type: str, blocks: Dict[str, int]) -> str 
 if __name__ == '__main__':
 
     INTF.setBuffering(True)
-    INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0000011')
+    INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
 
     try:
         # Retrieve the default build area
         build_area = Plot.get_build_area()
-        # build_area.visualize()
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
         print(f'=> /{command}')
 
         most_used_wood = build_area.filter_most_used_blocks('log')
+
         if most_used_wood is None:
-            most_used_wood = 'minecraft:oak_log'
-        most_used_wood = most_used_wood.replace('minecraft:', '').replace('log', 'planks')
+            most_used_wood = 'minecraft:oak_log (default)'
+
         print(f'=> Most used wood: {most_used_wood}')
 
-        construction_area_1 = SuburbPlot(x=10 + build_area.start.x, z=10 + build_area.start.z, size=(50, 50))
+        structures = dict()
+        structures['house1'] = Structure.parse_nbt_file('house1')
 
-        construction_area_1.remove_trees()
-        # construction_area_1.visualize(ground='orange_stained_glass')
+        suburb = SuburbPlot(x=10 + build_area.start.x, z=10 + build_area.start.z, size=(50, 50))
+        suburb.remove_trees()
 
+        house = structures['house1']
+
+        #  Move the following code into a method in SuburbPlot
         for i in range(5):
-            construction_plot.build_house_1(construction_area_1, most_used_wood)
+            iter_start = time.time()
+
+            area = (house.size[0], house.size[2])
+            construction_plot = suburb.get_construction_plot(area)
+
+            if construction_plot:
+                construction_plot.build(house, replacement=most_used_wood)
+                print(
+                    f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
+
+            print(f'=> Unable to find construction area for structure with size {house.size}')
+
         print('Done!')
 
     except KeyboardInterrupt:   # useful for aborting a run-away program

@@ -118,7 +118,7 @@ class Plot:
         deleted_blocks = set()
         unwanted_blocks = Block.filter(remove_filter, surface_blocks)
 
-        print(f'\n=> Removing vegetation on plot at {self.start} with size {self.size}')
+        print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
             block = unwanted_blocks.pop()
 
