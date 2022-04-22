@@ -30,7 +30,6 @@ if __name__ == '__main__':
     try:
         # Retrieve the default build area
         build_area = Plot.get_build_area()
-        build_area.visualize()
 
         command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         INTF.runCommand(command)
@@ -39,12 +38,9 @@ if __name__ == '__main__':
         most_used_wood = build_area.filter_most_used_blocks('log')
         print(f'=> Most used wood: {most_used_wood}')
 
-        build_area.visualize()
-
         construction_area_1 = SuburbPlot(x=10, z=10, size=(50, 50))
 
         construction_area_1.remove_trees()
-        construction_area_1.visualize(ground='orange_stained_glass')
 
         for i in range(5):
             iter_start = time.time()
@@ -58,7 +54,7 @@ if __name__ == '__main__':
                 most_used_wood = 'minecraft:oak_log'
             most_used_wood = most_used_wood.replace('minecraft:', '').replace('log', 'planks')
 
-            house_construction_plot.build_simple_house(most_used_wood,house_size[1])
+            house_construction_plot.build_simple_house(most_used_wood, house_size[1])
 
             print(
                 f'=> Built house of size {house_size} at {house_construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
