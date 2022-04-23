@@ -25,29 +25,6 @@ class Coordinates:
                            y=int(position[1].valuestr()),
                            z=int(position[2].valuestr()))
 
-    def __iter__(self) -> Iterator:
-        """Return an iterator over the current coordinates"""
-        coordinates = astuple(self)
-        return iter(coordinates)
-
-    def __sub__(self, other: Any):
-        """Return the substraction between the current coordinates and the given ones"""
-        if not isinstance(other, Coordinates):
-            raise Exception(f'Cannot substract Coordinates and {type(other)}')
-
-        return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
-
-    def __add__(self, other: Any):
-        """Return the addition between the current coordinates and the given ones"""
-        if not isinstance(other, Coordinates):
-            raise Exception(f'Cannot add Coordinates and {type(other)}')
-
-        return Coordinates(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    def __abs__(self) -> Coordinates:
-        """Return the absolute value of the coordinates"""
-        return Coordinates(abs(self.x), abs(self.y), abs(self.z))
-
     def distance(self, other: Any) -> int:
         """Return the Manhattan distance between two coordinates"""
         if not isinstance(other, Coordinates):
@@ -70,3 +47,26 @@ class Coordinates:
             raise Exception(f'Cannot compare Coordinates and {type(other)}')
 
         return self.x == other.x and self.y == other.y and self.z == other.z
+
+    def __iter__(self) -> Iterator:
+        """Return an iterator over the current coordinates"""
+        coordinates = astuple(self)
+        return iter(coordinates)
+
+    def __sub__(self, other: Any):
+        """Return the substraction between the current coordinates and the given ones"""
+        if not isinstance(other, Coordinates):
+            raise Exception(f'Cannot substract Coordinates and {type(other)}')
+
+        return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __add__(self, other: Any):
+        """Return the addition between the current coordinates and the given ones"""
+        if not isinstance(other, Coordinates):
+            raise Exception(f'Cannot add Coordinates and {type(other)}')
+
+        return Coordinates(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __abs__(self) -> Coordinates:
+        """Return the absolute value of the coordinates"""
+        return Coordinates(abs(self.x), abs(self.y), abs(self.z))

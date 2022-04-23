@@ -4,7 +4,7 @@ from nbt.nbt import NBTFile, TAG_List
 from typing import Generator, List, Tuple
 # from plots.construction_plot import ConstructionPlot
 
-from utils.block import Block
+from blocks.block import Block
 
 
 class Structure:
@@ -18,7 +18,7 @@ class Structure:
 
     @staticmethod
     def parse_nbt_file(file_name: str) -> Structure:
-        """Parse the nbt file found under resources/structure/{file_name}.nbt and return a structure object"""
+        """Parse the nbt file found under resources.structure.{file_name}.nbt and return a structure object"""
         file = NBTFile(f'resources/structures/{file_name}.nbt')
         size = [int(i.valuestr()) for i in file['size']]
 

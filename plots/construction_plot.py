@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-import time
-from typing import Tuple
+from re import Match
+from typing import Dict, Tuple
 
-from plots.plot import Plot
-from utils.coordinates import Coordinates
-from utils.criteria import Criteria
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+from plots.plot import Plot
+
+from utils.criteria import Criteria
 from utils.structure import Structure
+from utils.coordinates import Coordinates
 
 
 class ConstructionPlot(Plot):
@@ -49,9 +50,15 @@ class ConstructionPlot(Plot):
                         self.build_start.y + 2, self.build_start.z, "oak_door[half=upper]")
         INTF.sendBlocks()
 
-    def build(self, structure: Structure, replacement: str = '') -> bool:
+    def build(self, structure: Structure, materials: Dict[str, str] = None) -> bool:
         """Build the given structure onto the current construction spot"""
-        for block in structure.get_blocks_for(self):
+        blocks = structure.get_blocks_for(self)
+
+        # TODO
+        # if materials:
+        #     blocks = [block.convert(materials) for block in blocks]
+
+        for block in blocks:
             INTF.placeBlock(*block.coordinates, block.name)
 
         INTF.sendBlocks()
