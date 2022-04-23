@@ -31,8 +31,11 @@ class BlockList(MutableSequence):
         """Insert the given block et the given index"""
         self.__blocks.insert(index, block)
 
-    def filter(self, pattern: Tuple[str]) -> BlockSet:
+    def filter(self, pattern: str | Tuple[str]) -> BlockSet:
         """Return a sublist of blocks containing the given pattern in their name"""
+        if type(pattern) == str:
+            pattern = (pattern, )
+
         iterable = [block for block in self if block.is_one_of(pattern)]
         return BlockSet(iterable)
 
@@ -60,3 +63,8 @@ class BlockList(MutableSequence):
     def __delitem__(self, *args) -> None:
         """Delete the block at the given index or slice"""
         self.__blocks.__delitem__(*args)
+
+    def __str__(self) -> str:
+        """Return the string representation of the current list"""
+        names = [str(block) for block in self]
+        return 'BlockList([' + ', '.join(names) + '])'

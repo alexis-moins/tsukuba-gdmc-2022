@@ -54,6 +54,7 @@ class ConstructionPlot(Plot):
         """Build the given structure onto the current construction spot"""
         blocks = structure.get_blocks_for(self)
 
+        # TODO
         # if materials:
         #     blocks = [block.convert(materials) for block in blocks]
 

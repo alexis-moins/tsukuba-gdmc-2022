@@ -26,8 +26,11 @@ class BlockSet(MutableSet):
         occurences = self.counter.most_common(1)
         return occurences[0][0]
 
-    def filter(self, pattern: Tuple[str]) -> BlockSet:
+    def filter(self, pattern: str | Tuple[str]) -> BlockSet:
         """Return a subset of blocks containing the given pattern in their name"""
+        if type(pattern) == str:
+            pattern = (pattern, )
+
         iterable = [block for block in self if block.is_one_of(pattern)]
         return BlockSet(iterable)
 
@@ -55,3 +58,8 @@ class BlockSet(MutableSet):
     def __bool__(self) -> bool:
         """Return true if the current set is not empty, false otherwise"""
         return len(self.__blocks) > 0
+
+    def __str__(self) -> str:
+        """Return the string representation of the current set"""
+        names = [str(block) for block in self]
+        return 'BlockSet({' + ', '.join(names) + '})'

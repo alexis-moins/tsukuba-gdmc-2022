@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import List, Tuple
-from dataclasses import dataclass
+from typing import Dict, List, Tuple
+from dataclasses import dataclass, field
 
 from nbt.nbt import TAG_Compound, TAG_List
 
@@ -49,9 +49,13 @@ class Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""
         return Block(name=self.name, coordinates=self.coordinates.shift(*coordinates))
 
-    def is_one_of(self, patterns: Tuple[str]) -> bool:
-        """Return true if the current item's name matches the given tuple of patterns"""
-        for pattern in patterns:
-            if pattern in self.name:
+    def is_one_of(self, pattern: Tuple[str]) -> bool:
+        """Return true if the current item's name matches the given pattern"""
+        for part in pattern:
+            if part in self.name:
                 return True
         return False
+
+    def __str__(self) -> str:
+        """Return the string representation of the block"""
+        return self.name

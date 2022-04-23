@@ -42,12 +42,15 @@ if __name__ == '__main__':
 
         surface = build_area.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
-        most_used_wood = surface.filter(('log')).most_common_block
-        print(f'=> Most used wood: {most_used_wood}')
+        most_used_wood = surface.filter(pattern='log').most_common_block
+        input(f'=> Most used wood: {most_used_wood}')
 
         building_materials = dict()
+
+        # TODO extract material i.e. oak from minecraft:oak_log[...]
         building_materials['oak'] = most_used_wood
 
+        # Move this somewhere else
         structures = dict()
         structures['house1'] = Structure.parse_nbt_file('house1')
         structures['house2'] = Structure.parse_nbt_file('house2')
@@ -60,6 +63,7 @@ if __name__ == '__main__':
         #  Move the following code into a method in SuburbPlot
         for i in range(5):
             iter_start = time.time()
+
             random.shuffle(houses)
             house = houses[0]
 
