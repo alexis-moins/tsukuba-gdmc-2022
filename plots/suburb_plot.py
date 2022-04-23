@@ -9,7 +9,7 @@ from gdpc import interface as INTF
 
 from plots.construction_plot import ConstructionPlot
 from plots.plot import Plot
-from utils.block import Block
+from blocks.block import Block
 from utils.coordinates import Coordinates
 from utils.criteria import Criteria
 
@@ -128,5 +128,3 @@ class SuburbPlot(Plot):
             except KeyError:
                 pass
         INTF.sendBlocks()
-
-

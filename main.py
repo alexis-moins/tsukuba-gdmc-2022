@@ -15,7 +15,7 @@ from yaml import safe_load
 from plots import construction_plot
 from plots.plot import Plot
 from plots.suburb_plot import SuburbPlot
-from utils.block import Block
+from blocks.block import Block
 from utils.criteria import Criteria
 from utils.structure import Structure
 

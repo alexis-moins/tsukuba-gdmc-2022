@@ -4,7 +4,8 @@ from collections import Counter
 from collections.abc import MutableSequence
 from typing import Any, Iterable, Iterator, List, SupportsIndex, Tuple
 
-from utils.block import Block
+from blocks.block import Block
+from blocks.collections.block_set import BlockSet
 
 
 class BlockList(MutableSequence):
@@ -30,10 +31,10 @@ class BlockList(MutableSequence):
         """Insert the given block et the given index"""
         self.__blocks.insert(index, block)
 
-    def filter(self, pattern: Tuple[str]) -> BlockList:
+    def filter(self, pattern: Tuple[str]) -> BlockSet:
         """Return a sublist of blocks containing the given pattern in their name"""
         iterable = [block for block in self if block.is_one_of(pattern)]
-        return BlockList(iterable)
+        return BlockSet(iterable)
 
     def __iter__(self) -> Iterator[Block]:
         """Return an iterator of the blocks in the current list"""

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from re import match
+from typing import List, Tuple
 from dataclasses import dataclass
-from typing import Any, Collection, Counter, List, Set, Tuple
 
 from nbt.nbt import TAG_Compound, TAG_List
 

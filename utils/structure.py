@@ -4,7 +4,7 @@ from nbt.nbt import NBTFile, TAG_List
 from typing import Generator, List, Tuple
 # from plots.construction_plot import ConstructionPlot
 
-from utils.block import Block
+from blocks.block import Block
 
 
 class Structure:

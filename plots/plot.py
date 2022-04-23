@@ -1,8 +1,7 @@
 from __future__ import annotations
-from re import match
 
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 from gdpc import interface as INTF
 from gdpc import worldLoader as WL
@@ -10,8 +9,8 @@ from gdpc import worldLoader as WL
 from numpy import ndarray
 from nbt.nbt import MalformedFileError
 
-from utils.block import Block
-from utils.block_list import BlockList
+from blocks.block import Block
+from blocks.collections.block_list import BlockList
 from utils.coordinates import Coordinates
 from utils.criteria import Criteria
 
@@ -104,7 +103,6 @@ class Plot:
     def remove_trees(self) -> None:
         """Remove all plants at the surface of the current plot"""
         pattern = ('log', 'leaves', 'bush')
-
         surface = self.get_blocks_at_surface(Criteria.WORLD_SURFACE)
 
         amount = 0
@@ -113,7 +111,7 @@ class Plot:
 
         print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
-            block = unwanted_blocks.pop(0)
+            block = unwanted_blocks.pop()
 
             for coordinates in block.neighbouring_coordinates():
                 if coordinates not in deleted_blocks and coordinates in self:
@@ -123,7 +121,7 @@ class Plot:
                         continue
 
                     if block_around.is_one_of(pattern):
-                        unwanted_blocks.append(block_around)
+                        unwanted_blocks.add(block_around)
                         INTF.placeBlock(*block_around.coordinates, 'minecraft:glowstone')
 
             INTF.placeBlock(*block.coordinates, 'minecraft:air')
