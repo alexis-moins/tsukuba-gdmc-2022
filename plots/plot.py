@@ -1,4 +1,5 @@
 from __future__ import annotations
+from re import match
 
 import time
 from typing import Dict, List, Tuple
@@ -10,6 +11,7 @@ from numpy import ndarray
 from nbt.nbt import MalformedFileError
 
 from utils.block import Block
+from utils.block_list import BlockList
 from utils.coordinates import Coordinates
 from utils.criteria import Criteria
 
@@ -83,12 +85,12 @@ class Plot:
             return self._world.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
         return list()
 
-    def get_blocks_at_surface(self, criteria: Criteria) -> List[Block]:
+    def get_blocks_at_surface(self, criteria: Criteria) -> BlockList:
         """Return a list of the blocks at the surface of the plot, using the given criteria"""
         if criteria in self.surface_blocks.keys():
             return self.surface_blocks[criteria]
 
-        surface = list()
+        surface = BlockList()
         heightmap = self.get_heightmap(criteria)
 
         for x, rest in enumerate(heightmap):
@@ -99,28 +101,19 @@ class Plot:
         self.surface_blocks[criteria] = surface
         return surface
 
-    def filter_most_used_blocks(self, pattern: str) -> str:
-        """Return the most used block containing the given pattern"""
-        surface = self.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
-        counter = Block.group_by_name(surface)
-
-        return next(filter(lambda block: pattern in block, counter.keys()), None)
-
     def remove_trees(self) -> None:
         """Remove all plants at the surface of the current plot"""
+        pattern = ('log', 'leaves', 'bush')
 
-        from gdpc.lookup import LEAVES, VINES
-        remove_filter = LEAVES + VINES + ('log',)
-
-        surface_blocks = self.get_blocks_at_surface(Criteria.WORLD_SURFACE)
+        surface = self.get_blocks_at_surface(Criteria.WORLD_SURFACE)
 
         amount = 0
         deleted_blocks = set()
-        unwanted_blocks = Block.filter(remove_filter, surface_blocks)
+        unwanted_blocks = surface.filter(pattern)
 
         print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
-            block = unwanted_blocks.pop()
+            block = unwanted_blocks.pop(0)
 
             for coordinates in block.neighbouring_coordinates():
                 if coordinates not in deleted_blocks and coordinates in self:
@@ -129,8 +122,8 @@ class Plot:
                     if block_around in unwanted_blocks:
                         continue
 
-                    if block_around.is_one_of(remove_filter):
-                        unwanted_blocks.add(block_around)
+                    if block_around.is_one_of(pattern):
+                        unwanted_blocks.append(block_around)
                         INTF.placeBlock(*block_around.coordinates, 'minecraft:glowstone')
 
             INTF.placeBlock(*block.coordinates, 'minecraft:air')
