@@ -43,11 +43,6 @@ class BlockSet(MutableSet):
         """Remove the given block from the current set"""
         self.__blocks.discard(block)
 
-    @overload
-    def pop(self) -> Block:
-        """Return the first block of the set"""
-        pass
-
     def __iter__(self) -> Generator[Block]:
         """Return a generator of the blocks in the current set"""
         return (block for block in self.__blocks)

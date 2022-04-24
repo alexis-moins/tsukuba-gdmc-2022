@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import time
 import random
-from typing import Any
 
 from gdpc import toolbox as TB
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
-from yaml import safe_load
 
 from plots import construction_plot
 from plots.plot import Plot
@@ -15,13 +13,6 @@ from plots.suburb_plot import SuburbPlot
 from blocks.block import Block
 from utils.criteria import Criteria
 from utils.structure import Structure
-
-
-def load_file(file_name: str) -> Any:
-    """"""
-    with open(f'resources/{file_name}.yaml', 'r') as file:
-        data = safe_load(file)
-    return data
 
 
 if __name__ == '__main__':
@@ -39,17 +30,16 @@ if __name__ == '__main__':
 
         surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
-        block_name = surface.filter(pattern='log').most_common
+        block_name = surface.filter(pattern='_log').most_common
+        most_used_wood = Block.trim_name(block_name, '_log')
 
-        # TODO not tested, should work (maybe)
-        most_used_wood = Block.split_block_name(block_name)[0]
-
-        input(f'=> Most used wood: {most_used_wood}')
+        print(f'=> Most used wood: {most_used_wood}')
 
         building_materials = dict()
 
-        # TODO extract material i.e. oak from minecraft:oak_log[...]
         building_materials['oak'] = most_used_wood
+        building_materials['spruce'] = most_used_wood
+        building_materials['birch'] = most_used_wood
 
         # Move this somewhere else
         structures = dict()

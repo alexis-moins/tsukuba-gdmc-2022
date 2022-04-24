@@ -52,11 +52,7 @@ class ConstructionPlot(Plot):
 
     def build(self, structure: Structure, materials: Dict[str, str] = None) -> None:
         """Build the given structure onto the current construction spot"""
-        blocks = structure.get_blocks(plot=self)
-
-        # TODO Should work when decomented
-        # if materials:
-        #     blocks = (block.replace_first(materials) for block in blocks)
+        blocks = structure.get_blocks(plot=self, materials=materials)
 
         for block in blocks:
             INTF.placeBlock(*block.coordinates, block.name)
