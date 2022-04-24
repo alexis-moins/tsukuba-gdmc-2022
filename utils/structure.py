@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from nbt.nbt import NBTFile, TAG_List
-from typing import Generator, List, Tuple
+from typing import Generator, Tuple
 # from plots.construction_plot import ConstructionPlot
 
 from blocks.block import Block
@@ -9,8 +9,9 @@ from blocks.block import Block
 
 class Structure:
     """Class representing the minecraft construction of a structure block"""
+    __slots__ = ('name', 'size', 'blocks')
 
-    def __init__(self, name: str, size: Tuple[int, int, int], blocks: List[Block]) -> None:
+    def __init__(self, name: str, size: Tuple[int, int, int], blocks: Tuple[Block]) -> None:
         """Parameterized constructor creating a new minecraft structure"""
         self.name = name
         self.size = size
@@ -23,15 +24,15 @@ class Structure:
         size = [int(i.valuestr()) for i in file['size']]
 
         palette = file['palette']
-        blocks = Structure.parse_blocks(file['blocks'], palette)
+        blocks = Structure.__parse_blocks(file['blocks'], palette)
 
-        return Structure(name=file_name, size=tuple(size), blocks=blocks)
+        return Structure(name=file_name, size=tuple(size), blocks=tuple(blocks))
 
     @staticmethod
-    def parse_blocks(blocks: TAG_List, palette: TAG_List) -> List[Block]:
+    def __parse_blocks(blocks: TAG_List, palette: TAG_List) -> Generator[Block]:
         """Return a list of blocks parsed from the given blocks and palette"""
-        return [Block.parse_nbt(block, palette) for block in blocks]
+        return (Block.parse_nbt(block, palette) for block in blocks)
 
-    def get_blocks_for(self, plot) -> Generator[Block]:
-        """Return the block"""
+    def get_blocks(self, plot) -> Generator[Block]:
+        """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
         return (block.shift_position_to(plot.build_start) for block in self.blocks)

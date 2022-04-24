@@ -1,2 +1,6 @@
+# Files
+.DS_Store
+
+# Directories
 .idea/
 __pycache__/

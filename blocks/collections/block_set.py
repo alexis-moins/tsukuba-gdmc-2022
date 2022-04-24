@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import MutableSet
-from typing import Iterable, Iterator, Set, Tuple
+from typing import Iterable, Generator, Set, Tuple, overload
 
 from blocks.block import Block
 
 
 class BlockSet(MutableSet):
     """Class representing a set of blocks, implements the abstract MutableSet"""
+    __slots__ = ('__blocks')
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new set of blocks"""
@@ -21,7 +22,7 @@ class BlockSet(MutableSet):
         return Counter(names)
 
     @property
-    def most_common_block(self) -> str:
+    def most_common(self) -> str:
         """Return the name of the most common block in the current set of blocks"""
         occurences = self.counter.most_common(1)
         return occurences[0][0]
@@ -42,10 +43,14 @@ class BlockSet(MutableSet):
         """Remove the given block from the current set"""
         self.__blocks.discard(block)
 
-    def __iter__(self) -> Iterator[Block]:
-        """Return an iterator of the blocks in the current set"""
-        for block in self.__blocks:
-            yield block
+    @overload
+    def pop(self) -> Block:
+        """Return the first block of the set"""
+        pass
+
+    def __iter__(self) -> Generator[Block]:
+        """Return a generator of the blocks in the current set"""
+        return (block for block in self.__blocks)
 
     def __contains__(self, *args) -> bool:
         """Return true if the given block is in the current set"""

@@ -1,15 +1,12 @@
 from __future__ import annotations
-from collections import Counter
-from re import match
 
 import time
 import random
-from typing import Any, Dict
+from typing import Any
 
 from gdpc import toolbox as TB
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
-from numpy import extract
 from yaml import safe_load
 
 from plots import construction_plot
@@ -40,9 +37,13 @@ if __name__ == '__main__':
         INTF.runCommand(command)
         print(f'=> /{command}')
 
-        surface = build_area.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
-        most_used_wood = surface.filter(pattern='log').most_common_block
+        block_name = surface.filter(pattern='log').most_common
+
+        # TODO not tested, should work (maybe)
+        most_used_wood = Block.split_block_name(block_name)[0]
+
         input(f'=> Most used wood: {most_used_wood}')
 
         building_materials = dict()
@@ -74,10 +75,10 @@ if __name__ == '__main__':
                 construction_plot.build(house, materials=building_materials)
                 print(
                     f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
+            else:
+                print(f'=> Unable to find construction area for structure with size {house.size}')
 
-            print(f'=> Unable to find construction area for structure with size {house.size}')
-
-        print('Done!')
+        print('\nDone!')
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

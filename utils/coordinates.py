@@ -14,16 +14,16 @@ class Coordinates:
     y: int
     z: int
 
-    def towards(self, direction: Direction) -> Coordinates:
-        """Return the next coordinates in the given direction (from the current coordinates)"""
-        return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
-
     @staticmethod
     def parse_nbt(position: TAG_List) -> Coordinates:
         """Return the coordinates cooresponding to the given NBT tag list"""
         return Coordinates(x=int(position[0].valuestr()),
                            y=int(position[1].valuestr()),
                            z=int(position[2].valuestr()))
+
+    def towards(self, direction: Direction) -> Coordinates:
+        """Return the next coordinates in the given direction (from the current coordinates)"""
+        return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
 
     def distance(self, other: Any) -> int:
         """Return the Manhattan distance between two coordinates"""
@@ -48,19 +48,19 @@ class Coordinates:
 
         return self.x == other.x and self.y == other.y and self.z == other.z
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[int]:
         """Return an iterator over the current coordinates"""
         coordinates = astuple(self)
         return iter(coordinates)
 
-    def __sub__(self, other: Any):
+    def __sub__(self, other: Any) -> Coordinates:
         """Return the substraction between the current coordinates and the given ones"""
         if not isinstance(other, Coordinates):
             raise Exception(f'Cannot substract Coordinates and {type(other)}')
 
         return Coordinates(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def __add__(self, other: Any):
+    def __add__(self, other: Any) -> Coordinates:
         """Return the addition between the current coordinates and the given ones"""
         if not isinstance(other, Coordinates):
             raise Exception(f'Cannot add Coordinates and {type(other)}')

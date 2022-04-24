@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Dict, List, Tuple
-from dataclasses import dataclass, field
-
 from nbt.nbt import TAG_Compound, TAG_List
 
 from utils.direction import Direction
@@ -22,24 +21,29 @@ class Block:
         name = palette[index]['Name'].valuestr()
 
         if 'Properties' in palette[index].keys():
-            name += Block._parse_properties(palette[index]['Properties'])
+            name += Block.__parse_properties(palette[index]['Properties'])
 
         coordinates = Coordinates.parse_nbt(block['pos'])
         return Block(name=name, coordinates=coordinates)
 
     @staticmethod
-    def _parse_properties(properties: TAG_Compound) -> str:
+    def __parse_properties(properties: TAG_Compound) -> str:
         """Return the string parsed from the given properties"""
         parsed_properties = [f'{k}={v}' for k, v in properties.items()]
         return '[' + ', '.join(parsed_properties) + ']'
 
     @staticmethod
-    def extract_label(name: str) -> str | None:
-        """"""
-        splits = name.split(':')
-        if '_' in splits[1]:
-            return splits[1].split('_')[0]
-        return splits[1]
+    def split_block_name(name: str) -> List[str]:
+        """Split the given block's name into its main components"""
+        return name.replace('minecraft:', '').split('_')
+
+    def replace_first(self, materials: Dict[str, str]) -> Block:
+        """Return a new block whose material has been replaced by the first match of the given building materials"""
+        for material, replacement in materials.items():
+            if material in self.name:
+                name = self.name.replace(material, replacement)
+                return Block(name=name, coordinates=self.coordinates)
+        return self
 
     def neighbouring_coordinates(self) -> List[Coordinates]:
         """Return the list of all this block's neighbouring coordinates"""
