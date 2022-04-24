@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import numpy as np
 from nbt.nbt import TAG_List
 from typing import Any, Iterator
 from dataclasses import astuple, dataclass
 
 from utils.direction import Direction
+
+
+def R(a: float):
+    """a, angle in radians"""
+    c, s = np.cos(a), np.sin(a)
+    return np.array(((c, -s), (s, c)))
+
 
 
 @dataclass(frozen=True)
@@ -40,6 +48,9 @@ class Coordinates:
     def as_2D(self) -> Coordinates:
         """Return a new coordinates with y = 0"""
         return Coordinates(self.x, 0, self.z)
+
+    def rotate(self, angle: float) -> Coordinates:
+        pass
 
     def __eq__(self, other: Any) -> bool:
         """Return true if the given coordinates are equals to the current ones"""

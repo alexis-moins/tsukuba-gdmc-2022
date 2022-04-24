@@ -5,6 +5,7 @@ from typing import Generator, List, Tuple
 # from plots.construction_plot import ConstructionPlot
 
 from blocks.block import Block
+from plots.plot import Plot
 
 
 class Structure:
@@ -35,3 +36,7 @@ class Structure:
     def get_blocks_for(self, plot) -> Generator[Block]:
         """Return the block"""
         return (block.shift_position_to(plot.build_start) for block in self.blocks)
+
+    def rotate(self):
+        [block.coordinates for block in self.blocks]
+

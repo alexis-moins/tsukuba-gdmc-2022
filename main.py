@@ -13,6 +13,7 @@ from numpy import extract
 from yaml import safe_load
 
 from plots import construction_plot
+from plots.house_generator import HouseGenerator
 from plots.plot import Plot
 from plots.suburb_plot import SuburbPlot
 from blocks.block import Block
@@ -42,13 +43,13 @@ if __name__ == '__main__':
 
         surface = build_area.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
-        most_used_wood = surface.filter(pattern='log').most_common_block
-        input(f'=> Most used wood: {most_used_wood}')
+        # most_used_wood = surface.filter(pattern='log').most_common_block
+        # input(f'=> Most used wood: {most_used_wood}')
 
         building_materials = dict()
 
         # TODO extract material i.e. oak from minecraft:oak_log[...]
-        building_materials['oak'] = most_used_wood
+        # building_materials['oak'] = most_used_wood
 
         # Move this somewhere else
         structures = dict()
@@ -60,22 +61,27 @@ if __name__ == '__main__':
 
         houses = [structures['house1'], structures['house2']]
 
-        #  Move the following code into a method in SuburbPlot
-        for i in range(5):
-            iter_start = time.time()
+        # #  Move the following code into a method in SuburbPlot
+        # for i in range(5):
+        #     iter_start = time.time()
+        #
+        #     random.shuffle(houses)
+        #     house = houses[0]
+        #
+        #     area = (house.size[0], house.size[2])
+        #     construction_plot = suburb.get_construction_plot(area)
+        #
+        #     if construction_plot:
+        #         construction_plot.build(house, materials=building_materials)
+        #         print(
+        #             f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
+        #
+        #     print(f'=> Unable to find construction area for structure with size {house.size}')
 
-            random.shuffle(houses)
-            house = houses[0]
+        construction_plot = suburb.get_construction_plot((20, 15))
 
-            area = (house.size[0], house.size[2])
-            construction_plot = suburb.get_construction_plot(area)
-
-            if construction_plot:
-                construction_plot.build(house, materials=building_materials)
-                print(
-                    f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-
-            print(f'=> Unable to find construction area for structure with size {house.size}')
+        house_gen = HouseGenerator()
+        house_gen.build_house(1, '', construction_plot)
 
         print('Done!')
 

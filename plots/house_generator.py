@@ -7,21 +7,27 @@ from functools import reduce
 from typing import Tuple, List
 
 
+from gdpc import geometry as GEO
+from gdpc import interface as INTF
+
+from gdpc import geometry
+
+
 from plots.construction_plot import ConstructionPlot
 from utils.structure import Structure
 
 
 class HouseGenerator:
     def __init__(self):
-        self.walls = dict()
-        self.walls[(2, 1)] = [Structure.parse_nbt_file('modules/walls/wall_2x1_a')]
+        self.walls: dict[tuple, list[Structure]] = dict()
+        self.walls[(2, 2)] = [Structure.parse_nbt_file('modules/walls/wall_2x1_a')]
         self.walls[(3, 2)] = [Structure.parse_nbt_file('modules/walls/wall_3x2_a')]
         self.walls[(4, 2)] = [Structure.parse_nbt_file('modules/walls/wall_4x2_a')]
         self.walls[(5, 2)] = [Structure.parse_nbt_file('modules/walls/wall_5x2_a')]
         self.walls[(6, 2)] = [Structure.parse_nbt_file('modules/walls/wall_6x2_a')]
         self.walls[(7, 2)] = [Structure.parse_nbt_file('modules/walls/wall_7x2_a')]
 
-        self.corners = dict()
+        self.corners: dict[tuple, list[Structure]] = dict()
         self.corners[(2, 2)] = [Structure.parse_nbt_file('modules/corners/corner_2x2_a')]
         self.corners[(3, 3)] = [Structure.parse_nbt_file('modules/corners/corner_3x3_a')]
         self.corners[(4, 4)] = [Structure.parse_nbt_file('modules/corners/corner_4x4_a')]
@@ -29,8 +35,9 @@ class HouseGenerator:
 
 
     # Could be a function in construction plot ?
-    def build_house(self, size: Tuple[int, int], storey_amount: int, profession: str, construction_plot: ConstructionPlot):
+    def build_house(self, storey_amount: int, profession: str, construction_plot: ConstructionPlot):
 
+        size = construction_plot.size
         short_side = min(size)
         # At the moment, only one outline width, might change in the future
         outline_width = 2
@@ -51,7 +58,7 @@ class HouseGenerator:
         # define corners size
 
         # Define this depending on available corners modules sizes
-        max_available_corner_size = 5
+        max_available_corner_size = 4
 
         max_corner_size = (short_side - min_indoor_size) // 2
         max_corner_size = min(max_corner_size, max_available_corner_size)
@@ -79,6 +86,38 @@ class HouseGenerator:
             length_needed = size[0] - (2 * corner_size) + 2
             wall_sq = self.get_wall_sequence(length_needed)
             sides = [(size[0], wall_sq), (size[1], wall_sq)]
+
+
+        construction_plot.build_foundation(construction_plot.build_start.y)
+
+        print(f'wall sequence : {sides[0][1]}')
+
+        # first side
+        x_shift = 0
+
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks_for(construction_plot):
+
+            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
+        x_shift += corner_size - 1
+
+        for wall in sides[0][1]:
+            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks_for(construction_plot):
+
+                INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
+            x_shift += wall - 1
+
+
+        z_shift = 0
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks_for(construction_plot):
+            INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
+        z_shift += corner_size - 1
+
+        for wall in sides[1][1]:
+            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks_for(construction_plot):
+                INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
+            z_shift += wall - 1
+
+
 
 
 
