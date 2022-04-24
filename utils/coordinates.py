@@ -14,7 +14,6 @@ def R(a: float):
     return np.array(((c, -s), (s, c)))
 
 
-
 @dataclass(frozen=True)
 class Coordinates:
     """Represents a set of x, y and z coordinates"""
@@ -50,7 +49,10 @@ class Coordinates:
         return Coordinates(self.x, 0, self.z)
 
     def rotate(self, angle: float) -> Coordinates:
-        pass
+        # Todo test this
+        rotated_x, rotated_z = R(angle) @ np.array((self.x, self.z))
+        return Coordinates(rotated_x, self.y, rotated_z)
+
 
     def __eq__(self, other: Any) -> bool:
         """Return true if the given coordinates are equals to the current ones"""
