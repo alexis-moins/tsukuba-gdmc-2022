@@ -25,7 +25,7 @@ class BlockSet(MutableSet):
     def most_common(self) -> str:
         """Return the name of the most common block in the current set of blocks"""
         occurences = self.counter.most_common(1)
-        return occurences[0][0]
+        return occurences[0][0] if occurences else None
 
     def filter(self, pattern: str | Tuple[str]) -> BlockSet:
         """Return a subset of blocks containing the given pattern in their name"""

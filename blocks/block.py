@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Dict, List, Tuple
+from dataclasses import dataclass, field
 
 from gdpc.lookup import BLOCKS
 from nbt.nbt import TAG_Compound, TAG_List
@@ -15,6 +15,7 @@ class Block:
     """Represents a block in the world"""
     name: str
     coordinates: Coordinates
+    properties: Dict[str, str] = field(default_factory=dict)
 
     @staticmethod
     def parse_nbt(block: TAG_Compound, palette: TAG_List) -> Block:
@@ -22,24 +23,40 @@ class Block:
         index = int(block['state'].valuestr())
         name = palette[index]['Name'].valuestr()
 
+        properties = dict()
         if 'Properties' in palette[index].keys():
-            name += Block.__parse_properties(palette[index]['Properties'])
+            compound: TAG_Compound = palette[index]['Properties']
+            properties = dict(compound.iteritems())
 
         coordinates = Coordinates.parse_nbt(block['pos'])
-        return Block(name=name, coordinates=coordinates)
+        return Block(name, coordinates, properties=properties)
 
     @staticmethod
-    def __parse_properties(properties: TAG_Compound) -> str:
-        """Return the string parsed from the given properties"""
-        parsed_properties = [f'{k}={v}' for k, v in properties.items()]
-        return '[' + ', '.join(parsed_properties) + ']'
+    def deserialize(name: str, coordinates: Coordinates) -> Block:
+        """"""
+        properties = {}
+        if '[' in name:
+            raw_properties = name.split('[')
+            name = raw_properties[0]
+            properties = dict((key.strip(), value.strip())
+                              for key, value in (element.split(':')
+                                                 for element in raw_properties[1][:-1].split(', ')))
 
-    @staticmethod
-    def trim_name(name: str, pattern: str) -> List[str]:
+        return Block(name, coordinates, properties=properties)
+
+    @ staticmethod
+    def trim_name(name: str, pattern: str) -> str:
         """Trim the given block name to remove the given pattern, also gets rid of 'minecraft:"""
         return name.replace('minecraft:', '').replace(pattern, '')
 
-    @staticmethod
+    @ property
+    def full_name(self) -> str:
+        """Return the full name of the block, properties included"""
+        properties = [f'{k}={v}' for k, v in self.properties.items()]
+        indicator = '[' + ', '.join(properties) + ']' if properties else ''
+        return f'{self.name}{indicator}'
+
+    @ staticmethod
     def exists(block_name: str) -> bool:
         """Return true if the given block name exists in minecraft"""
         return block_name.split('[')[0] in BLOCKS
@@ -51,7 +68,7 @@ class Block:
                 name = self.name.replace(material, replacement)
 
                 if Block.exists(name):
-                    return Block(name=name, coordinates=self.coordinates)
+                    return Block(name, self.coordinates, properties=self.properties)
         return self
 
     def neighbouring_coordinates(self) -> List[Coordinates]:
@@ -60,7 +77,7 @@ class Block:
 
     def shift_position_to(self, coordinates: Coordinates) -> Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""
-        return Block(name=self.name, coordinates=self.coordinates.shift(*coordinates))
+        return Block(self.name, self.coordinates.shift(*coordinates), properties=self.properties)
 
     def is_one_of(self, pattern: Tuple[str]) -> bool:
         """Return true if the current item's name matches the given pattern"""
@@ -69,6 +86,10 @@ class Block:
                 return True
         return False
 
+    def __hash__(self) -> int:
+        """Return the hashed value of the current block"""
+        return hash(self.coordinates)
+
     def __str__(self) -> str:
         """Return the string representation of the block"""
-        return self.name
+        return self.full_name
