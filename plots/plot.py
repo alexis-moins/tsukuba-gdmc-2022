@@ -76,7 +76,7 @@ class Plot:
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the world"""
         name = self._world.getBlockAt(x, y, z)
-        return Block(name, Coordinates(x, y, z))
+        return Block.deserialize(name, Coordinates(x, y, z))
 
     def get_heightmap(self, criteria: Criteria) -> ndarray:
         """Return the desired heightmap of the given type"""
@@ -102,7 +102,7 @@ class Plot:
 
     def remove_trees(self) -> None:
         """Remove all plants at the surface of the current plot"""
-        pattern = ('log', 'leaves', 'bush')
+        pattern = ('log', 'leaves', 'bush', 'mushroom')
         surface = self.get_blocks(Criteria.WORLD_SURFACE)
 
         amount = 0

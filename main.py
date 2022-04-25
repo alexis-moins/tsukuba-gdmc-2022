@@ -30,16 +30,16 @@ if __name__ == '__main__':
 
         surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
-        block_name = surface.filter(pattern='_log').most_common
-        most_used_wood = Block.trim_name(block_name, '_log')
-
-        print(f'=> Most used wood: {most_used_wood}')
-
         building_materials = dict()
+        logs = surface.filter(pattern='_log')
 
-        building_materials['oak'] = most_used_wood
-        building_materials['spruce'] = most_used_wood
-        building_materials['birch'] = most_used_wood
+        if logs:
+            most_used_wood = Block.trim_name(logs.most_common, '_log')
+            print(f'=> Most used wood: {most_used_wood}')
+
+            building_materials['oak'] = most_used_wood
+            building_materials['spruce'] = most_used_wood
+            building_materials['birch'] = most_used_wood
 
         # Move this somewhere else
         structures = dict()

@@ -23,10 +23,10 @@ class BlockList(MutableSequence):
         return Counter(names)
 
     @property
-    def most_common(self) -> str:
+    def most_common(self) -> str | None:
         """Return the name of the most common block in the current list of blocks"""
         occurences = self.counter.most_common(1)
-        return occurences[0][0]
+        return occurences[0][0] if occurences else None
 
     def insert(self, index: SupportsIndex, block: Block) -> None:
         """Insert the given block et the given index"""
