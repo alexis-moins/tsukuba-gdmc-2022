@@ -10,7 +10,7 @@ from blocks.collections.block_list import BlockList
 
 class Structure:
     """Class representing the minecraft construction of a structure block"""
-    __slots__ = ('name', 'size', 'blocks', 'variations')
+    __slots__ = ['name', 'size', 'blocks', 'variations']
 
     def __init__(self, name: str, size: Tuple[int, int, int], blocks: BlockList) -> None:
         """Parameterized constructor creating a new minecraft structure"""
@@ -28,7 +28,7 @@ class Structure:
         palette = file['palette']
         blocks = Structure.__parse_blocks(file['blocks'], palette)
 
-        print(f'=> Parsed structure "{file_name}"')
+        print(f'=> Parsed structure <{file_name}>')
         return Structure(name=file_name, size=tuple(size), blocks=blocks)
 
     @ staticmethod
