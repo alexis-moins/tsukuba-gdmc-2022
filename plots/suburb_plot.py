@@ -7,6 +7,7 @@ import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+import launch_env
 from plots.construction_plot import ConstructionPlot
 from plots.plot import Plot
 from blocks.block import Block
@@ -27,14 +28,14 @@ class SuburbPlot(Plot):
 
     def _build_foundation_blocks(self) -> None:
         self.foundation_blocks_surface = {b.coordinates.as_2D(): b for b in filter(self._is_block_valid,
-                                                                                   self.get_blocks_at_surface(
+                                                                                   self.get_blocks(
                                                                                        Criteria.MOTION_BLOCKING_NO_LEAVES))}
 
     def _is_block_valid(self, b):
         return b.coordinates.y < self.construction_roof and not b.is_one_of(
             ["water"]) and b.coordinates.as_2D() not in self.occupied_coords_surface
 
-    def get_construction_plot(self, size: Tuple[int, int], padding: int = 3, speed: int = None) -> ConstructionPlot | None:
+    def get_construction_plot(self, area: Tuple[int, int], padding: int = 3, speed: int = None) -> ConstructionPlot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
             Score is defined by get_score function.
 
@@ -51,12 +52,13 @@ class SuburbPlot(Plot):
         self._build_foundation_blocks()
 
         # DEBUG
-        colors = ['green', 'pink', 'magenta', 'lime', 'yellow', 'orange', 'purple', 'gray', 'white']
-        random.shuffle(colors)
-        for coord_2d in self.foundation_blocks_surface:
-            INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, colors[0] + '_wool')
+        if launch_env.DEBUG:
+            colors = ['green', 'pink', 'magenta', 'lime', 'yellow', 'orange', 'purple', 'gray', 'white']
+            random.shuffle(colors)
+            for coord_2d in self.foundation_blocks_surface:
+                INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, colors[0] + '_wool')
 
-        INTF.sendBlocks()
+            INTF.sendBlocks()
         # END DEBUG
 
         keys_list = list(self.foundation_blocks_surface.keys())
@@ -66,22 +68,23 @@ class SuburbPlot(Plot):
         best_coord_2d = keys_list[0]
 
         for coord_2d in keys_list[::speed]:
-            coord_score = self._get_score(coord_2d, size)
+            coord_score = self._get_score(coord_2d, area)
 
             if coord_score < min_score:
                 best_coord_2d = coord_2d
                 min_score = coord_score
 
-        print(f'Best score : {min_score}')
+        if launch_env.DEBUG:
+            print(f'Best score : {min_score}')
 
         if min_score == SuburbPlot._WORST_SCORE:
             return None
 
         best_coord = self.foundation_blocks_surface[best_coord_2d].coordinates
 
-        self.occupy_area(best_coord, size, padding)
+        self.occupy_area(best_coord, area, padding)
 
-        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=size, build_start=best_coord)
+        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=area, build_start=best_coord)
 
     def _get_score(self, coord_2d: Coordinates, size: Tuple[int, int]) -> float:
         """Return a score evaluating the fitness of a building in an area.
@@ -122,9 +125,10 @@ class SuburbPlot(Plot):
                     self.occupied_coords_surface.add(coord_2d)
 
         # ONLY FOR DEBUG :D
-        for coord_2d in self.occupied_coords_surface:
-            try:
-                INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, 'red_wool')
-            except KeyError:
-                pass
-        INTF.sendBlocks()
+        if launch_env.DEBUG:
+            for coord_2d in self.occupied_coords_surface:
+                try:
+                    INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, 'red_wool')
+                except KeyError:
+                    pass
+            INTF.sendBlocks()
