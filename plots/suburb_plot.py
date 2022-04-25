@@ -7,6 +7,7 @@ import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+import launch_env
 from plots.construction_plot import ConstructionPlot
 from plots.plot import Plot
 from blocks.block import Block
@@ -51,12 +52,13 @@ class SuburbPlot(Plot):
         self._build_foundation_blocks()
 
         # DEBUG
-        colors = ['green', 'pink', 'magenta', 'lime', 'yellow', 'orange', 'purple', 'gray', 'white']
-        random.shuffle(colors)
-        for coord_2d in self.foundation_blocks_surface:
-            INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, colors[0] + '_wool')
+        if launch_env.DEBUG:
+            colors = ['green', 'pink', 'magenta', 'lime', 'yellow', 'orange', 'purple', 'gray', 'white']
+            random.shuffle(colors)
+            for coord_2d in self.foundation_blocks_surface:
+                INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, colors[0] + '_wool')
 
-        INTF.sendBlocks()
+            INTF.sendBlocks()
         # END DEBUG
 
         keys_list = list(self.foundation_blocks_surface.keys())
@@ -72,7 +74,8 @@ class SuburbPlot(Plot):
                 best_coord_2d = coord_2d
                 min_score = coord_score
 
-        print(f'Best score : {min_score}')
+        if launch_env.DEBUG:
+            print(f'Best score : {min_score}')
 
         if min_score == SuburbPlot._WORST_SCORE:
             return None
@@ -122,9 +125,10 @@ class SuburbPlot(Plot):
                     self.occupied_coords_surface.add(coord_2d)
 
         # ONLY FOR DEBUG :D
-        for coord_2d in self.occupied_coords_surface:
-            try:
-                INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, 'red_wool')
-            except KeyError:
-                pass
-        INTF.sendBlocks()
+        if launch_env.DEBUG:
+            for coord_2d in self.occupied_coords_surface:
+                try:
+                    INTF.placeBlock(*self.foundation_blocks_surface[coord_2d].coordinates, 'red_wool')
+                except KeyError:
+                    pass
+            INTF.sendBlocks()

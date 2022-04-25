@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import time
 import random
+import sys
 
 from gdpc import toolbox as TB
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+import launch_env
 from plots import construction_plot
 from plots.plot import Plot
 from plots.suburb_plot import SuburbPlot
@@ -16,6 +18,9 @@ from utils.structure import Structure
 
 
 if __name__ == '__main__':
+
+    if 'd' in sys.argv or 'D' in sys.argv or 'debug' in sys.argv or 'DEBUG' in sys.argv:
+        launch_env.DEBUG = True
 
     INTF.setBuffering(True)
     INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
