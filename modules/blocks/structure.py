@@ -39,10 +39,19 @@ class Structure:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
 
-    def get_blocks(self, plot, materials: Dict[str, str]) -> BlockList:
+    def get_blocks(self, plot, materials: Dict[str, str], angle=0) -> BlockList:
         """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
         blocks = self.__get_variation(materials) if materials else self.blocks
-        return BlockList([block.shift_position_to(plot.build_start) for block in blocks])
+
+        shift_due_to_rotation = Coordinates(0, 0, 0)
+        if angle == 90:
+            shift_due_to_rotation = Coordinates(self.size[2], 0, 0)
+        elif angle == 180:
+            shift_due_to_rotation = Coordinates(self.size[0], 0, self.size[2])
+        elif angle == 270:
+            shift_due_to_rotation = Coordinates(0, 0, self.size[0])
+
+        return BlockList([block.rotate(angle).shift_position_to(plot.build_start + shift_due_to_rotation) for block in blocks])
 
     def __get_variation(self, materials: Dict[str, str]) -> BlockList:
         """Return the variation of the structure with the given materials"""
@@ -54,5 +63,8 @@ class Structure:
         self.variations[variation] = blocks
         return BlockList(blocks)
 
-    def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> List[Block]:
-        return [block.rotate(angle, rotation_point) for block in self.blocks]
+    def get_area(self, rotation: float):
+        if rotation == 90 or rotation == 270:
+            return self.size[2], self.size[0]
+        else:
+            return self.size[0], self.size[2]
