@@ -1,12 +1,11 @@
 [tool.poetry]
-name = "gdmc"
+name = "tsukuba-gdmc-2022"
 version = "0.1.0"
 description = ""
-authors = ["AlexisMoins <moinsalexis@gmail.com>"]
+authors = ["AlexisMoins <moinsalexis@gmail.com>", "kz2wd"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-PyYAML = "^6.0"
 gdpc = "^5.0.2"
 
 [tool.poetry.dev-dependencies]
@@ -15,6 +14,9 @@ pytest = "^7.1.2"
 
 [tool.autopep8]
 max_line_length = 120
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
