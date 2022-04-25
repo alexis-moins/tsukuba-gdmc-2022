@@ -6,6 +6,7 @@ from typing import Generator, List, Tuple
 
 from blocks.block import Block
 from plots.plot import Plot
+from utils.coordinates import Coordinates
 
 
 class Structure:
@@ -37,6 +38,6 @@ class Structure:
         """Return the block"""
         return (block.shift_position_to(plot.build_start) for block in self.blocks)
 
-    def rotate(self):
-        [block.coordinates for block in self.blocks]
+    def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> List[Block]:
+        return [block.rotate(angle, rotation_point) for block in self.blocks]
 

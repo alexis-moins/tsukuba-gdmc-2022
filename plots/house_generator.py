@@ -14,6 +14,7 @@ from gdpc import geometry
 
 
 from plots.construction_plot import ConstructionPlot
+from utils.coordinates import Coordinates
 from utils.structure import Structure
 
 
@@ -172,11 +173,20 @@ class HouseGenerator:
 if __name__ == "__main__":
     print("TESTING HOUSE GENERATOR")
 
-    print("wall sequence test")
+    print('rotation coordinate test')
 
-    values = list(range(8, 20))
+    center = Coordinates(1, 0, 0)
 
-    for v in values:
-        for i in range(5):
-            print(f'{v} : {HouseGenerator.get_wall_sequence(v)}')
-        print()
+    point = Coordinates(1, 0, 3)
+
+    print(point)
+    print(point.rotate(90, center))
+
+    # print("wall sequence test")
+    #
+    # values = list(range(8, 20))
+    #
+    # for v in values:
+    #     for i in range(5):
+    #         print(f'{v} : {HouseGenerator.get_wall_sequence(v)}')
+    #     print()
