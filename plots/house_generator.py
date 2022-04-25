@@ -89,33 +89,54 @@ class HouseGenerator:
             wall_sq = self.get_wall_sequence(length_needed)
             sides = [(size[0], wall_sq), (size[1], wall_sq)]
 
-
-        construction_plot.build_foundation(construction_plot.build_start.y)
+        construction_plot.build_foundation(construction_plot.build_start.y - 1)
 
         print(f'wall sequence : {sides[0][1]}')
 
         # first side
         x_shift = 0
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 0):
 
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks_for(construction_plot):
+            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
+        # x_shift += corner_size - 1
+        INTF.sendBlocks()
+        input("PRESS ENTER")
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 90):
+
+            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
+        # x_shift += corner_size - 1
+        INTF.sendBlocks()
+        input("PRESS ENTER")
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 180):
+
+            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
+        # x_shift += corner_size - 1
+        INTF.sendBlocks()
+        input("PRESS ENTER")
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 270):
 
             INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
         x_shift += corner_size - 1
+        INTF.sendBlocks()
+        input("PRESS ENTER")
+
 
         for wall in sides[0][1]:
-            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks_for(construction_plot):
+            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks(construction_plot, dict(), ):
 
                 INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
+            INTF.sendBlocks()
+            input("PRESS ENTER")
             x_shift += wall - 1
 
 
         z_shift = 0
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks_for(construction_plot):
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict()):
             INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
         z_shift += corner_size - 1
 
         for wall in sides[1][1]:
-            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks_for(construction_plot):
+            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks(construction_plot, dict()):
                 INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
             z_shift += wall - 1
 

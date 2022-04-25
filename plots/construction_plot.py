@@ -19,7 +19,7 @@ class ConstructionPlot(Plot):
         super().__init__(x, z, size)
         self.build_start = build_start
 
-    def __build_foundation(self, foundation_level: int, main_block: str = 'stone_bricks') -> None:
+    def build_foundation(self, foundation_level: int, main_block: str = 'stone_bricks') -> None:
         """"""
         for coord in self._iterate_over_air(foundation_level):
             INTF.placeBlock(*coord, main_block)
@@ -34,7 +34,7 @@ class ConstructionPlot(Plot):
 
     def build(self, structure: Structure, materials: Dict[str, str] = None, rotation=0) -> None:
         """Build the given structure onto the current construction spot"""
-        self.__build_foundation(self.build_start.y - 1)
+        self.build_foundation(self.build_start.y - 1)
         blocks = structure.get_blocks(plot=self, materials=materials, angle=rotation)
 
         for block in blocks:
