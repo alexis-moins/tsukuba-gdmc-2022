@@ -9,13 +9,15 @@ from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
 import launch_env
-from plots import construction_plot
-from plots.house_generator import HouseGenerator
-from plots.plot import Plot
-from plots.suburb_plot import SuburbPlot
-from blocks.block import Block
-from utils.criteria import Criteria
-from utils.structure import Structure
+
+from modules.plots.plot import Plot
+from modules.plots import construction_plot
+from modules.plots.suburb_plot import SuburbPlot
+
+from modules.blocks.block import Block
+
+from modules.utils.criteria import Criteria
+from modules.blocks.structure import Structure
 
 
 if __name__ == '__main__':
@@ -78,8 +80,6 @@ if __name__ == '__main__':
         # if construction_plot:
         #     house_gen = HouseGenerator()
         #     house_gen.build_house(1, '', construction_plot)
-
-
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

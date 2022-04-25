@@ -5,7 +5,7 @@ from nbt.nbt import TAG_List
 from typing import Any, Iterator
 from dataclasses import astuple, dataclass
 
-from utils.direction import Direction
+from modules.utils.direction import Direction
 
 
 def R(a: float):

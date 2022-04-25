@@ -11,6 +11,7 @@ gdpc = "^5.0.2"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.6.0"
+pytest = "^7.1.2"
 
 [tool.autopep8]
 max_line_length = 120

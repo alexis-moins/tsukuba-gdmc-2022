@@ -4,10 +4,11 @@ from typing import Dict, Tuple
 from nbt.nbt import NBTFile, TAG_List
 # from plots.construction_plot import ConstructionPlot
 
-from blocks.block import Block
-from plots.plot import Plot
-from utils.coordinates import Coordinates
-from blocks.collections.block_list import BlockList
+from modules.plots.plot import Plot
+from modules.utils.coordinates import Coordinates
+
+from modules.blocks.block import Block
+from modules.blocks.collections.block_list import BlockList
 
 
 class Structure:
@@ -55,4 +56,3 @@ class Structure:
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> List[Block]:
         return [block.rotate(angle, rotation_point) for block in self.blocks]
-

@@ -6,8 +6,8 @@ from dataclasses import dataclass, field
 from gdpc.lookup import BLOCKS
 from nbt.nbt import TAG_Compound, TAG_List
 
-from utils.direction import Direction
-from utils.coordinates import Coordinates
+from modules.utils.direction import Direction
+from modules.utils.coordinates import Coordinates
 
 
 @dataclass(frozen=True)
@@ -101,5 +101,5 @@ class Block:
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
         # TODO : rotate face too
-        
+
         return Block(self.name, self.coordinates.rotate(angle, rotation_point))

@@ -9,10 +9,11 @@ from gdpc import worldLoader as WL
 from numpy import ndarray
 from nbt.nbt import MalformedFileError
 
-from blocks.block import Block
-from blocks.collections.block_list import BlockList
-from utils.coordinates import Coordinates
-from utils.criteria import Criteria
+from modules.blocks.block import Block
+from modules.blocks.collections.block_list import BlockList
+
+from modules.utils.criteria import Criteria
+from modules.utils.coordinates import Coordinates
 
 
 def default_build_area_coordinates() -> tuple[Coordinates, Coordinates]:

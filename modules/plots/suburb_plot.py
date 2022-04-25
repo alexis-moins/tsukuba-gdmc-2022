@@ -8,11 +8,13 @@ from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
 import launch_env
-from plots.construction_plot import ConstructionPlot
-from plots.plot import Plot
-from blocks.block import Block
-from utils.coordinates import Coordinates
-from utils.criteria import Criteria
+from modules.blocks.block import Block
+
+from modules.plots.plot import Plot
+from modules.plots.construction_plot import ConstructionPlot
+
+from modules.utils.criteria import Criteria
+from modules.utils.coordinates import Coordinates
 
 
 class SuburbPlot(Plot):

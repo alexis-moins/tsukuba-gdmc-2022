@@ -5,11 +5,11 @@ from typing import Dict, Tuple
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
-from plots.plot import Plot
+from modules.plots.plot import Plot
 
-from utils.criteria import Criteria
-from utils.structure import Structure
-from utils.coordinates import Coordinates
+from modules.utils.criteria import Criteria
+from modules.blocks.structure import Structure
+from modules.utils.coordinates import Coordinates
 
 
 class ConstructionPlot(Plot):
