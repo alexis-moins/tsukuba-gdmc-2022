@@ -53,13 +53,14 @@ if __name__ == '__main__':
         structures = dict()
         structures['house1'] = Structure.parse_nbt_file('house1')
         structures['house2'] = Structure.parse_nbt_file('house2')
+        structures['house3'] = Structure.parse_nbt_file('house3')
 
-        suburb = SuburbPlot(x=50 + build_area.start.x, z=50 + build_area.start.z, size=(50, 50))
+        suburb = SuburbPlot(x=25 + build_area.start.x, z=25 + build_area.start.z, size=(100, 100))
         suburb.remove_trees()
-        houses = [structures['house1'], structures['house2']]
+        houses = [structures['house1'], structures['house2'], structures['house3']]
 
         #  Move the following code into a method in SuburbPlot
-        for i in range(5):
+        for i in range(15):
             iter_start = time.time()
 
             house = random.choice(houses)

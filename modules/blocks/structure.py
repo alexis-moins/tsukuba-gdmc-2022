@@ -45,11 +45,11 @@ class Structure:
 
         shift_due_to_rotation = Coordinates(0, 0, 0)
         if angle == 90:
-            shift_due_to_rotation = Coordinates(self.size[2], 0, 0)
+            shift_due_to_rotation = Coordinates(self.size[2] - 1, 0, 0)
         elif angle == 180:
-            shift_due_to_rotation = Coordinates(self.size[0], 0, self.size[2])
+            shift_due_to_rotation = Coordinates(self.size[0], 0, self.size[2] - 1)
         elif angle == 270:
-            shift_due_to_rotation = Coordinates(0, 0, self.size[0])
+            shift_due_to_rotation = Coordinates(0, 0, self.size[0] - 1)
 
         return BlockList([block.rotate(angle).shift_position_to(plot.build_start + shift_due_to_rotation) for block in blocks])
 
