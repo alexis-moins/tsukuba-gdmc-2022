@@ -8,11 +8,13 @@ from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
 import launch_env
-from plots.construction_plot import ConstructionPlot
-from plots.plot import Plot
-from blocks.block import Block
-from utils.coordinates import Coordinates
-from utils.criteria import Criteria
+from modules.blocks.block import Block
+
+from modules.plots.plot import Plot
+from modules.plots.construction_plot import ConstructionPlot
+
+from modules.utils.criteria import Criteria
+from modules.utils.coordinates import Coordinates
 
 
 class SuburbPlot(Plot):
@@ -35,7 +37,7 @@ class SuburbPlot(Plot):
         return b.coordinates.y < self.construction_roof and not b.is_one_of(
             ["water"]) and b.coordinates.as_2D() not in self.occupied_coords_surface
 
-    def get_construction_plot(self, area: Tuple[int, int], padding: int = 3, speed: int = None) -> ConstructionPlot | None:
+    def get_construction_plot(self, area: Tuple[int, int], padding: int = 3, speed: int = None, max_score: int = 500) -> ConstructionPlot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
             Score is defined by get_score function.
 
@@ -77,7 +79,7 @@ class SuburbPlot(Plot):
         if launch_env.DEBUG:
             print(f'Best score : {min_score}')
 
-        if min_score == SuburbPlot._WORST_SCORE:
+        if min_score > max_score:
             return None
 
         best_coord = self.foundation_blocks_surface[best_coord_2d].coordinates

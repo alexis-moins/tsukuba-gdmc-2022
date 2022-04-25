@@ -4,8 +4,8 @@ from collections import Counter
 from collections.abc import MutableSequence
 from typing import Any, Iterable, Generator, List, SupportsIndex, Tuple
 
-from blocks.block import Block
-from blocks.collections.block_set import BlockSet
+from modules.blocks.block import Block
+from modules.blocks.collections.block_set import BlockSet
 
 
 class BlockList(MutableSequence):

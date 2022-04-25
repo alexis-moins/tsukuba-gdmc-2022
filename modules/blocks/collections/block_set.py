@@ -4,7 +4,7 @@ from collections import Counter
 from collections.abc import MutableSet
 from typing import Iterable, Generator, Set, Tuple
 
-from blocks.block import Block
+from modules.blocks.block import Block
 
 
 class BlockSet(MutableSet):

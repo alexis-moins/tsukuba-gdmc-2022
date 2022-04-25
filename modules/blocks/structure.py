@@ -4,10 +4,11 @@ from typing import Dict, Tuple
 from nbt.nbt import NBTFile, TAG_List
 # from plots.construction_plot import ConstructionPlot
 
-from blocks.block import Block
-from plots.plot import Plot
-from utils.coordinates import Coordinates
-from blocks.collections.block_list import BlockList
+from modules.plots.plot import Plot
+from modules.utils.coordinates import Coordinates
+
+from modules.blocks.block import Block
+from modules.blocks.collections.block_list import BlockList
 
 
 class Structure:
@@ -18,7 +19,7 @@ class Structure:
         """Parameterized constructor creating a new minecraft structure"""
         self.name = name
         self.size = size
-        self.blocks: Tuple[Block] = tuple(blocks)
+        self.blocks: Tuple[BlockList] = tuple(blocks)
         self.variations: Dict[str, BlockList] = dict()
 
     @ staticmethod
@@ -41,12 +42,12 @@ class Structure:
     def get_blocks(self, plot, materials: Dict[str, str], angle=0) -> BlockList:
         """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
         blocks = self.__get_variation(materials) if materials else self.blocks
-        print(self.size)
+
         shift_due_to_rotation = Coordinates(0, 0, 0)
         if angle == 90:
             shift_due_to_rotation = Coordinates(self.size[2] - 1, 0, 0)
         elif angle == 180:
-            shift_due_to_rotation = Coordinates(self.size[0] - 1, 0, self.size[2] - 1)
+            shift_due_to_rotation = Coordinates(self.size[0], 0, self.size[2] - 1)
         elif angle == 270:
             shift_due_to_rotation = Coordinates(0, 0, self.size[0] - 1)
 
@@ -58,14 +59,12 @@ class Structure:
         if variation in self.variations.keys():
             return self.variations[variation]
 
-        blocks = BlockList([block.replace_first(materials) for block in self.blocks])
+        blocks = [block.replace_first(materials) for block in self.blocks]
         self.variations[variation] = blocks
-        return blocks
+        return BlockList(blocks)
 
     def get_area(self, rotation: float):
         if rotation == 90 or rotation == 270:
             return self.size[2], self.size[0]
         else:
             return self.size[0], self.size[2]
-
-

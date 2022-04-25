@@ -1,5 +1,4 @@
 
-
 # Class utility is only to load modules 1 time and store them
 # Should be a singleton so
 import random
@@ -12,11 +11,8 @@ from gdpc import interface as INTF
 
 from gdpc import geometry
 
-
-from plots.construction_plot import ConstructionPlot
-from utils.coordinates import Coordinates
-from utils.direction import Direction
-from utils.structure import Structure
+from modules.blocks.structure import Structure
+from modules.plots.construction_plot import ConstructionPlot
 
 
 class HouseGenerator:
@@ -72,11 +68,11 @@ class HouseGenerator:
         # + 2 because of each corners having one intersecting point with the wall
         """Long explanation for the + 2
         our pattern joins elements (corners/walls) by having on all of them the same extremities and superposing them.
-        
+
         So, for example, a wall of size 4 has : [extremity , block , block , extremity]
         and if we add another wall of size 4 we obtain : [extremity , block , block , extremity , block , block , extremity]
         which would be a wall of size 7
-        
+
         Since our corners make up for 2 intersections, we add + 2 to the length needed
         """
         if size[0] != size[1]:
@@ -88,8 +84,6 @@ class HouseGenerator:
             length_needed = size[0] - (2 * corner_size) + 2
             wall_sq = self.get_wall_sequence(length_needed)
             sides = [(size[0], wall_sq), (size[1], wall_sq)]
-
-        construction_plot.build_foundation(construction_plot.build_start.y - 1)
 
         print(f'wall sequence : {sides[0][1]}')
 
@@ -194,9 +188,6 @@ class HouseGenerator:
 
 if __name__ == "__main__":
     print("TESTING HOUSE GENERATOR")
-
-
-    print(Direction.EAST.get_rotated_direction(90))
 
     # print('rotation coordinate test')
     #

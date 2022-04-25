@@ -9,13 +9,16 @@ from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
 import launch_env
-from plots import construction_plot
-from plots.house_generator import HouseGenerator
-from plots.plot import Plot
-from plots.suburb_plot import SuburbPlot
-from blocks.block import Block
-from utils.criteria import Criteria
-from utils.structure import Structure
+from modules.plots.house_generator import HouseGenerator
+
+from modules.plots.plot import Plot
+from modules.plots import construction_plot
+from modules.plots.suburb_plot import SuburbPlot
+
+from modules.blocks.block import Block
+
+from modules.utils.criteria import Criteria
+from modules.blocks.structure import Structure
 
 
 if __name__ == '__main__':
@@ -46,16 +49,23 @@ if __name__ == '__main__':
             building_materials['oak'] = most_used_wood
             building_materials['spruce'] = most_used_wood
             building_materials['birch'] = most_used_wood
+        else:
+            if 'sand' in surface.most_common:
+                print("Selected sand palette")
 
+                building_materials['cobblestone'] = 'red_sandstone'
+                building_materials['oak_planks'] = 'sandstone'
+                building_materials['oak_stairs'] = 'sandstone_stairs'
+                building_materials['birch_stairs'] = 'sandstone_stairs'
         # Move this somewhere else
         structures = dict()
         structures['house1'] = Structure.parse_nbt_file('house1')
         structures['house2'] = Structure.parse_nbt_file('house2')
+        structures['house3'] = Structure.parse_nbt_file('house3')
 
         suburb = SuburbPlot(x=50 + build_area.start.x, z=50 + build_area.start.z, size=(50, 50))
         suburb.remove_trees()
-
-        houses = [structures['house1'], structures['house2']]
+        houses = [structures['house1'], structures['house2'], structures['house3']]
 
         #  Move the following code into a method in SuburbPlot
         # for i in range(5):
