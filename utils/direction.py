@@ -21,3 +21,14 @@ class Direction(Enum):
 
     # The direction to the west
     WEST = (-1, 0, 0)
+
+    def get_rotated_direction(self, angle: float, _horizontal_directions=(NORTH, WEST, SOUTH, EAST)):
+        index_shift = int(angle // 90)
+        try:
+            index_shift += _horizontal_directions.index(self)
+        except ValueError:
+            return self
+        index_shift %= 4
+        return _horizontal_directions[index_shift]
+
+
