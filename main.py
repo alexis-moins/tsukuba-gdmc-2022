@@ -32,7 +32,7 @@ if __name__ == '__main__':
         # Retrieve the default build area
         build_area = Plot.get_build_area()
 
-        command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
+        command = f"tp @a {build_area.start.x + 50} 110 {build_area.start.z + 50}"
         INTF.runCommand(command)
         print(f'=> /{command}')
 
@@ -54,27 +54,28 @@ if __name__ == '__main__':
         structures['house1'] = Structure.parse_nbt_file('house1')
         structures['house2'] = Structure.parse_nbt_file('house2')
 
-        suburb = SuburbPlot(x=10 + build_area.start.x, z=10 + build_area.start.z, size=(50, 50))
+        suburb = SuburbPlot(x=50 + build_area.start.x, z=50 + build_area.start.z, size=(50, 50))
         suburb.remove_trees()
-
         houses = [structures['house1'], structures['house2']]
 
         #  Move the following code into a method in SuburbPlot
         for i in range(5):
             iter_start = time.time()
 
-            random.shuffle(houses)
-            house = houses[0]
+            house = random.choice(houses)
 
-            area = (house.size[0], house.size[2])
+            rotations = [0, 90, 180, 270]
+            rotation = random.choice(rotations)
+            area = house.get_area(rotation)
+
             construction_plot = suburb.get_construction_plot(area)
 
             if construction_plot:
-                construction_plot.build(house, materials=building_materials)
+                construction_plot.build(house, materials=building_materials, rotation=rotation)
                 print(
                     f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-
-            print(f'=> Unable to find construction area for structure with size {house.size}')
+            else:
+                print(f'=> Unable to find construction area for structure with size {house.size}')
 
         # construction_plot = suburb.get_construction_plot((20, 15))
         # if construction_plot:

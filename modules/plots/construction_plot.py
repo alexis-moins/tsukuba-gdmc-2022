@@ -32,10 +32,10 @@ class ConstructionPlot(Plot):
                 yield block.coordinates.shift(0, y_shift, 0)
                 y_shift += 1
 
-    def build(self, structure: Structure, materials: Dict[str, str] = None) -> None:
+    def build(self, structure: Structure, materials: Dict[str, str] = None, rotation=0) -> None:
         """Build the given structure onto the current construction spot"""
         self.__build_foundation(self.build_start.y - 1)
-        blocks = structure.get_blocks(plot=self, materials=materials)
+        blocks = structure.get_blocks(plot=self, materials=materials, angle=rotation)
 
         for block in blocks:
             INTF.placeBlock(*block.coordinates, block.full_name)

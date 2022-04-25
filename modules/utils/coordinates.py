@@ -53,7 +53,7 @@ class Coordinates:
             rotation_point = Coordinates(0, 0, 0)
 
         rotated_x, rotated_z = R(np.deg2rad(angle)) @ (self - rotation_point).xz
-        rotated_x, rotated_z = int(rotated_x), int(rotated_z)
+        rotated_x, rotated_z = round(rotated_x), round(rotated_z)
         return Coordinates(rotated_x, self.y, rotated_z) + rotation_point
 
     @property
