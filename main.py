@@ -48,7 +48,14 @@ if __name__ == '__main__':
             building_materials['oak'] = most_used_wood
             building_materials['spruce'] = most_used_wood
             building_materials['birch'] = most_used_wood
+        else:
+            if 'sand' in surface.most_common:
+                print("Selected sand palette")
 
+                building_materials['cobblestone'] = 'red_sandstone'
+                building_materials['oak_planks'] = 'sandstone'
+                building_materials['oak_stairs'] = 'sandstone_stairs'
+                building_materials['birch_stairs'] = 'sandstone_stairs'
         # Move this somewhere else
         structures = dict()
         structures['house1'] = Structure.parse_nbt_file('house1')
