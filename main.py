@@ -57,36 +57,29 @@ if __name__ == '__main__':
 
         houses = [structures['house1'], structures['house2']]
 
-        # #  Move the following code into a method in SuburbPlot
-        # for i in range(5):
-        #     iter_start = time.time()
-        #
-        #     random.shuffle(houses)
-        #     house = houses[0]
-        #
-        #     area = (house.size[0], house.size[2])
-        #     construction_plot = suburb.get_construction_plot(area)
-        #
-        #     if construction_plot:
-        #         construction_plot.build(house, materials=building_materials)
-        #         print(
-        #             f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-        #
-        #     print(f'=> Unable to find construction area for structure with size {house.size}')
+        #  Move the following code into a method in SuburbPlot
+        for i in range(5):
+            iter_start = time.time()
 
-        construction_plot = suburb.get_construction_plot((20, 15))
+            random.shuffle(houses)
+            house = houses[0]
 
-        house_gen = HouseGenerator()
-        house_gen.build_house(1, '', construction_plot)
+            area = (house.size[0], house.size[2])
+            construction_plot = suburb.get_construction_plot(area)
 
             if construction_plot:
                 construction_plot.build(house, materials=building_materials)
                 print(
                     f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-            else:
-                print(f'=> Unable to find construction area for structure with size {house.size}')
 
-        print('\nDone!')
+            print(f'=> Unable to find construction area for structure with size {house.size}')
+
+        # construction_plot = suburb.get_construction_plot((20, 15))
+        # if construction_plot:
+        #     house_gen = HouseGenerator()
+        #     house_gen.build_house(1, '', construction_plot)
+
+
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")
