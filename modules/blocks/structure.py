@@ -47,7 +47,7 @@ class Structure:
         if angle == 90:
             shift_due_to_rotation = Coordinates(self.size[2] - 1, 0, 0)
         elif angle == 180:
-            shift_due_to_rotation = Coordinates(self.size[0], 0, self.size[2] - 1)
+            shift_due_to_rotation = Coordinates(self.size[0] - 1, 0, self.size[2] - 1)
         elif angle == 270:
             shift_due_to_rotation = Coordinates(0, 0, self.size[0] - 1)
 

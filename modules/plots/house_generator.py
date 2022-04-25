@@ -11,6 +11,7 @@ from gdpc import interface as INTF
 
 from gdpc import geometry
 
+from modules.blocks.block import Block
 from modules.blocks.structure import Structure
 from modules.plots.construction_plot import ConstructionPlot
 
@@ -18,17 +19,49 @@ from modules.plots.construction_plot import ConstructionPlot
 class HouseGenerator:
     def __init__(self):
         self.walls: dict[tuple, list[Structure]] = dict()
-        self.walls[(2, 2)] = [Structure.parse_nbt_file('modules/walls/wall_2x1_plain_a')]
+        self.walls[(2, 2)] = [Structure.parse_nbt_file('modules/walls/wall_2x2_plain_a')]
         self.walls[(3, 2)] = [Structure.parse_nbt_file('modules/walls/wall_3x2_plain_a')]
         self.walls[(4, 2)] = [Structure.parse_nbt_file('modules/walls/wall_4x2_plain_a')]
-        self.walls[(5, 2)] = [Structure.parse_nbt_file('modules/walls/wall_5x2_window_a')]
-        self.walls[(6, 2)] = [Structure.parse_nbt_file('modules/walls/wall_6x2_window_a')]
-        self.walls[(7, 2)] = [Structure.parse_nbt_file('modules/walls/wall_7x2_window_a')]
+        self.walls[(5, 2)] = [Structure.parse_nbt_file('modules/walls/wall_5x2_plain_a'),
+                              Structure.parse_nbt_file('modules/walls/wall_5x2_window_a')]
+        self.walls[(6, 2)] = [Structure.parse_nbt_file('modules/walls/wall_6x2_window_a'),
+                              Structure.parse_nbt_file('modules/walls/wall_6x2_plain_a')]
+        self.walls[(7, 2)] = [Structure.parse_nbt_file('modules/walls/wall_7x2_window_a'),
+                              Structure.parse_nbt_file('modules/walls/wall_7x2_window_b'),
+                              Structure.parse_nbt_file('modules/walls/wall_7x2_plain_a')]
+        self.walls[(8, 2)] = [Structure.parse_nbt_file('modules/walls/wall_8x2_window_a'),
+                              Structure.parse_nbt_file('modules/walls/wall_8x2_window_b'),
+                              Structure.parse_nbt_file('modules/walls/wall_8x2_plain_a')]
+        self.walls[(9, 2)] = [Structure.parse_nbt_file('modules/walls/wall_9x2_window_a'),
+                              Structure.parse_nbt_file('modules/walls/wall_9x2_window_b'),
+                              Structure.parse_nbt_file('modules/walls/wall_9x2_plain_a')]
 
         self.corners: dict[tuple, list[Structure]] = dict()
         self.corners[(2, 2)] = [Structure.parse_nbt_file('modules/corners/corner_2x2_plain_a')]
-        self.corners[(3, 3)] = [Structure.parse_nbt_file('modules/corners/corner_3x3_plain_a')]
-        self.corners[(4, 4)] = [Structure.parse_nbt_file('modules/corners/corner_4x4_plain_a')]
+        self.corners[(3, 3)] = [Structure.parse_nbt_file('modules/corners/corner_3x3_plain_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_3x3_plain_b'),
+                                Structure.parse_nbt_file('modules/corners/corner_3x3_plain_c'),
+                                Structure.parse_nbt_file('modules/corners/corner_3x3_rounded_a')]
+        self.corners[(4, 4)] = [Structure.parse_nbt_file('modules/corners/corner_4x4_plain_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_4x4_rounded_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_4x4_rounded_b')]
+        self.corners[(5, 5)] = [Structure.parse_nbt_file('modules/corners/corner_5x5_plain_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_5x5_plain_b'),
+                                Structure.parse_nbt_file('modules/corners/corner_5x5_plain_c'),
+                                Structure.parse_nbt_file('modules/corners/corner_5x5_window_a')]
+        self.corners[(6, 6)] = [Structure.parse_nbt_file('modules/corners/corner_6x6_plain_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_6x6_plain_b'),
+                                Structure.parse_nbt_file('modules/corners/corner_6x6_plain_c'),
+                                Structure.parse_nbt_file('modules/corners/corner_6x6_window_a')]
+        self.corners[(7, 7)] = [Structure.parse_nbt_file('modules/corners/corner_7x7_plain_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_7x7_plain_b'),
+                                Structure.parse_nbt_file('modules/corners/corner_7x7_plain_c'),
+                                Structure.parse_nbt_file('modules/corners/corner_7x7_window_a')]
+        self.corners[(8, 8)] = [Structure.parse_nbt_file('modules/corners/corner_8x8_plain_a'),
+                                Structure.parse_nbt_file('modules/corners/corner_8x8_plain_b'),
+                                Structure.parse_nbt_file('modules/corners/corner_8x8_plain_c'),
+                                Structure.parse_nbt_file('modules/corners/corner_8x8_plain_d'),
+                                Structure.parse_nbt_file('modules/corners/corner_8x8_window_a')]
 
 
 
@@ -56,7 +89,7 @@ class HouseGenerator:
         # define corners size
 
         # Define this depending on available corners modules sizes
-        max_available_corner_size = 4
+        max_available_corner_size = 8
 
         max_corner_size = (short_side - min_indoor_size) // 2
         max_corner_size = min(max_corner_size, max_available_corner_size)
@@ -85,58 +118,35 @@ class HouseGenerator:
             wall_sq = self.get_wall_sequence(length_needed)
             sides = [(size[0], wall_sq), (size[1], wall_sq)]
 
-        print(f'wall sequence : {sides[0][1]}')
+        # outline
+        max_wall_x = sides[0][0]
+        max_wall_z = sides[1][0]
 
-        # first side
-        x_shift = 0
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 0):
+        print(f'sides : {sides}')
+        print(f'corner size : {corner_size}')
 
-            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
-        # x_shift += corner_size - 1
-        INTF.sendBlocks()
-        input("PRESS ENTER")
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 90):
+        self.build_wall(construction_plot, (corner_size - 1, 0), (1, 0), 2, sides[0][1], 0)
+        self.build_wall(construction_plot, (corner_size - 1, max_wall_z - 2), (1, 0), 2, sides[0][1], 180)
+        self.build_wall(construction_plot, (0, corner_size - 1), (0, 1), 2, sides[1][1], 270)
+        self.build_wall(construction_plot, (max_wall_x - 2, corner_size - 1), (0, 1), 2, sides[1][1], 90)
 
-            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
-        # x_shift += corner_size - 1
-        INTF.sendBlocks()
-        input("PRESS ENTER")
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 180):
+        self.build_corner(construction_plot, corner_size, 90, (0, 0))
+        self.build_corner(construction_plot, corner_size, 0, (0, max_wall_z - corner_size))
+        self.build_corner(construction_plot, corner_size, 180, (max_wall_x - corner_size, 0))
+        self.build_corner(construction_plot, corner_size, 270, (max_wall_x - corner_size, max_wall_z - corner_size))
 
-            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
-        # x_shift += corner_size - 1
-        INTF.sendBlocks()
-        input("PRESS ENTER")
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), 270):
+    def build_wall(self, construction_plot: ConstructionPlot, start: tuple[int, int], direction: tuple[int, int],
+                   outline_width: int, side: List[int], angle: float):
+        x_shift, z_shift = start
+        for wall in side:
+            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks(construction_plot, dict(), angle):
+                INTF.placeBlock(*b.coordinates.shift(x_shift, 1, z_shift), b.name)
+            x_shift += (wall - 1) * direction[0]
+            z_shift += (wall - 1) * direction[1]
 
-            INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
-        x_shift += corner_size - 1
-        INTF.sendBlocks()
-        input("PRESS ENTER")
-
-
-        for wall in sides[0][1]:
-            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks(construction_plot, dict(), ):
-
-                INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
-            INTF.sendBlocks()
-            input("PRESS ENTER")
-            x_shift += wall - 1
-
-
-        z_shift = 0
-        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict()):
-            INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
-        z_shift += corner_size - 1
-
-        for wall in sides[1][1]:
-            for b in random.choice(self.walls[(wall, outline_width)]).get_blocks(construction_plot, dict()):
-                INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
-            z_shift += wall - 1
-
-
-
-
+    def build_corner(self, construction_plot: ConstructionPlot, corner_size: int, angle: float, point: tuple[int, int]):
+        for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks(construction_plot, dict(), angle):
+            INTF.placeBlock(*b.coordinates.shift(point[0], 1, point[1]), b.name)
 
     @staticmethod
     def get_wall_sequence(length_needed: int):

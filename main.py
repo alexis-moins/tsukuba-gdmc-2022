@@ -63,7 +63,7 @@ if __name__ == '__main__':
         structures['house2'] = Structure.parse_nbt_file('house2')
         structures['house3'] = Structure.parse_nbt_file('house3')
 
-        suburb = SuburbPlot(x=50 + build_area.start.x, z=50 + build_area.start.z, size=(50, 50))
+        suburb = SuburbPlot(x=0 + build_area.start.x, z=0 + build_area.start.z, size=(120, 120))
         suburb.remove_trees()
         houses = [structures['house1'], structures['house2'], structures['house3']]
 
@@ -86,10 +86,11 @@ if __name__ == '__main__':
         #     else:
         #         print(f'=> Unable to find construction area for structure with size {house.size}')
 
-        construction_plot = suburb.get_construction_plot((20, 15))
-        if construction_plot:
-            house_gen = HouseGenerator()
-            house_gen.build_house(1, '', construction_plot)
+        house_gen = HouseGenerator()
+        for i in range(5):
+            construction_plot = suburb.get_construction_plot((random.randint(10, 50), random.randint(10, 50)), speed=10)
+            if construction_plot:
+                house_gen.build_house(1, '', construction_plot)
 
 
 
