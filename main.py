@@ -1,17 +1,14 @@
 from __future__ import annotations
-from collections import Counter
-from re import match
 
 import time
 import random
-from typing import Any, Dict
+import sys
 
 from gdpc import toolbox as TB
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
-from numpy import extract
-from yaml import safe_load
 
+import launch_env
 from plots import construction_plot
 from plots.house_generator import HouseGenerator
 from plots.plot import Plot
@@ -21,14 +18,10 @@ from utils.criteria import Criteria
 from utils.structure import Structure
 
 
-def load_file(file_name: str) -> Any:
-    """"""
-    with open(f'resources/{file_name}.yaml', 'r') as file:
-        data = safe_load(file)
-    return data
-
-
 if __name__ == '__main__':
+
+    if 'd' in sys.argv or 'D' in sys.argv or 'debug' in sys.argv or 'DEBUG' in sys.argv:
+        launch_env.DEBUG = True
 
     INTF.setBuffering(True)
     INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
@@ -41,15 +34,18 @@ if __name__ == '__main__':
         INTF.runCommand(command)
         print(f'=> /{command}')
 
-        surface = build_area.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
-
-        # most_used_wood = surface.filter(pattern='log').most_common_block
-        # input(f'=> Most used wood: {most_used_wood}')
+        surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         building_materials = dict()
+        logs = surface.filter(pattern='_log')
 
-        # TODO extract material i.e. oak from minecraft:oak_log[...]
-        # building_materials['oak'] = most_used_wood
+        if logs:
+            most_used_wood = Block.trim_name(logs.most_common, '_log')
+            print(f'=> Most used wood: {most_used_wood}')
+
+            building_materials['oak'] = most_used_wood
+            building_materials['spruce'] = most_used_wood
+            building_materials['birch'] = most_used_wood
 
         # Move this somewhere else
         structures = dict()
@@ -61,29 +57,29 @@ if __name__ == '__main__':
 
         houses = [structures['house1'], structures['house2']]
 
-        # #  Move the following code into a method in SuburbPlot
-        # for i in range(5):
-        #     iter_start = time.time()
-        #
-        #     random.shuffle(houses)
-        #     house = houses[0]
-        #
-        #     area = (house.size[0], house.size[2])
-        #     construction_plot = suburb.get_construction_plot(area)
-        #
-        #     if construction_plot:
-        #         construction_plot.build(house, materials=building_materials)
-        #         print(
-        #             f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-        #
-        #     print(f'=> Unable to find construction area for structure with size {house.size}')
+        #  Move the following code into a method in SuburbPlot
+        for i in range(5):
+            iter_start = time.time()
 
-        construction_plot = suburb.get_construction_plot((20, 15))
+            random.shuffle(houses)
+            house = houses[0]
 
-        house_gen = HouseGenerator()
-        house_gen.build_house(1, '', construction_plot)
+            area = (house.size[0], house.size[2])
+            construction_plot = suburb.get_construction_plot(area)
 
-        print('Done!')
+            if construction_plot:
+                construction_plot.build(house, materials=building_materials)
+                print(
+                    f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
+
+            print(f'=> Unable to find construction area for structure with size {house.size}')
+
+        # construction_plot = suburb.get_construction_plot((20, 15))
+        # if construction_plot:
+        #     house_gen = HouseGenerator()
+        #     house_gen.build_house(1, '', construction_plot)
+
+
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

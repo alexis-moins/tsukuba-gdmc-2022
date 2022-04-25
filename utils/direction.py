@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from enum import Enum
+from nbt.nbt import TAG_String
 
 
 class Direction(Enum):
@@ -21,6 +24,16 @@ class Direction(Enum):
 
     # The direction to the west
     WEST = (-1, 0, 0)
+
+    @staticmethod
+    def parse_nbt(value: TAG_String) -> Direction:
+        """Return a direction parsed from the given nbt string tag"""
+        direction = value.valuestr()
+        return Direction[direction.upper()]
+
+    def __str__(self) -> str:
+        """Return the string representation of the direction"""
+        return self.name.lower()
 
     def get_rotated_direction(self, angle: float, _horizontal_directions=(NORTH, WEST, SOUTH, EAST)):
         index_shift = int(angle // 90)
