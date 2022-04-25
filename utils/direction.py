@@ -34,3 +34,14 @@ class Direction(Enum):
     def __str__(self) -> str:
         """Return the string representation of the direction"""
         return self.name.lower()
+
+    def get_rotated_direction(self, angle: float, _horizontal_directions=(NORTH, WEST, SOUTH, EAST)):
+        index_shift = int(angle // 90)
+        try:
+            index_shift += _horizontal_directions.index(self)
+        except ValueError:
+            return self
+        index_shift %= 4
+        return _horizontal_directions[index_shift]
+
+

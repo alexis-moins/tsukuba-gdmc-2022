@@ -98,3 +98,8 @@ class Block:
     def __str__(self) -> str:
         """Return the string representation of the block"""
         return self.full_name
+
+    def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
+        # TODO : rotate face too
+        
+        return Block(self.name, self.coordinates.rotate(angle, rotation_point))

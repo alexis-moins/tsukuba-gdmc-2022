@@ -10,6 +10,7 @@ from gdpc import interface as INTF
 
 import launch_env
 from plots import construction_plot
+from plots.house_generator import HouseGenerator
 from plots.plot import Plot
 from plots.suburb_plot import SuburbPlot
 from blocks.block import Block
@@ -70,10 +71,15 @@ if __name__ == '__main__':
                 construction_plot.build(house, materials=building_materials)
                 print(
                     f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-            else:
-                print(f'=> Unable to find construction area for structure with size {house.size}')
 
-        print('\nDone!')
+            print(f'=> Unable to find construction area for structure with size {house.size}')
+
+        # construction_plot = suburb.get_construction_plot((20, 15))
+        # if construction_plot:
+        #     house_gen = HouseGenerator()
+        #     house_gen.build_house(1, '', construction_plot)
+
+
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

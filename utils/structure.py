@@ -5,6 +5,8 @@ from nbt.nbt import NBTFile, TAG_List
 # from plots.construction_plot import ConstructionPlot
 
 from blocks.block import Block
+from plots.plot import Plot
+from utils.coordinates import Coordinates
 from blocks.collections.block_list import BlockList
 
 
@@ -50,3 +52,7 @@ class Structure:
         blocks = [block.replace_first(materials) for block in self.blocks]
         self.variations[variation] = blocks
         return BlockList(blocks)
+
+    def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> List[Block]:
+        return [block.rotate(angle, rotation_point) for block in self.blocks]
+
