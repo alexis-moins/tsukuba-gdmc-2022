@@ -70,7 +70,7 @@ class Plot:
 
     def visualize(self, ground: str = 'blue_stained_glass') -> None:
         """Change the blocks at the surface of the plot to visualize it"""
-        for block in self.get_blocks_at_surface(Criteria.MOTION_BLOCKING):
+        for block in self.get_blocks(Criteria.MOTION_BLOCKING):
             INTF.placeBlock(*block.coordinates, ground)
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
@@ -84,7 +84,7 @@ class Plot:
             return self._world.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
         return list()
 
-    def get_blocks_at_surface(self, criteria: Criteria) -> BlockList:
+    def get_blocks(self, criteria: Criteria) -> BlockList:
         """Return a list of the blocks at the surface of the plot, using the given criteria"""
         if criteria in self.surface_blocks.keys():
             return self.surface_blocks[criteria]
@@ -103,7 +103,7 @@ class Plot:
     def remove_trees(self) -> None:
         """Remove all plants at the surface of the current plot"""
         pattern = ('log', 'leaves', 'bush')
-        surface = self.get_blocks_at_surface(Criteria.WORLD_SURFACE)
+        surface = self.get_blocks(Criteria.WORLD_SURFACE)
 
         amount = 0
         deleted_blocks = set()

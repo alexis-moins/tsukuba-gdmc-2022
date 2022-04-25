@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import MutableSequence
-from typing import Any, Iterable, Iterator, List, SupportsIndex, Tuple
+from typing import Any, Iterable, Generator, List, SupportsIndex, Tuple
 
 from blocks.block import Block
 from blocks.collections.block_set import BlockSet
@@ -10,6 +10,7 @@ from blocks.collections.block_set import BlockSet
 
 class BlockList(MutableSequence):
     """Class representing a list of blocks, implements the abstract MutableSequence"""
+    __slots__ = ('__blocks')
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""
@@ -22,7 +23,7 @@ class BlockList(MutableSequence):
         return Counter(names)
 
     @property
-    def most_common_block(self) -> str:
+    def most_common(self) -> str:
         """Return the name of the most common block in the current list of blocks"""
         occurences = self.counter.most_common(1)
         return occurences[0][0]
@@ -39,10 +40,9 @@ class BlockList(MutableSequence):
         iterable = [block for block in self if block.is_one_of(pattern)]
         return BlockSet(iterable)
 
-    def __iter__(self) -> Iterator[Block]:
-        """Return an iterator of the blocks in the current list"""
-        for block in self.__blocks:
-            yield block
+    def __iter__(self) -> Generator[Block]:
+        """Return a generator of the blocks in the current list"""
+        return (block for block in self.__blocks)
 
     def __len__(self) -> int:
         """Return the length of the block list"""

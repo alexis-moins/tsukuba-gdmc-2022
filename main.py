@@ -1,16 +1,11 @@
 from __future__ import annotations
-from collections import Counter
-from re import match
 
 import time
 import random
-from typing import Any, Dict
 
 from gdpc import toolbox as TB
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
-from numpy import extract
-from yaml import safe_load
 
 from plots import construction_plot
 from plots.plot import Plot
@@ -18,13 +13,6 @@ from plots.suburb_plot import SuburbPlot
 from blocks.block import Block
 from utils.criteria import Criteria
 from utils.structure import Structure
-
-
-def load_file(file_name: str) -> Any:
-    """"""
-    with open(f'resources/{file_name}.yaml', 'r') as file:
-        data = safe_load(file)
-    return data
 
 
 if __name__ == '__main__':
@@ -40,15 +28,18 @@ if __name__ == '__main__':
         INTF.runCommand(command)
         print(f'=> /{command}')
 
-        surface = build_area.get_blocks_at_surface(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
-        most_used_wood = surface.filter(pattern='log').most_common_block
-        input(f'=> Most used wood: {most_used_wood}')
+        block_name = surface.filter(pattern='_log').most_common
+        most_used_wood = Block.trim_name(block_name, '_log')
+
+        print(f'=> Most used wood: {most_used_wood}')
 
         building_materials = dict()
 
-        # TODO extract material i.e. oak from minecraft:oak_log[...]
         building_materials['oak'] = most_used_wood
+        building_materials['spruce'] = most_used_wood
+        building_materials['birch'] = most_used_wood
 
         # Move this somewhere else
         structures = dict()
@@ -74,10 +65,10 @@ if __name__ == '__main__':
                 construction_plot.build(house, materials=building_materials)
                 print(
                     f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
+            else:
+                print(f'=> Unable to find construction area for structure with size {house.size}')
 
-            print(f'=> Unable to find construction area for structure with size {house.size}')
-
-        print('Done!')
+        print('\nDone!')
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

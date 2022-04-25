@@ -27,14 +27,14 @@ class SuburbPlot(Plot):
 
     def _build_foundation_blocks(self) -> None:
         self.foundation_blocks_surface = {b.coordinates.as_2D(): b for b in filter(self._is_block_valid,
-                                                                                   self.get_blocks_at_surface(
+                                                                                   self.get_blocks(
                                                                                        Criteria.MOTION_BLOCKING_NO_LEAVES))}
 
     def _is_block_valid(self, b):
         return b.coordinates.y < self.construction_roof and not b.is_one_of(
             ["water"]) and b.coordinates.as_2D() not in self.occupied_coords_surface
 
-    def get_construction_plot(self, size: Tuple[int, int], padding: int = 3, speed: int = None) -> ConstructionPlot | None:
+    def get_construction_plot(self, area: Tuple[int, int], padding: int = 3, speed: int = None) -> ConstructionPlot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score.
             Score is defined by get_score function.
 
@@ -66,7 +66,7 @@ class SuburbPlot(Plot):
         best_coord_2d = keys_list[0]
 
         for coord_2d in keys_list[::speed]:
-            coord_score = self._get_score(coord_2d, size)
+            coord_score = self._get_score(coord_2d, area)
 
             if coord_score < min_score:
                 best_coord_2d = coord_2d
@@ -79,9 +79,9 @@ class SuburbPlot(Plot):
 
         best_coord = self.foundation_blocks_surface[best_coord_2d].coordinates
 
-        self.occupy_area(best_coord, size, padding)
+        self.occupy_area(best_coord, area, padding)
 
-        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=size, build_start=best_coord)
+        return ConstructionPlot(x=best_coord_2d.x, z=best_coord_2d.z, size=area, build_start=best_coord)
 
     def _get_score(self, coord_2d: Coordinates, size: Tuple[int, int]) -> float:
         """Return a score evaluating the fitness of a building in an area.

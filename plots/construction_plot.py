@@ -26,7 +26,7 @@ class ConstructionPlot(Plot):
         INTF.sendBlocks()
 
     def _iterate_over_air(self, max_y: int) -> Coordinates:
-        for block in self.get_blocks_at_surface(Criteria.WORLD_SURFACE):
+        for block in self.get_blocks(Criteria.WORLD_SURFACE):
             y_shift = 1
             while block.coordinates.y + y_shift <= max_y:
                 yield block.coordinates.shift(0, y_shift, 0)
@@ -50,13 +50,9 @@ class ConstructionPlot(Plot):
                         self.build_start.y + 2, self.build_start.z, "oak_door[half=upper]")
         INTF.sendBlocks()
 
-    def build(self, structure: Structure, materials: Dict[str, str] = None) -> bool:
+    def build(self, structure: Structure, materials: Dict[str, str] = None) -> None:
         """Build the given structure onto the current construction spot"""
-        blocks = structure.get_blocks_for(self)
-
-        # TODO
-        # if materials:
-        #     blocks = [block.convert(materials) for block in blocks]
+        blocks = structure.get_blocks(plot=self, materials=materials)
 
         for block in blocks:
             INTF.placeBlock(*block.coordinates, block.name)
