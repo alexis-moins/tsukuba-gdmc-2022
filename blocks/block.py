@@ -15,7 +15,7 @@ class Block:
     """Represents a block in the world"""
     name: str
     coordinates: Coordinates
-    properties: Dict[str, str] = field(default_factory=dict)
+    properties: Dict[str, str | Direction] = field(default_factory=dict)
 
     @staticmethod
     def parse_nbt(block: TAG_Compound, palette: TAG_List) -> Block:
@@ -100,6 +100,9 @@ class Block:
         return self.full_name
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
-        # TODO : rotate face too
-        
-        return Block(self.name, self.coordinates.rotate(angle, rotation_point))
+
+        properties = self.properties.copy()
+        if 'facing' in properties:
+            properties['facing'] = properties['facing'].get_rotated_direction(angle)
+
+        return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
