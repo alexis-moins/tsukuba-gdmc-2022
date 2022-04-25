@@ -10,7 +10,7 @@ from blocks.collections.block_set import BlockSet
 
 class BlockList(MutableSequence):
     """Class representing a list of blocks, implements the abstract MutableSequence"""
-    __slots__ = ('__blocks')
+    __slots__ = ('__blocks', )
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""

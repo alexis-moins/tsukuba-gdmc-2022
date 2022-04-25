@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 from dataclasses import dataclass, field
 
 from gdpc.lookup import BLOCKS
@@ -25,11 +25,16 @@ class Block:
 
         properties = dict()
         if 'Properties' in palette[index].keys():
-            compound: TAG_Compound = palette[index]['Properties']
-            properties = dict(compound.iteritems())
+            properties = Block.__parse_properties(palette[index]['Properties'])
 
         coordinates = Coordinates.parse_nbt(block['pos'])
         return Block(name, coordinates, properties=properties)
+
+    @staticmethod
+    def __parse_properties(properties: TAG_Compound) -> Dict[str, Any]:
+        """Return a dictionary of the given pared properties"""
+        return {key: (Direction.parse_nbt(value) if key == 'facing' else value)
+                for key, value in properties.iteritems()}
 
     @staticmethod
     def deserialize(name: str, coordinates: Coordinates) -> Block:
@@ -44,19 +49,19 @@ class Block:
 
         return Block(name, coordinates, properties=properties)
 
-    @ staticmethod
+    @staticmethod
     def trim_name(name: str, pattern: str) -> str:
         """Trim the given block name to remove the given pattern, also gets rid of 'minecraft:"""
         return name.replace('minecraft:', '').replace(pattern, '')
 
-    @ property
+    @property
     def full_name(self) -> str:
         """Return the full name of the block, properties included"""
-        properties = [f'{k}={v}' for k, v in self.properties.items()]
+        properties = [f'{key}={value}' for key, value in self.properties.items()]
         indicator = '[' + ', '.join(properties) + ']' if properties else ''
         return f'{self.name}{indicator}'
 
-    @ staticmethod
+    @staticmethod
     def exists(block_name: str) -> bool:
         """Return true if the given block name exists in minecraft"""
         return block_name.split('[')[0] in BLOCKS

@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import MutableSet
-from typing import Iterable, Generator, Set, Tuple, overload
+from typing import Iterable, Generator, Set, Tuple
 
 from blocks.block import Block
 
 
 class BlockSet(MutableSet):
     """Class representing a set of blocks, implements the abstract MutableSet"""
-    __slots__ = ('__blocks')
+    __slots__ = ('__blocks', )
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new set of blocks"""
