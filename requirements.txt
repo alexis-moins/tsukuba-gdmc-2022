@@ -28,9 +28,9 @@ distlib==0.3.4 ; python_version >= "3.7" \
 filelock==3.6.0 ; python_version >= "3.7" \
     --hash=sha256:f8314284bfffbdcfa0ff3d7992b023d4c628ced6feb957351d4c48d059f56bc0 \
     --hash=sha256:9cd540a9352e432c7246a48fe4e8712b10acb1df2ad1f30e8c070b82ae1fed85
-fonttools==4.33.2 ; python_version >= "3.7" and python_version < "4" \
-    --hash=sha256:b4da40696829845ea8c1cb33ce51c552179754cbee7ab4e8b96a6bcf421f437a \
-    --hash=sha256:696fe922a271584c3ec8325ba31d4001a4fd6c4953b22900b767f1cb53ce1044
+fonttools==4.33.3 ; python_version >= "3.7" and python_version < "4" \
+    --hash=sha256:f829c579a8678fa939a1d9e9894d01941db869de44390adb49ce67055a06cc2a \
+    --hash=sha256:c0fdcfa8ceebd7c1b2021240bd46ef77aa8e7408cf10434be55df52384865f8e
 gdpc==5.0.2 \
     --hash=sha256:262d005250dc7eaecc3f5201cc826e667fc0eeafdc736ea7756635f7901b9e40 \
     --hash=sha256:c189ae43d9cdc8021bf604fff635dc8daebd06d824e695816c9a77884d1b19c6
