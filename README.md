@@ -9,8 +9,7 @@ This repository is an entry for the annual GDMC competition of 2022.
 Start by cloning the repository to get the files on your machine. Alternatively, you can change `~/GDMC` to any location you want.
 
 ```bash
-# Get the files on your computer
-git clone git@github.com:AlexisMoins/tsukuba-gdmc-2022.git ~/GDMC
+git clone git@github.com:AlexisMoins/tsukuba-gdmc-2022.git ~/GDMC && cd ~/GDMC
 ```
 
 ### Setup the environment
@@ -19,28 +18,41 @@ git clone git@github.com:AlexisMoins/tsukuba-gdmc-2022.git ~/GDMC
 
 As a final note, please notice that the syntax used across the projet is python version **3.10** so you might want to install version 3.10 via python's [official website](https://www.python.org) or via tools like [pyenv](https://github.com/pyenv/pyenv).
 
-```bash
-# First, enter the directory
-cd ~/GDMC
+This command will install the dependencies and start a new virtual environment
 
-# Install packages and start virtual env
+```bash
 poetry install && poetry shell
 ```
 
 Using `pip`, the main packages that you should install are `gdpc`, `pytest` if you want to run tests, `pre-commit` to keep the requirements.txt file **synchronized**. Exact versions of the aforementioned packages can again be found in the `pyproject.toml` file. Alternatively, you can directly install the dependencies by typing :
 
 ```bash
-# Install packages using pip
 pip install -r requirements.txt
 ```
 
 ### Add pre-commit hooks (optional)
 
-To keep the `requirements.txt` file in sync with the `pyproject.toml` file (given that the `pre-commit` package is installed), you need to run the following command :
+To keep the `requirements.txt` file in sync with the `pyproject.toml` file (given that the `pre-commit` package is installed), you need to run one of the following commands.
+
+If you have launched a poetry virtual env:
 
 ```bash
 pre-commit install
 ```
+
+Otherwise, use one of the following (depending on your case)
+- if you use poetry :
+
+  ```bash
+  poetry run pre-commit install
+  ```
+ 
+- or, if you use pip: 
+
+  ```bash
+  python -m pre-commit install
+  ```
+
 
 ### Install the GDPC Java mod
 
@@ -51,6 +63,5 @@ Instructions on how to get the mod running on your machine can be found in the o
 Once the environment is ready, simply starta single-player minecraft game and launch the `main.py` script and you're good to go !
 
 ```bash
-# Launch the simulation
 python main.py
 ```
