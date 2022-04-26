@@ -11,6 +11,7 @@ from gdpc import interface as INTF
 
 from gdpc import geometry
 
+import launch_env
 from modules.blocks.block import Block
 from modules.blocks.structure import Structure
 from modules.plots.construction_plot import ConstructionPlot
@@ -122,8 +123,9 @@ class HouseGenerator:
         max_wall_x = sides[0][0]
         max_wall_z = sides[1][0]
 
-        print(f'sides : {sides}')
-        print(f'corner size : {corner_size}')
+        if launch_env.DEBUG:
+            print(f'sides : {sides}')
+            print(f'corner size : {corner_size}')
 
         self.build_wall(construction_plot, (corner_size - 1, 0), (1, 0), 2, sides[0][1], 0)
         self.build_wall(construction_plot, (corner_size - 1, max_wall_z - 2), (1, 0), 2, sides[0][1], 180)
@@ -155,8 +157,8 @@ class HouseGenerator:
         # Defined by modules
         max_available_wall = 7
         min_available_wall = 2
-        even_walls = [2, 4, 6]
-        odd_walls = [3, 5, 7]
+        even_walls = [2, 4, 6, 8]
+        odd_walls = [3, 5, 7, 9]
         all_walls = even_walls + odd_walls
 
         wall_sequence = []
