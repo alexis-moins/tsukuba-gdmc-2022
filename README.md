@@ -2,7 +2,7 @@
 
 This repository is an entry for the annual GDMC competition of 2022.
 
-## How to use ?
+## How to use
 
 ### Clone the repository
 
@@ -34,7 +34,7 @@ Using `pip`, the main packages that you should install are `gdpc`, `pytest` if y
 pip install -r requirements.txt
 ```
 
-### Adding pre-commit hooks
+### Add pre-commit hooks (optional)
 
 To keep the `requirements.txt` file in sync with the `pyproject.toml` file (given that the `pre-commit` package is installed), you need to run the following command :
 
@@ -42,10 +42,15 @@ To keep the `requirements.txt` file in sync with the `pyproject.toml` file (give
 pre-commit install
 ```
 
+### Install the GDPC Java mod
+
+Instructions on how to get the mod running on your machine can be found in the official [GDPC Interface](https://github.com/nilsgawlik/gdmc_http_interface/wiki/Installation) github repository. Once you have succesfully followed the given instrtuction you can go to the final step below!
+
 ### Launch the simulation
 
-Once the environment is ready, simply launch the main script and you're good to go !
+Once the environment is ready, simply starta single-player minecraft game and launch the `main.py` script and you're good to go !
 
 ```bash
+# Launch the simulation
 python main.py
 ```
