@@ -2,7 +2,7 @@
 name = "tsukuba-gdmc-2022"
 version = "0.1.0"
 description = ""
-authors = ["AlexisMoins <moinsalexis@gmail.com>", "kz2wd"]
+authors = ["Alexis Moins <moinsalexis@gmail.com>", "Youri Chancrin <yrus.chan@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
