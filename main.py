@@ -8,6 +8,8 @@ from gdpc import toolbox as TB
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+from modules.utils.loader import BUILD_AREA
+
 import launch_env
 
 from modules.plots.plot import Plot
@@ -26,16 +28,14 @@ if __name__ == '__main__':
         os.system('clear')
 
         # Retrieve the default build area
-        build_area = Plot.get_build_area()
+        start, end = BUILD_AREA
+        build_area = Plot.from_coordinates(start, end)
 
-        command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
-        INTF.runCommand(command)
-        print(f'=> /{command}')
-
+        INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
         build_area.remove_trees()
 
         population = random.randrange(2, 4)
-        simulation = Simulation(area=build_area, population=population, years=10)
+        simulation = Simulation(build_area, population=population, years=10)
 
         simulation.start()
 
