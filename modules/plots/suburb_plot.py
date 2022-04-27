@@ -7,6 +7,7 @@ import numpy as np
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
+
 import launch_env
 from modules.blocks.block import Block
 
@@ -27,6 +28,35 @@ class SuburbPlot(Plot):
         # Surface word here is to precise that we are working
         self.occupied_coords_surface: Set[Coordinates] = set()
         self.foundation_blocks_surface: Dict[Coordinates, Block] = dict()
+
+        self.steep_map = None
+
+    @staticmethod
+    def _delta_sum(values: list, base: int):
+        return sum(abs(base - v) for v in values)
+
+    def compute_steep_map(self, span: int = 1):
+        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        shape = heightmap.shape
+        print(f'default shape : {shape}')
+
+        steep = np.empty(shape=(self.size[0] - 2 * span, self.size[1] - 2 * span))
+        for i in range(span, self.size[0] - span):
+            for j in range(span, self.size[1] - span):
+                steep[i - span, j - span] = self._delta_sum(heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
+
+        print(steep)
+        print(steep.shape)
+
+        flat_steep = steep.flatten()
+
+        ind_of_mins = np.argpartition(flat_steep, 20)[:20]
+        print(f'indexes of mins {ind_of_mins}')
+        print(f'values of mins {flat_steep[ind_of_mins]}')
+
+
+
+
 
     def _build_foundation_blocks(self) -> None:
         self.foundation_blocks_surface = {b.coordinates.as_2D(): b for b in filter(self._is_block_valid,
@@ -134,3 +164,6 @@ class SuburbPlot(Plot):
                 except KeyError:
                     pass
             INTF.sendBlocks()
+
+
+

@@ -11,6 +11,7 @@ from gdpc import interface as INTF
 import launch_env
 
 from modules.plots.plot import Plot
+from modules.plots.suburb_plot import SuburbPlot
 from modules.simulation.simulation import Simulation
 
 
@@ -23,21 +24,27 @@ if __name__ == '__main__':
     INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
 
     try:
-        os.system('clear')
 
         # Retrieve the default build area
         build_area = Plot.get_build_area()
 
-        command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
-        INTF.runCommand(command)
-        print(f'=> /{command}')
+        suburb = SuburbPlot(x=25 + build_area.start.x, z=25 + build_area.start.z, size=(100, 100))
 
-        build_area.remove_trees()
+        suburb.compute_steep_map(1)
+        suburb.compute_steep_map(10)
+        suburb.compute_steep_map(40)
 
-        population = random.randrange(2, 4)
-        simulation = Simulation(area=build_area, population=population, years=10)
 
-        simulation.start()
+        # command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
+        # INTF.runCommand(command)
+        # print(f'=> /{command}')
+        #
+        # build_area.remove_trees()
+        #
+        # population = random.randrange(2, 4)
+        # simulation = Simulation(area=build_area, population=population, years=10)
+        #
+        # simulation.start()
 
         # surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
