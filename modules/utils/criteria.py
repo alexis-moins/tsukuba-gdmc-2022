@@ -15,3 +15,6 @@ class Criteria(Enum):
 
     # The top solid blocks
     OCEAN_FLOOR = 3
+
+    # Like MOTION_BLOCKING_NO_LEAVES but ignoring logs
+    MOTION_BLOCKING_NO_TREES = 4

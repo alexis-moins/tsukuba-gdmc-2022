@@ -84,7 +84,7 @@ class Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""
         return Block(self.name, self.coordinates.shift(*coordinates), properties=self.properties)
 
-    def is_one_of(self, pattern: Tuple[str]) -> bool:
+    def is_one_of(self, pattern: Tuple[str, ...]) -> bool:
         """Return true if the current item's name matches the given pattern"""
         for part in pattern:
             if part in self.name:
