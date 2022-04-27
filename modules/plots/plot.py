@@ -103,31 +103,23 @@ class Plot:
 
     def remove_trees(self) -> None:
         """Remove all plants at the surface of the current plot"""
-        pattern = ('log', 'leaves', 'bush', 'mushroom')
-        surface = self.get_blocks(Criteria.WORLD_SURFACE)
+        pattern = ('log', 'bush', 'mushroom')
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         amount = 0
-        deleted_blocks = set()
         unwanted_blocks = surface.filter(pattern)
 
         print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
             block = unwanted_blocks.pop()
 
-            for coordinates in block.neighbouring_coordinates():
-                if coordinates not in deleted_blocks and coordinates in self:
-                    block_around = self.get_block_at(*coordinates)
+            current_coord: Coordinates = block.coordinates
+            while self.get_block_at(*current_coord).is_one_of(pattern + ('air', 'leaves')):
 
-                    if block_around in unwanted_blocks:
-                        continue
+                INTF.placeBlock(*current_coord, 'minecraft:air')
 
-                    if block_around.is_one_of(pattern):
-                        unwanted_blocks.add(block_around)
-                        INTF.placeBlock(*block_around.coordinates, 'minecraft:glowstone')
-
-            INTF.placeBlock(*block.coordinates, 'minecraft:air')
-            deleted_blocks.add(block.coordinates)
-            amount += 1
+                current_coord = current_coord.shift(0, -1, 0)
+                amount += 1
 
         INTF.sendBlocks()
         print(f'=> Deleted {amount} blocs\n')

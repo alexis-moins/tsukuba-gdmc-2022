@@ -32,6 +32,8 @@ if __name__ == '__main__':
         # Retrieve the default build area
         build_area = Plot.get_build_area()
 
+        build_area.remove_trees()
+        input('exit pls')
         command = f"tp @a {build_area.start.x + 50} 110 {build_area.start.z + 50}"
         INTF.runCommand(command)
         print(f'=> /{command}')
