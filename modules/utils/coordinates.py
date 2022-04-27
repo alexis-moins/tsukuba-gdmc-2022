@@ -28,6 +28,10 @@ class Coordinates:
                            y=int(position[1].valuestr()),
                            z=int(position[2].valuestr()))
 
+    def neighbours(self) -> list[Coordinates]:
+        """Return the list of neighbouring coordinates of the current coordinates"""
+        return [self.towards(direction) for direction in Direction]
+
     def towards(self, direction: Direction) -> Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
         return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])

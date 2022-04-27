@@ -78,7 +78,7 @@ class Block:
 
     def neighbouring_coordinates(self) -> List[Coordinates]:
         """Return the list of all this block's neighbouring coordinates"""
-        return [self.coordinates.towards(direction) for direction in Direction]
+        return self.coordinates.neighbours()
 
     def shift_position_to(self, coordinates: Coordinates) -> Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""

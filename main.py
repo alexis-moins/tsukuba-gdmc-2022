@@ -1,9 +1,8 @@
 from __future__ import annotations
-import os
 
-import time
-import random
+import os
 import sys
+import random
 
 from gdpc import toolbox as TB
 from gdpc import geometry as GEO
@@ -12,14 +11,7 @@ from gdpc import interface as INTF
 import launch_env
 
 from modules.plots.plot import Plot
-from modules.plots import construction_plot
-from modules.plots.suburb_plot import SuburbPlot
-
-from modules.blocks.block import Block
 from modules.simulation.simulation import Simulation
-
-from modules.utils.criteria import Criteria
-from modules.blocks.structure import Structure
 
 
 if __name__ == '__main__':
@@ -36,14 +28,16 @@ if __name__ == '__main__':
         # Retrieve the default build area
         build_area = Plot.get_build_area()
 
+        command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
+        INTF.runCommand(command)
+        print(f'=> /{command}')
+
+        build_area.remove_trees()
+
         population = random.randrange(2, 4)
-        simulation = Simulation(area=build_area, population=population, years=20)
+        simulation = Simulation(area=build_area, population=population, years=10)
 
         simulation.start()
-
-        # command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
-        # INTF.runCommand(command)
-        # print(f'=> /{command}')
 
         # surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
