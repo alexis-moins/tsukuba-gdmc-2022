@@ -12,7 +12,7 @@ import launch_env
 
 from modules.plots.plot import Plot
 from modules.simulation.simulation import Simulation
-
+from modules.utils.criteria import Criteria
 
 if __name__ == '__main__':
 
