@@ -58,6 +58,8 @@ class Plot:
 
     def compute_steep_map(self, span: int = 1):
 
+        self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find()
+
         heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
@@ -91,8 +93,13 @@ class Plot:
 
     def get_heightmap(self, criteria: Criteria) -> ndarray:
         """Return the desired heightmap of the given type"""
+        # Add our custom
+        if Criteria.MOTION_BLOCKING_NO_TREES not in WORLD.heightmaps:
+            WORLD.heightmaps[criteria.name] = self.__get_heightmap_no_trees()
+
         if criteria.name in WORLD.heightmaps.keys():
             return WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
+
         raise Exception(f'Invalid criteria: {criteria}')
 
     def get_blocks(self, criteria: Criteria) -> BlockList:
@@ -100,11 +107,6 @@ class Plot:
 
         if criteria in self.surface_blocks.keys():
             return self.surface_blocks[criteria]
-
-        # Little hack to have custom heightmaps
-        if criteria == Criteria.MOTION_BLOCKING_NO_TREES:
-            self.surface_blocks[Criteria.MOTION_BLOCKING_NO_TREES] = self._get_blocks_no_trees()
-            return self.surface_blocks[Criteria.MOTION_BLOCKING_NO_TREES]
 
         surface = []
         heightmap = self.get_heightmap(criteria)
@@ -117,24 +119,25 @@ class Plot:
         self.surface_blocks[criteria] = surface
         return BlockList(surface)
 
-    def _get_blocks_no_trees(self) -> BlockList:
+    def __get_heightmap_no_trees(self) -> np.ndarray:
         """Return a list of block representing a heightmap without trees
 
         It is not perfect as sometimes, there can be flower or grass or other blocks between the ground and the '
         floating' logs, but it is good enough for our use"""
-        surface = []
-        heightmap = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        heightmap = np.copy(WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_LEAVES.name])
 
         for x, rest in enumerate(heightmap):
             for z, h in enumerate(rest):
-                base_coord = Coordinates(self.start.x + x, h - 1, self.start.z + z)
-                ground_coord = base_coord
-                for ground_coord in self.__yield_until_ground(base_coord):
-                    ground_coord = ground_coord.shift(0, -1, 0)
-                surface.append(self.get_block_at(*ground_coord))
+                base_coord = Coordinates(BUILD_AREA.start.x + x, h - 1, BUILD_AREA.start.z + z)
 
-        self.surface_blocks[Criteria.MOTION_BLOCKING_NO_TREES] = surface
-        return BlockList(surface)
+                ground_coord = None
+                # To get to the last block until the ground
+                for ground_coord in self.__yield_until_ground(base_coord):
+                    pass
+                if ground_coord:
+                    heightmap[x, z] = ground_coord.y
+
+        return heightmap
 
     def get_subplot(self, size: Size, padding: int = 5, speed: int = 200, max_score: int = 500) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""

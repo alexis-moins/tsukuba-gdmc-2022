@@ -28,8 +28,11 @@ if __name__ == '__main__':
         build_area = Plot.from_coordinates(start, end)
 
         INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
-        build_area.compute_steep_map(2)
-        build_area.visualize_steep_map(2)
+
+        build_area.visualize()
+
+        # build_area.compute_steep_map(2)
+        # build_area.visualize_steep_map(2)
 
         #
         # population = random.randrange(2, 4)
