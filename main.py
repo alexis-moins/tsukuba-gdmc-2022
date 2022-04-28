@@ -27,14 +27,12 @@ if __name__ == '__main__':
 
         # Retrieve the default build area
         build_area = Plot.get_build_area()
+        print(f'Build area : {build_area.start}')
 
-        suburb = SuburbPlot(x=25 + build_area.start.x, z=25 + build_area.start.z, size=(100, 100))
-
-        suburb.compute_steep_map(1)
-        suburb.compute_steep_map(10)
-        suburb.compute_steep_map(40)
-
-
+        suburb = SuburbPlot(x=build_area.start.x, z=build_area.start.z, size=build_area.size)
+        span = 2
+        suburb.compute_steep_map(span)
+        suburb.visualize_steep_map(span)
         # command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
         # INTF.runCommand(command)
         # print(f'=> /{command}')
