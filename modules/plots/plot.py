@@ -1,76 +1,84 @@
 from __future__ import annotations
-
-import time
-from typing import Dict, Tuple
+from typing import Generator
 
 import numpy as np
-from gdpc import interface as INTF, lookup
-from gdpc import worldLoader as WL
-
 from numpy import ndarray
-from nbt.nbt import MalformedFileError
+from gdpc import interface as INTF
+
+import random
+import launch_env
+from modules.utils.criteria import Criteria
+from modules.utils.coordinates import Coordinates, Size
 
 from modules.blocks.block import Block
 from modules.blocks.collections.block_list import BlockList
 
-from modules.utils.criteria import Criteria
-from modules.utils.coordinates import Coordinates
-
-
-def default_build_area_coordinates() -> tuple[Coordinates, Coordinates]:
-    """Return a tuple of the starting and end coordinates of the requested build area"""
-    x1, y1, z1, x2, y2, z2 = INTF.requestBuildArea()
-    return Coordinates(x1, y1, z1), Coordinates(x2, y2, z2)
-
-
-def get_world_slice(retry_amount: int = 10, retry_wait_time: int = 1):
-    default_start, default_end = default_build_area_coordinates()
-    while retry_amount:
-        try:
-            return WL.WorldSlice(default_start.x, default_start.z, default_end.x + 1, default_end.z + 1)
-        except MalformedFileError:
-            retry_amount -= 1
-            time.sleep(retry_wait_time)
-    print(f'[ERROR] : Could not get a world slice in {retry_amount} try')
+from modules.utils.loader import WORLD, BUILD_AREA, update_world_slice
 
 
 class Plot:
-    """Represents a build area"""
-    default_start, default_end = default_build_area_coordinates()
+    """Class representing a plot"""
 
-    _world = get_world_slice()
-
-    def __init__(self, x: int, z: int, size: Tuple[int, int]) -> None:
+    def __init__(self, x: int, y: int, z: int, size: Size) -> None:
         """Parameterised constructor creating a new plot inside the build area"""
-        self.start = Coordinates(x, 0, z)
-        self.end = Coordinates(x + size[0], 255, z + size[1])
+        self.start = Coordinates(x, y, z)
+        self.end = Coordinates(x + size.x, 255, z + size.z)
         self.size = size
 
-        self.surface_blocks: Dict[Criteria, BlockList] = dict()
+        self.occupied_coordinates: set[Coordinates] = set()
 
-        self.center = self.start.x + self.size[0] // 2, self.start.z + self.size[1] // 2
-        self.offset = self.start - Plot.default_start, self.end - Plot.default_start
+        self.surface_blocks: dict[Criteria, BlockList] = {}
+        self.offset = self.start - BUILD_AREA.start, self.end - BUILD_AREA.start
 
-    def __contains__(self, coordinates: Coordinates) -> bool:
-        """Return true if the current plot contains the given coordinates"""
-        return \
-            self.start.x <= coordinates.x < self.end.x and \
-            self.start.y <= coordinates.y < self.end.y and \
-            self.start.z <= coordinates.z < self.end.z
+        # TODO change center into coordinates
+        self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
+
+        self.steep_map = None
 
     @staticmethod
-    def get_build_area() -> Plot:
-        """Return the plot of the default build area"""
-        coord_a, coord_b = default_build_area_coordinates()
-        size = abs(coord_a - coord_b)
-        return Plot(x=coord_a.x, z=coord_a.z, size=(size.x, size.z))
+    def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
+        """Return a new plot created from the given start and end coordinates"""
+        return Plot(*start, Size.from_coordinates(start, end))
 
     def update(self) -> None:
         """Update the world slice and most importantly the heightmaps"""
-        Plot._world = get_world_slice()
-        self.surface_blocks = dict()
+        update_world_slice()
+        self.surface_blocks.clear()
 
-    def visualize(self, ground: str = 'blue_stained_glass', criteria: Criteria = Criteria.MOTION_BLOCKING) -> None:
+    @staticmethod
+    def _delta_sum(values: list, base: int):
+        return sum(abs(base - v) for v in values)
+
+    def flat_heightmap_to_plot_coord(self, index: int, span: int):
+        side_length = self.size.x - 2 * span
+        x = index // side_length
+        z = index - side_length * x
+        #
+        return self.start.shift(x + span, 0, z + span)
+
+    def compute_steep_map(self, span: int = 1):
+
+        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
+
+        steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
+        for i in range(span, self.size.x - span):
+            for j in range(span, self.size.z - span):
+                steep[i - span, j - span] = self._delta_sum(
+                    heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
+
+        self.steep_map = steep.flatten()
+
+    def visualize_steep_map(self, span):
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+        surface = surface.without('water').not_inside(self.occupied_coordinates)
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        for i, value in enumerate(self.steep_map):
+            coord = self.flat_heightmap_to_plot_coord(i, span)
+            block = surface.find(coord)
+            if block:
+                INTF.placeBlock(*block.coordinates, colors[min(int(value // span), 8)] + '_stained_glass')
+
+    def visualize(self, ground: str = 'orange_wool', criteria: Criteria = Criteria.MOTION_BLOCKING_NO_TREES) -> None:
         """Change the blocks at the surface of the plot to visualize it"""
         for block in self.get_blocks(criteria):
             INTF.placeBlock(*block.coordinates, ground)
@@ -78,14 +86,14 @@ class Plot:
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the world"""
-        name = self._world.getBlockAt(x, y, z)
+        name = WORLD.getBlockAt(x, y, z)
         return Block.deserialize(name, Coordinates(x, y, z))
 
     def get_heightmap(self, criteria: Criteria) -> ndarray:
         """Return the desired heightmap of the given type"""
-        if criteria.name in self._world.heightmaps.keys():
-            return self._world.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
-        raise Exception(f'Invalid criteria : {criteria}')
+        if criteria.name in WORLD.heightmaps.keys():
+            return WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
+        raise Exception(f'Invalid criteria: {criteria}')
 
     def get_blocks(self, criteria: Criteria) -> BlockList:
         """Return a list of the blocks at the surface of the plot, using the given criteria"""
@@ -98,7 +106,7 @@ class Plot:
             self.surface_blocks[Criteria.MOTION_BLOCKING_NO_TREES] = self._get_blocks_no_trees()
             return self.surface_blocks[Criteria.MOTION_BLOCKING_NO_TREES]
 
-        surface = BlockList()
+        surface = []
         heightmap = self.get_heightmap(criteria)
 
         for x, rest in enumerate(heightmap):
@@ -107,26 +115,93 @@ class Plot:
                 surface.append(self.get_block_at(*coordinates))
 
         self.surface_blocks[criteria] = surface
-        return surface
+        return BlockList(surface)
 
     def _get_blocks_no_trees(self) -> BlockList:
         """Return a list of block representing a heightmap without trees
 
         It is not perfect as sometimes, there can be flower or grass or other blocks between the ground and the '
         floating' logs, but it is good enough for our use"""
-        surface = BlockList()
+        surface = []
         heightmap = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         for x, rest in enumerate(heightmap):
             for z, h in enumerate(rest):
                 base_coord = Coordinates(self.start.x + x, h - 1, self.start.z + z)
                 ground_coord = base_coord
-                for ground_coord in self._yield_until_ground(base_coord):
+                for ground_coord in self.__yield_until_ground(base_coord):
                     ground_coord = ground_coord.shift(0, -1, 0)
                 surface.append(self.get_block_at(*ground_coord))
 
         self.surface_blocks[Criteria.MOTION_BLOCKING_NO_TREES] = surface
-        return surface
+        return BlockList(surface)
+
+    def get_subplot(self, size: Size, padding: int = 5, speed: int = 200, max_score: int = 500) -> Plot | None:
+        """Return the best coordinates to place a building of a certain size, minimizing its score"""
+
+        # TODO add .lower_than(max_height=200)
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+        surface = surface.without('water').not_inside(self.occupied_coordinates)
+
+        # DEBUG
+        if launch_env.DEBUG:
+            colors = ['magenta', 'lime', 'orange', 'purple', 'white']
+            random.shuffle(colors)
+            for block in surface:
+                INTF.placeBlock(*block.coordinates, colors[0] + '_wool')
+
+            INTF.sendBlocks()
+
+        # >Get the minimal score in the coordinate list
+        min_score = max_score
+
+        for block in surface[::speed]:
+            block_score = self.__get_score(block.coordinates, surface, size)
+
+            if block_score < min_score:
+                best_coordinates = block.coordinates
+                min_score = block_score
+
+        if launch_env.DEBUG:
+            print(f'Best score : {min_score}')
+
+        if min_score >= max_score:
+            return None
+
+        sub_plot = Plot(*best_coordinates, size=size)
+
+        for coordinates in sub_plot:
+            self.occupied_coordinates.add(coordinates.as_2D())
+
+        return sub_plot
+
+    def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size) -> float:
+        """Return a score evaluating the fitness of a building in an area.
+            The lower the score, the better it fits
+
+            Score is calculated as follows :
+            malus depending on the distance from the center of the area +
+            Sum of all differences in the y coordinate
+            """
+        # apply malus to score depending on the distance to the 'center'
+
+        # TODO Maybe improve this notation, quite not beautiful, set center as a coordinate ?
+        # Would be great
+        center = Coordinates(self.center[0], 0, self.center[1])
+        score = coordinates.as_2D().distance(center) * .1
+
+        # Score = sum of difference between the first point's altitude and the other
+        for x in range(size.x):
+            for z in range(size.z):
+                current_coord = coordinates.shift(x, 0, z)
+                current_block = surface.find(current_coord)
+
+                if not current_block:
+                    return 100_000_000
+
+                score += abs(coordinates.y - current_block.coordinates.y)
+
+        return score
 
     def remove_trees(self) -> None:
         """Remove all plants at the surface of the current plot"""
@@ -134,12 +209,11 @@ class Plot:
         surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         amount = 0
-        unwanted_blocks = surface.filter(pattern)
-
+        unwanted_blocks = surface.filter(pattern).to_set()
         print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
         while unwanted_blocks:
             block = unwanted_blocks.pop()
-            for coord in self._yield_until_ground(block.coordinates):
+            for coord in self.__yield_until_ground(block.coordinates):
                 INTF.placeBlock(*coord, 'minecraft:air')
                 amount += 1
 
@@ -147,10 +221,35 @@ class Plot:
         print(f'=> Deleted {amount} blocs\n')
         self.update()
 
-    def _yield_until_ground(self, coordinates: Coordinates, match_of_not_ground: tuple[str, ...] = ('air', 'leaves',
-                                                                                                    'log', 'vine')):
+    def __yield_until_ground(self, coordinates: Coordinates):
         """Yield the coordinates """
         current_coord: Coordinates = coordinates
-        while self.get_block_at(*current_coord).is_one_of(match_of_not_ground):
+        while self.get_block_at(*current_coord).is_one_of(('air', 'leaves', 'log', 'vine')):
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
+
+    def build_foundation(self, block: str = 'minecraft:stone_bricks') -> None:
+        """"""
+        for coord in self.__iterate_over_air(self.start.y - 1):
+            INTF.placeBlock(*coord, block)
+        INTF.sendBlocks()
+
+    def __iterate_over_air(self, max_y: int) -> Coordinates:
+        for block in self.get_blocks(Criteria.WORLD_SURFACE):
+            y_shift = 1
+            while block.coordinates.y + y_shift <= max_y:
+                yield block.coordinates.shift(0, y_shift, 0)
+                y_shift += 1
+
+    def __contains__(self, coordinates: Coordinates) -> bool:
+        """Return true if the current plot contains the given coordinates"""
+        return self.start.x <= coordinates.x < self.end.x and \
+            self.start.y <= coordinates.y < self.end.y and \
+            self.start.z <= coordinates.z < self.end.z
+
+    def __iter__(self) -> Generator[Coordinates]:
+        """Return a generator over the coordinates of the current plot"""
+        padding = 5
+        for x in range(-padding, self.size.x + padding):
+            for z in range(-padding, self.size.z + padding):
+                yield self.start.shift(x, 0, z)
