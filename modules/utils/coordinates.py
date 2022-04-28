@@ -15,6 +15,19 @@ def R(a: float):
 
 
 @dataclass(frozen=True)
+class Size:
+    """Class representing a 2 dimensional size"""
+    x: int
+    z: int
+
+    @staticmethod
+    def from_coordinates(start: Coordinates, end: Coordinates) -> Size:
+        """Return a new size computed from the two given coordinates"""
+        distance = abs(start - end)
+        return Size(distance.x, distance.z)
+
+
+@dataclass(frozen=True)
 class Coordinates:
     """Represents a set of x, y and z coordinates"""
     x: int

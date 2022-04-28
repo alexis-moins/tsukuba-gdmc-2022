@@ -7,7 +7,6 @@ from modules.blocks.structure import Structure
 from modules.plots.construction_plot import ConstructionPlot
 
 from modules.plots.plot import Plot
-from modules.plots.suburb_plot import SuburbPlot
 
 from networkx import Graph, dijkstra_path
 
@@ -96,9 +95,7 @@ class City:
         self.professions['available'] = [Profession.FARMER, Profession.LUMBERJACK]
         self.professions['given'] = []
 
-        self.suburb = SuburbPlot(x=25 + self.plot.start.x, z=25 + self.plot.start.z, size=(100, 100))
-
-    @ property
+    @property
     def population(self) -> int:
         """Return the number of inhabitants in the city"""
         return len(self.inhabitants)
@@ -106,26 +103,31 @@ class City:
     def add_building(self, structure: Structure) -> None:
         """"""
         rotation = choice([0, 90, 180, 270])
-        area = structure.get_area(rotation)
-        plot = self.suburb.get_construction_plot(area)
+        size = structure.get_size(rotation)
+        plot = self.plot.get_subplot(size)
 
         if plot:
-            plot.build(structure, rotation=rotation)
-            print(f'=> New building <{structure.name}> added to the city at {plot.build_start}')
-            coordinates = plot.build_start
+            plot.remove_trees()
+            plot.build_foundation()
+            plot.visualize()
+
+            structure.build(plot.start, rotation=rotation)
+
+            print(f'=> New building <{structure.name}> added to the city at {plot.start}')
+            coordinates = plot.start
             self.buildings.append(coordinates)
 
-            if len(self.buildings) == 2:
-                print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
-                for coord in dijkstra_path(self.graph, self.buildings[0], self.buildings[1]):
-                    INTF.placeBlock(*coord, 'minecraft:red_wool')
-                    self.roads.append(coord)
+            # if len(self.buildings) == 2:
+            #     print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
+            #     for coord in dijkstra_path(self.graph, self.buildings[0], self.buildings[1]):
+            #         INTF.placeBlock(*coord, 'minecraft:red_wool')
+            #         self.roads.append(coord)
 
-            elif len(self.buildings) >= 3 and self.roads:
-                closest_road = self.closest_coordinates(coordinates)
+            # elif len(self.buildings) >= 3 and self.roads:
+            #     closest_road = self.closest_coordinates(coordinates)
 
-                for coord in dijkstra_path(self.graph, coordinates, closest_road):
-                    INTF.placeBlock(*coord, 'minecraft:red_wool')
+            #     for coord in dijkstra_path(self.graph, coordinates, closest_road):
+            #         INTF.placeBlock(*coord, 'minecraft:red_wool')
 
     def closest_coordinates(self, coordinates: Coordinates):
         """"""
