@@ -1,16 +1,15 @@
 from __future__ import annotations
+from dataclasses import astuple
 
-import os
 import sys
 import random
-
-from gdpc import toolbox as TB
-from gdpc import geometry as GEO
-from gdpc import interface as INTF
-
 import launch_env
 
+from gdpc import interface as INTF
+
+
 from modules.plots.plot import Plot
+from modules.utils.loader import BUILD_AREA
 from modules.simulation.simulation import Simulation
 
 
@@ -21,23 +20,23 @@ if __name__ == '__main__':
 
     INTF.setBuffering(True)
     INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
+    INTF.runCommand('gamerule randomTickSpeed 200')
 
     try:
-        os.system('clear')
-
         # Retrieve the default build area
-        build_area = Plot.get_build_area()
+        start, end = BUILD_AREA
+        build_area = Plot.from_coordinates(start, end)
 
-        command = f"tp @a {build_area.start.x} 110 {build_area.start.z}"
-        INTF.runCommand(command)
-        print(f'=> /{command}')
-
-        build_area.remove_trees()
+        INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
 
         population = random.randrange(2, 4)
-        simulation = Simulation(area=build_area, population=population, years=10)
+        simulation = Simulation(build_area, population=population, years=10)
 
         simulation.start()
+
+        # Clearing drops & getting back to default tick speed
+        INTF.runCommand('kill @e[type=minecraft:item]')
+        INTF.runCommand('gamerule randomTickSpeed 3')
 
         # surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
