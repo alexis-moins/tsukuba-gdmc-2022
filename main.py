@@ -28,15 +28,18 @@ if __name__ == '__main__':
         build_area = Plot.from_coordinates(start, end)
 
         INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
+        build_area.compute_steep_map(2)
+        build_area.visualize_steep_map(2)
 
-        population = random.randrange(2, 4)
-        simulation = Simulation(build_area, population=population, years=10)
-
-        simulation.start()
-
-        # Clearing drops & getting back to default tick speed
-        INTF.runCommand('kill @e[type=minecraft:item]')
-        INTF.runCommand('gamerule randomTickSpeed 3')
+        #
+        # population = random.randrange(2, 4)
+        # simulation = Simulation(build_area, population=population, years=10)
+        #
+        # simulation.start()
+        #
+        # # Clearing drops & getting back to default tick speed
+        # INTF.runCommand('kill @e[type=minecraft:item]')
+        # INTF.runCommand('gamerule randomTickSpeed 3')
 
         # surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 

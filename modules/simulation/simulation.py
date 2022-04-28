@@ -4,7 +4,6 @@ from random import choice, shuffle
 from modules.blocks.collections.block_list import BlockList
 
 from modules.blocks.structure import Structure
-from modules.plots.construction_plot import ConstructionPlot
 
 from modules.plots.plot import Plot
 
@@ -31,7 +30,7 @@ class Profession(Enum):
 class Building:
     """"""
 
-    def __init__(self, plot: ConstructionPlot, blocks: BlockList) -> None:
+    def __init__(self, plot: Plot, blocks: BlockList) -> None:
         """Parameterized constructor creating a new building"""
         self.plot = plot
         self.blocks = blocks

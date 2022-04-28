@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Generator
 
+import numpy as np
 from numpy import ndarray
 from gdpc import interface as INTF
 
@@ -32,6 +33,8 @@ class Plot:
         # TODO change center into coordinates
         self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
 
+        self.steep_map = None
+
     @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
         """Return a new plot created from the given start and end coordinates"""
@@ -41,6 +44,39 @@ class Plot:
         """Update the world slice and most importantly the heightmaps"""
         update_world_slice()
         self.surface_blocks.clear()
+
+    @staticmethod
+    def _delta_sum(values: list, base: int):
+        return sum(abs(base - v) for v in values)
+
+    def flat_heightmap_to_plot_coord(self, index: int, span: int):
+        side_length = self.size.x - 2 * span
+        x = index // side_length
+        z = index - side_length * x
+        #
+        return self.start.shift(x + span, 0, z + span)
+
+    def compute_steep_map(self, span: int = 1):
+
+        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
+
+        steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
+        for i in range(span, self.size.x - span):
+            for j in range(span, self.size.z - span):
+                steep[i - span, j - span] = self._delta_sum(
+                    heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
+
+        self.steep_map = steep.flatten()
+
+    def visualize_steep_map(self, span):
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+        surface = surface.without('water').not_inside(self.occupied_coordinates)
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        for i, value in enumerate(self.steep_map):
+            coord = self.flat_heightmap_to_plot_coord(i, span)
+            block = surface.find(coord)
+            if block:
+                INTF.placeBlock(*block.coordinates, colors[min(int(value // span), 8)] + '_stained_glass')
 
     def visualize(self, ground: str = 'orange_wool', criteria: Criteria = Criteria.MOTION_BLOCKING_NO_TREES) -> None:
         """Change the blocks at the surface of the plot to visualize it"""
