@@ -78,13 +78,13 @@ class Block:
 
     def neighbouring_coordinates(self) -> List[Coordinates]:
         """Return the list of all this block's neighbouring coordinates"""
-        return [self.coordinates.towards(direction) for direction in Direction]
+        return self.coordinates.neighbours()
 
     def shift_position_to(self, coordinates: Coordinates) -> Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""
         return Block(self.name, self.coordinates.shift(*coordinates), properties=self.properties)
 
-    def is_one_of(self, pattern: Tuple[str]) -> bool:
+    def is_one_of(self, pattern: Tuple[str, ...]) -> bool:
         """Return true if the current item's name matches the given pattern"""
         for part in pattern:
             if part in self.name:

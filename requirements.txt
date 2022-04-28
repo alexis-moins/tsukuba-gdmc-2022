@@ -16,7 +16,7 @@ cfgv==3.3.1 ; python_version >= "3.7" \
 charset-normalizer==2.0.12 ; python_version >= "3.6" and python_version < "4" \
     --hash=sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597 \
     --hash=sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df
-colorama==0.4.4 ; sys_platform == "win32" and python_version >= "3.7" \
+colorama==0.4.4 \
     --hash=sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2 \
     --hash=sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b
 cycler==0.11.0 ; python_version >= "3.7" and python_version < "4" \
@@ -28,15 +28,15 @@ distlib==0.3.4 ; python_version >= "3.7" \
 filelock==3.6.0 ; python_version >= "3.7" \
     --hash=sha256:f8314284bfffbdcfa0ff3d7992b023d4c628ced6feb957351d4c48d059f56bc0 \
     --hash=sha256:9cd540a9352e432c7246a48fe4e8712b10acb1df2ad1f30e8c070b82ae1fed85
-fonttools==4.33.2 ; python_version >= "3.7" and python_version < "4" \
-    --hash=sha256:b4da40696829845ea8c1cb33ce51c552179754cbee7ab4e8b96a6bcf421f437a \
-    --hash=sha256:696fe922a271584c3ec8325ba31d4001a4fd6c4953b22900b767f1cb53ce1044
+fonttools==4.33.3 ; python_version >= "3.7" and python_version < "4" \
+    --hash=sha256:f829c579a8678fa939a1d9e9894d01941db869de44390adb49ce67055a06cc2a \
+    --hash=sha256:c0fdcfa8ceebd7c1b2021240bd46ef77aa8e7408cf10434be55df52384865f8e
 gdpc==5.0.2 \
     --hash=sha256:262d005250dc7eaecc3f5201cc826e667fc0eeafdc736ea7756635f7901b9e40 \
     --hash=sha256:c189ae43d9cdc8021bf604fff635dc8daebd06d824e695816c9a77884d1b19c6
-identify==2.4.12 ; python_version >= "3.7" \
-    --hash=sha256:5f06b14366bd1facb88b00540a1de05b69b310cbc2654db3c7e07fa3a4339323 \
-    --hash=sha256:3f3244a559290e7d3deb9e9adc7b33594c1bc85a9dd82e0f1be519bf12a1ec17
+identify==2.5.0 ; python_version >= "3.7" \
+    --hash=sha256:3acfe15a96e4272b4ec5662ee3e231ceba976ef63fd9980ed2ce9cc415df393f \
+    --hash=sha256:c83af514ea50bf2be2c4a3f2fb349442b59dc87284558ae9ff54191bff3541d2
 idna==3.3 ; python_version >= "3.6" and python_version < "4" \
     --hash=sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff \
     --hash=sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d
@@ -126,6 +126,9 @@ matplotlib==3.5.1 ; python_version >= "3.7" and python_version < "4" \
 nbt==1.5.1 ; python_version >= "3.6" and python_version < "4" \
     --hash=sha256:1503314d0374b983642f9f219890330ce19d9d85966a28bdb6bef1fb17c4c2c0 \
     --hash=sha256:da3bb2137605cb9dfe7446f13f19b3ae7faf920d430a387fb78efde27f6636c5
+networkx==2.8 \
+    --hash=sha256:1a1e8fe052cc1b4e0339b998f6795099562a264a13a5af7a32cad45ab9d4e126 \
+    --hash=sha256:4a52cf66aed221955420e11b3e2e05ca44196b4829aab9576d4d439212b0a14f
 nodeenv==1.6.0 ; python_version >= "3.7" \
     --hash=sha256:621e6b7076565ddcacd2db0294c0381e01fd28945ab36bcf00f41c5daf63bef7 \
     --hash=sha256:3ef13ff90291ba2a4a7a4ff9a979b63ffdd00a464dbe04acf0ea6471517a4c2b

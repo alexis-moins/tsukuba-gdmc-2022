@@ -32,7 +32,7 @@ class BlockList(MutableSequence):
         """Insert the given block et the given index"""
         self.__blocks.insert(index, block)
 
-    def filter(self, pattern: str | Tuple[str]) -> BlockSet:
+    def filter(self, pattern: str | Tuple[str, ...]) -> BlockSet:
         """Return a sublist of blocks containing the given pattern in their name"""
         if type(pattern) == str:
             pattern = (pattern, )

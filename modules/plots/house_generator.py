@@ -13,10 +13,10 @@ from gdpc import interface as INTF
 from gdpc import geometry
 
 
-from plots.construction_plot import ConstructionPlot
-from utils.coordinates import Coordinates
-from utils.direction import Direction
-from utils.structure import Structure
+from modules.plots.construction_plot import ConstructionPlot
+from modules.utils.coordinates import Coordinates
+from modules.utils.direction import Direction
+from modules.blocks.structure import Structure
 
 
 class HouseGenerator:

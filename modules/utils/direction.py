@@ -25,6 +25,22 @@ class Direction(Enum):
     # The direction to the west
     WEST = (-1, 0, 0)
 
+    UP_NORTH = (0, 1, -1)
+
+    UP_SOUTH = (0, 1, 1)
+
+    UP_EAST = (1, 1, 0)
+
+    UP_WEST = (-1, 1, 0)
+
+    DOWN_NORTH = (0, -1, -1)
+
+    DOWN_SOUTH = (0, -1, 1)
+
+    DOWN_EAST = (1, -1, 0)
+
+    DOWN_WEST = (-1, -1, 0)
+
     @staticmethod
     def parse_nbt(value: TAG_String) -> Direction:
         """Return a direction parsed from the given nbt string tag"""
@@ -44,5 +60,3 @@ class Direction(Enum):
             return self
         index_shift %= 4
         return _horizontal_directions[index_shift]
-
-
