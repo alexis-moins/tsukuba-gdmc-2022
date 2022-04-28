@@ -46,7 +46,7 @@ class Plot:
         self.surface_blocks.clear()
 
     @staticmethod
-    def _delta_sum(values: list, base: int):
+    def _delta_sum(values: list, base: int) -> int:
         return sum(abs(base - v) for v in values)
 
     def flat_heightmap_to_plot_coord(self, index: int, span: int):
@@ -58,21 +58,22 @@ class Plot:
 
     def compute_steep_map(self, span: int = 1):
 
-        self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find()
-
-        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_TREES)
 
         steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
         for i in range(span, self.size.x - span):
             for j in range(span, self.size.z - span):
-                steep[i - span, j - span] = self._delta_sum(
-                    heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
+                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(self.start.shift(i, 0, j))
+                if block.is_one_of(('water',)):
+                    steep[i - span, j - span] = 100_000_000
+                else:
+                    steep[i - span, j - span] = self._delta_sum(
+                        heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
 
         self.steep_map = steep.flatten()
 
     def visualize_steep_map(self, span):
         surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
-        surface = surface.without('water').not_inside(self.occupied_coordinates)
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         for i, value in enumerate(self.steep_map):
             coord = self.flat_heightmap_to_plot_coord(i, span)
@@ -116,8 +117,8 @@ class Plot:
                 coordinates = Coordinates(self.start.x + x, h - 1, self.start.z + z)
                 surface.append(self.get_block_at(*coordinates))
 
-        self.surface_blocks[criteria] = surface
-        return BlockList(surface)
+        self.surface_blocks[criteria] = BlockList(surface)
+        return self.surface_blocks[criteria]
 
     def __get_heightmap_no_trees(self) -> np.ndarray:
         """Return a list of block representing a heightmap without trees

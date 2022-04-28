@@ -31,8 +31,8 @@ if __name__ == '__main__':
 
         build_area.visualize()
 
-        # build_area.compute_steep_map(2)
-        # build_area.visualize_steep_map(2)
+        build_area.compute_steep_map(2)
+        build_area.visualize_steep_map(2)
 
         #
         # population = random.randrange(2, 4)
