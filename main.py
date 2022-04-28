@@ -10,15 +10,11 @@ from gdpc import interface as INTF
 
 from modules.plots.plot import Plot
 from modules.utils.loader import BUILD_AREA
-from modules.simulation.simulation import Simulation
+
 from modules.utils.criteria import Criteria
+from modules.utils.simulation import Simulation, DecisionMaker, HumanPlayer
 
 if __name__ == '__main__':
-
-    surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
-
-    building_materials = dict()
-    logs = surface.filter(pattern='_log')
 
     try:
         # Retrieve the default build area
@@ -26,8 +22,11 @@ if __name__ == '__main__':
         build_area = Plot.from_coordinates(start, end)
 
         INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
-        build_area.compute_steep_map(2)
-        build_area.visualize_steep_map(2)
+
+        simu = Simulation(build_area, 1, 1, 1, HumanPlayer())
+        # simu = Simulation(build_area, 1, 1, 1, DecisionMaker())
+        simu.start()
+
 
         #
         # population = random.randrange(2, 4)

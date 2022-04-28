@@ -18,6 +18,9 @@ class Building:
         self.work_productivity = productivity
         self.food_productivity = food
 
+    def __str__(self):
+        return self.name
+
 
 class City:
     def __init__(self):
@@ -32,25 +35,27 @@ class City:
         return sum(b.bed_amount for b in self.buildings)
 
     @property
-    def food_production(self):
+    def work_production(self):
         return sum(b.work_productivity for b in self.buildings)
 
     @property
-    def work_production(self):
+    def food_production(self):
         return sum(b.food_productivity for b in self.buildings)
 
     def update(self):
-        self.productivity_available += self.work_production
+        self.productivity_available += max(0, min(self.work_production, self.population))
         self.food_available += self.food_production
 
         # Increase population if enough food
         if self.food_available >= self.population:
             self.food_available -= self.population
 
-            max_children_amount = int(self.population // 2)
-            # 10 for precaution
-            food_for_children = self.food_available - self.population - 10
-            self.population += min(food_for_children, max_children_amount)
+            if self.bed_amount >= self.population:
+                max_children_amount = min(int(self.population // 2), self.bed_amount - self.population)
+
+                # add extra value if you don't want to go out of food immediately
+                food_for_children = self.food_available - self.population
+                self.population += max(0, min(food_for_children, max_children_amount))
 
         # Decrease population else
         else:
@@ -62,11 +67,11 @@ class City:
             self.food_available = 0
 
     def __str__(self) -> str:
-        return f'population : {self.population}' \
+        return f'population : {self.population}/{self.bed_amount}' \
                f'\nFood : {self.food_available} (var: {self.food_production})' \
-               f'\nWork : {self.productivity_available} (var : {self.work_production})' \
+               f'\nWork : {self.productivity_available} (var : {max(0, min(self.work_production, self.population))})' \
                f'\nBuildings : {len(self.buildings)}' \
-               f'\n{" - ".join(b.name for b in self.buildings)}'
+               f'\n{" - ".join(str(b) for b in self.buildings)}'
 
 
 class DecisionMaker:
@@ -74,7 +79,9 @@ class DecisionMaker:
         pass
 
     def get_action(self, possible_actions):
-        return possible_actions[0]
+        act = random.choice(possible_actions)
+        print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}] :: Chose {act}')
+        return act
 
     def get_location(self, plot):
         return random.choice(plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)).coordinates
@@ -85,21 +92,29 @@ class HumanPlayer(DecisionMaker):
         super().__init__()
 
     def get_action(self, possible_actions):
-        pass
+
+        action_chose = None
+        while action_chose is None:
+            print('You have to choose an action')
+            for i, act in enumerate(possible_actions):
+                print(f'{i} - {act}')
+
+            try:
+                action_chose = possible_actions[int(input('Selected : '))]
+            except IndexError:
+                print('Your answer is incorrect')
+            except ValueError:
+                print('Your answer is incorrect')
+        return action_chose
 
     def get_location(self, plot):
         pass
 
 
 class Buildings(Enum):
-    HOUSE = (10, Building('House', None, 5, 0, 0))
-    FARM = (10, Building('Farm', 'Farmer', 0, 1, 5))
-
-
-class Action(Enum):
-    NOTHING = 0
-    HOUSE = 1
-    FARM = 2
+    HOUSE = (30, Building('House', None, 5, 0, 0))
+    FARM = (30, Building('Farm', 'Farmer', 0, 1, 5))
+    FACTORY = (50, Building('Factory', None, 0, 20, 0))
 
 
 class Simulation:
@@ -125,19 +140,20 @@ class Simulation:
             # Update city
             self.city.update()
 
-            action_index = self.decision_maker.get_action(self.get_available_actions())
+            action = self.decision_maker.get_action(self.get_available_actions())
 
             # Execute action
-            if Action(action_index) == Action.HOUSE:
-                cost, house = Buildings.HOUSE
-                if self.city.productivity_available >= cost:
-                    self.city.productivity_available -= cost
-                    self.city.buildings.append(Buildings.HOUSE.value)
-            elif Action(action_index) == Action.FARM:
-                cost, house = Buildings.HOUSE
-                if self.city.productivity_available >= cost:
-                    self.city.productivity_available -= cost
-                    self.city.buildings.append(Buildings.HOUSE.value)
+            for building in Buildings:
+                cost, house = building.value
+                if action == house:
+                    if self.city.productivity_available >= cost:
+                        self.city.productivity_available -= cost
+                        self.city.buildings.append(house)
+                        print(f'Added building {house}')
+                    else:
+                        print(f'Not enough productivity available for this ! {self.city.productivity_available}/{cost}')
+                    break
+
 
             # Get event
             print('No event this year')
@@ -147,12 +163,16 @@ class Simulation:
 
             # End turn
             print(f'End of year {year}, current stats : {self.city}')
+            # input('Enter to go to next year')
             year += 1
 
             # input('Enter to go to next year')
 
-
     def get_available_actions(self):
-        pass
+        actions = ['Nothing']
+        for b in Buildings:
+            if b.value[0] <= self.city.productivity_available:
+                actions.append(b.value[1])
+        return actions
 
 
