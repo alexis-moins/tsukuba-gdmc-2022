@@ -103,10 +103,15 @@ class City:
         """"""
         rotation = choice([0, 90, 180, 270])
         size = structure.get_size(rotation)
-        plot = self.plot.get_subplot(size)
+        padding = 10
+        plot = self.plot.get_subplot(size, padding=padding)
 
         if plot:
-            plot.remove_trees()
+            area_with_padding = BlockList(
+                list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
+                         filter(lambda coord: coord in self.plot, plot.surface(padding)))))
+            plot.remove_trees(area_with_padding)
+
             plot.build_foundation()
 
             structure.build(plot.start, rotation=rotation)

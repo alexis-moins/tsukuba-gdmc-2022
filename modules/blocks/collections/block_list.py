@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from collections import Counter
 from collections.abc import MutableSequence
 from typing import Any, Iterable, Generator, SupportsIndex
@@ -15,6 +16,7 @@ class BlockList(MutableSequence):
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""
+
         self.__blocks: list[Block] = list(iterable) if iterable else list()
         self.__coordinates = {block.coordinates.as_2D(): block for block in self.__blocks}
 
@@ -93,3 +95,12 @@ class BlockList(MutableSequence):
         """Return the string representation of the current list"""
         names = [str(block) for block in self]
         return 'BlockList([' + ', '.join(names) + '])'
+
+    def __add__(self, other: BlockList | list[Block]):
+        if isinstance(other, BlockList):
+            return BlockList(self.__blocks + other.__blocks)
+        elif isinstance(other, list):
+            return BlockList(self.__blocks + other)
+
+    def random_elements(self, amount=1) -> BlockList:
+        return BlockList(random.choices(self.__blocks, k=amount))
