@@ -184,7 +184,7 @@ class Plot:
         min_score = max_score
 
         for block in blocks_to_check:
-            block_score = self.__get_score(block.coordinates, surface, size)
+            block_score = self.__get_score(block.coordinates, surface, size, max_score)
 
             if block_score < min_score:
                 best_coordinates = block.coordinates
@@ -203,7 +203,7 @@ class Plot:
 
         return sub_plot
 
-    def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size) -> float:
+    def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -227,7 +227,19 @@ class Plot:
                 if not current_block:
                     return 100_000_000
 
-                score += abs(coordinates.y - current_block.coordinates.y)
+                # putting foundation isn't a problem compared to digging in the terrain, so we apply a
+                # worsening factor to digging
+                to_add = coordinates.y - current_block.coordinates.y
+                # placing foundation
+                if to_add > 0:
+                    score += int(to_add * .8)
+                # digging (bad)
+                else:
+                    score += abs(to_add) * 3
+
+                # Return earlier if score is already too bad
+                if score >= max_score:
+                    return score
 
         return score
 
