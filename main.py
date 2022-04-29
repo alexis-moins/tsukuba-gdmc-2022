@@ -11,12 +11,15 @@ from gdpc import interface as INTF
 
 from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
+from modules.utils import simulation
 from modules.utils.loader import BUILD_AREA
 
 from modules.utils.criteria import Criteria
 from modules.utils.simulation import Simulation, DecisionMaker, HumanPlayer
 
 if __name__ == '__main__':
+
+    INTF.setBuffering(True)
 
     try:
         # Retrieve the default build area
@@ -40,11 +43,8 @@ if __name__ == '__main__':
         # INTF.runCommand('kill @e[type=minecraft:item]')
         # INTF.runCommand('gamerule randomTickSpeed 3')
 
-        simulation.start()
 
         # Clearing drops & getting back to default tick speed
-        INTF.runCommand('kill @e[type=minecraft:item]')
-        INTF.runCommand('gamerule randomTickSpeed 3')
 
         # surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 

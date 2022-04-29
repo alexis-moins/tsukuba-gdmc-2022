@@ -1,7 +1,11 @@
 import random
 from enum import Enum
 
+from modules.blocks.collections.block_list import BlockList
+from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
+from modules.utils import loader
+from modules.utils.coordinates import Coordinates
 from modules.utils.criteria import Criteria
 
 
@@ -11,7 +15,8 @@ class Event:
 
 
 class Building:
-    def __init__(self, name, profession, bed_amount, productivity, food):
+    def __init__(self, structure, name, profession, bed_amount, productivity, food):
+        self.structure = structure
         self.name = name
         self.profession = profession
         self.bed_amount = bed_amount
@@ -23,12 +28,29 @@ class Building:
 
 
 class City:
-    def __init__(self):
-        self.buildings = [Building("Town hall", None, 5, 5, 5)]
+    def __init__(self, plot):
+        self.plot = plot
+        self.buildings = [Building(loader.structures['house1'], "Town hall", None, 5, 5, 5)]
         self.professions = {}
         self.population = 5
         self.productivity_available = 5
         self.food_available = 5
+
+    def add_building(self, building: Building, coord: Coordinates, rotation: int):
+        padding = 3
+        structure = building.structure
+        size = structure.get_size(rotation)
+        plot = Plot(*coord, size=size)
+
+        area_with_padding = BlockList(
+            list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
+                     filter(lambda coord: coord in self.plot, plot.surface(padding)))))
+        plot.remove_trees(area_with_padding)
+
+        plot.build_foundation()
+        structure.build(coord, rotation=rotation)
+
+        self.buildings.append(building)
 
     @property
     def bed_amount(self):
@@ -83,8 +105,12 @@ class DecisionMaker:
         print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}] :: Chose {act}')
         return act
 
-    def get_location(self, plot):
+    def get_coordinates(self, plot) -> Coordinates:
         return random.choice(plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)).coordinates
+
+    def get_rotation(self) -> int:
+        orientation = [0, 90, 180, 270]
+        return random.choice(orientation)
 
 
 class HumanPlayer(DecisionMaker):
@@ -107,18 +133,48 @@ class HumanPlayer(DecisionMaker):
                 print('Your answer is incorrect')
         return action_chose
 
-    def get_location(self, plot):
-        pass
+    def get_coordinates(self, plot):
+        print(f"Choose coordinates between {plot.start} and {plot.end}")
+        coord = None
+        while coord is None:
+            answer = input("Coordinates for the building X Z: ").split()
+            try:
+                x, z = int(answer[0]), int(answer[1])
+                coord = Coordinates(x, 0, z)
+                coord = plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord).coordinates
+            except Exception:
+                print("Something went wrong with your coordinate")
+
+            if coord and coord not in plot:
+                print(f"Coord {coord} not in plot !")
+                coord = None
+        return coord
+
+    def get_rotation(self):
+        angles = [0, 90, 180, 270]
+        print(f"Choose rotation between {angles}")
+        rotation = None
+        while rotation is None:
+            for i, ang in enumerate(angles):
+                print(f'{i} - {ang}')
+            try:
+                rotation = angles[int(input('Selected : '))]
+            except IndexError:
+                print('Your answer is incorrect')
+            except ValueError:
+                print('Your answer is incorrect')
+        return rotation
 
 
 class Buildings(Enum):
-    HOUSE = (30, Building('House', None, 5, 0, 0))
-    FARM = (30, Building('Farm', 'Farmer', 0, 1, 5))
-    FACTORY = (50, Building('Factory', None, 0, 20, 0))
+    HOUSE = (30, Building(loader.structures['house2'], 'House', None, 5, 0, 0))
+    FARM = (30, Building(loader.structures['house3'], 'Farm', 'Farmer', 0, 1, 5))
+    FACTORY = (50, Building(loader.structures['house3'], 'Factory', None, 0, 20, 0))
 
 
 class Simulation:
-    def __init__(self, plot: Plot, friendliness, field_productivity, humidity, decision_maker):
+    def __init__(self, plot: Plot, friendliness: float, field_productivity: float, humidity: float,
+                 decision_maker: DecisionMaker):
         self.decision_maker = decision_maker
         self.humidity = humidity
         self.field_productivity = field_productivity
@@ -133,7 +189,8 @@ class Simulation:
     def start(self):
         year = 0
 
-        self.city = City()
+        # If you have multiple cities, just give a subplot here
+        self.city = City(self.plot)
 
         while year < self.duration:
 
@@ -144,16 +201,17 @@ class Simulation:
 
             # Execute action
             for building in Buildings:
-                cost, house = building.value
-                if action == house:
+                cost, build = building.value
+                if action == build:
                     if self.city.productivity_available >= cost:
                         self.city.productivity_available -= cost
-                        self.city.buildings.append(house)
-                        print(f'Added building {house}')
+                        self.city.add_building(build,
+                                               self.decision_maker.get_coordinates(Plot(*self.city.plot.start, size=self.city.plot.size - build.structure.size)),
+                                               self.decision_maker.get_rotation())
+                        print(f'Added building {build}')
                     else:
                         print(f'Not enough productivity available for this ! {self.city.productivity_available}/{cost}')
                     break
-
 
             # Get event
             print('No event this year')
@@ -174,5 +232,3 @@ class Simulation:
             if b.value[0] <= self.city.productivity_available:
                 actions.append(b.value[1])
         return actions
-
-
