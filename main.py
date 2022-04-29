@@ -46,9 +46,11 @@ def start_simulation(years: int, population: int) -> None:
     build_area = Plot.from_coordinates(start, end)
 
     INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
-    simulation = Simulation(build_area, population=population, years=years)
 
-    simulation.start()
+    # simu = Simulation(build_area, 1, 1, 1, HumanPlayer())
+    simu = Simulation(build_area, 1, 1, 1, SmartDecisionMaker(build_area), duration=100)
+    # simu = Simulation(build_area, 1, 1, 1, DecisionMaker())
+    simu.start()
 
     INTF.runCommand('gamerule randomTickSpeed 3')
     INTF.runCommand('gamerule doEntityDrops true')
