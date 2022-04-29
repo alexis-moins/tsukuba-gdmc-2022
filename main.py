@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import time
 from dataclasses import astuple
 
 import sys
@@ -7,7 +9,7 @@ import launch_env
 
 from gdpc import interface as INTF
 
-
+from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
 from modules.utils.loader import BUILD_AREA
 from modules.simulation.simulation import Simulation
@@ -29,16 +31,10 @@ if __name__ == '__main__':
 
         INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
 
-        build_area.visualize()
+        population = random.randrange(2, 4)
+        simulation = Simulation(build_area, population=10, years=40)
 
-        build_area.compute_steep_map(2)
-        build_area.visualize_steep_map(2)
-
-        #
-        # population = random.randrange(2, 4)
-        # simulation = Simulation(build_area, population=population, years=10)
-        #
-        # simulation.start()
+        simulation.start()
         #
         # # Clearing drops & getting back to default tick speed
         # INTF.runCommand('kill @e[type=minecraft:item]')
@@ -75,23 +71,7 @@ if __name__ == '__main__':
         # houses = [structures['house1'], structures['house2'], structures['house3']]
 
         # #  Move the following code into a method in SuburbPlot
-        # for i in range(15):
-        #     iter_start = time.time()
-
-        #     house = random.choice(houses)
-
-        #     rotations = [0, 90, 180, 270]
-        #     rotation = random.choice(rotations)
-        #     area = house.get_area(rotation)
-
-        #     construction_plot = suburb.get_construction_plot(area)
-
-        #     if construction_plot:
-        #         construction_plot.build(house, materials=building_materials, rotation=rotation)
-        #         print(
-        #             f'\n=> Built structure {house.name} of size {house.size} at {construction_plot.build_start} in {time.time() - iter_start: .2f}s\n')
-        #     else:
-        #         print(f'=> Unable to find construction area for structure with size {house.size}')
+        #
 
     except KeyboardInterrupt:   # useful for aborting a run-away program
         print("Pressed Ctrl-C to kill program.")

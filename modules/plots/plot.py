@@ -3,7 +3,7 @@ from typing import Generator
 
 import numpy as np
 from numpy import ndarray
-from gdpc import interface as INTF
+from gdpc import interface as INTF, lookup
 
 import random
 import launch_env
@@ -34,6 +34,7 @@ class Plot:
         self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
 
         self.steep_map = None
+        self.priority_blocks: BlockList | None = None
 
     @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
@@ -49,12 +50,14 @@ class Plot:
     def _delta_sum(values: list, base: int) -> int:
         return sum(abs(base - v) for v in values)
 
-    def flat_heightmap_to_plot_coord(self, index: int, span: int):
+    def flat_heightmap_to_plot_block(self, index: int, span: int) -> Block | None:
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+
         side_length = self.size.x - 2 * span
         x = index // side_length
         z = index - side_length * x
-        #
-        return self.start.shift(x + span, 0, z + span)
+
+        return surface.find(self.start.shift(x + span, 0, z + span))
 
     def compute_steep_map(self, span: int = 1):
 
@@ -72,12 +75,20 @@ class Plot:
 
         self.steep_map = steep.flatten()
 
+        amount_of_prio = int((10 / 100) * self.steep_map.size)
+
+        prio = np.argpartition(self.steep_map, amount_of_prio)[:amount_of_prio]
+        blocks = []
+        for p in prio:
+            block = self.flat_heightmap_to_plot_block(p, span)
+            if block and block not in self.occupied_coordinates:
+                blocks.append(block)
+        self.priority_blocks = BlockList(blocks)
+
     def visualize_steep_map(self, span):
-        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         for i, value in enumerate(self.steep_map):
-            coord = self.flat_heightmap_to_plot_coord(i, span)
-            block = surface.find(coord)
+            block = self.flat_heightmap_to_plot_block(i, span)
             if block:
                 INTF.placeBlock(*block.coordinates, colors[min(int(value // span), 8)] + '_stained_glass')
 
@@ -140,16 +151,29 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, size: Size, padding: int = 5, speed: int = 200, max_score: int = 500) -> Plot | None:
+    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
         # TODO add .lower_than(max_height=200)
+
         surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
         surface = surface.without('water').not_inside(self.occupied_coordinates)
 
+        random_blocks = int(len(surface) * (10 / 100))
+
+        blocks_to_check = surface.random_elements(random_blocks)
+
+        if self.priority_blocks is None:
+            self.compute_steep_map(2)
+            if launch_env.DEBUG:
+                self.visualize_steep_map(2)
+
+        blocks_to_check = self.priority_blocks + blocks_to_check
+        print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
+
         # DEBUG
-        if launch_env.DEBUG:
-            colors = ['magenta', 'lime', 'orange', 'purple', 'white']
+        if launch_env.DEBUG and False:
+            colors = list(lookup.COLORS)
             random.shuffle(colors)
             for block in surface:
                 INTF.placeBlock(*block.coordinates, colors[0] + '_wool')
@@ -159,7 +183,7 @@ class Plot:
         # >Get the minimal score in the coordinate list
         min_score = max_score
 
-        for block in surface[::speed]:
+        for block in blocks_to_check:
             block_score = self.__get_score(block.coordinates, surface, size)
 
             if block_score < min_score:
