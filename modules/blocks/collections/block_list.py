@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import random
 from collections import Counter
 from collections.abc import MutableSequence
-from typing import Any, Collection, Iterable, Generator, SupportsIndex
+from typing import Any, Iterable, Generator, SupportsIndex
 
 from modules.blocks.block import Block
 from modules.blocks.collections.block_set import BlockSet
@@ -15,6 +16,7 @@ class BlockList(MutableSequence):
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""
+
         self.__blocks: list[Block] = list(iterable) if iterable else list()
         self.__coordinates = {block.coordinates.as_2D(): block for block in self.__blocks}
 
@@ -77,20 +79,28 @@ class BlockList(MutableSequence):
         """Return true if the current list is not empty, false otherwise"""
         return len(self.__blocks) > 0
 
-    def __getitem__(self, i: slice | SupportsIndex) -> Any:
+    def __getitem__(self, *arguments) -> Any:
         """Return the block at the given index"""
-        return BlockList(self.__blocks[i])
+        return self.__blocks.__getitem__(*arguments)
 
-    def __setitem__(self, i: slice | SupportsIndex, o: Block | Iterable[Block]) -> None:
+    def __setitem__(self, *arguments) -> None:
         """Set a block at a certain index or slice"""
-        self.__blocks[i] = o
-        # TODO add to self.__coordinates
+        self.__blocks.__setitem__(*arguments)
 
-    def __delitem__(self, *args) -> None:
+    def __delitem__(self, *arguments) -> None:
         """Delete the block at the given index or slice"""
-        self.__blocks.__delitem__(*args)
+        self.__blocks.__delitem__(*arguments)
 
     def __str__(self) -> str:
         """Return the string representation of the current list"""
         names = [str(block) for block in self]
         return 'BlockList([' + ', '.join(names) + '])'
+
+    def __add__(self, other: BlockList | list[Block]):
+        if isinstance(other, BlockList):
+            return BlockList(self.__blocks + other.__blocks)
+        elif isinstance(other, list):
+            return BlockList(self.__blocks + other)
+
+    def random_elements(self, amount=1) -> BlockList:
+        return BlockList(random.choices(self.__blocks, k=amount))

@@ -45,6 +45,12 @@ class Coordinates:
         """Return the list of neighbouring coordinates of the current coordinates"""
         return [self.towards(direction) for direction in Direction]
 
+    def with_points(self, x: int = None, y: int = None, z: int = None) -> Coordinates:
+        """"""
+        return Coordinates(x if x else self.x,
+                           y if y else self.y,
+                           z if z else self.z)
+
     def towards(self, direction: Direction) -> Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
         return Coordinates(self.x + direction.value[0], self.y + direction.value[1], self.z + direction.value[2])
