@@ -107,7 +107,7 @@ class Plot:
         """Return the desired heightmap of the given type"""
         # Add our custom
         if Criteria.MOTION_BLOCKING_NO_TREES not in WORLD.heightmaps:
-            WORLD.heightmaps[criteria.name] = self.__get_heightmap_no_trees()
+            WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_TREES.name] = self.__get_heightmap_no_trees()
 
         if criteria.name in WORLD.heightmaps.keys():
             return WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
@@ -243,10 +243,11 @@ class Plot:
 
         return score
 
-    def remove_trees(self) -> None:
+    def remove_trees(self, surface: BlockList = None) -> None:
         """Remove all plants at the surface of the current plot"""
         pattern = ('log', 'bush', 'mushroom')
-        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
+        if surface is None:
+            surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
         amount = 0
         unwanted_blocks = surface.filter(pattern).to_set()
