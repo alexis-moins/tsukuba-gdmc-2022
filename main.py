@@ -15,11 +15,12 @@ from modules.utils import simulation
 from modules.utils.loader import BUILD_AREA
 
 from modules.utils.criteria import Criteria
-from modules.utils.simulation import Simulation, DecisionMaker, HumanPlayer
+from modules.utils.simulation import Simulation, DecisionMaker, HumanPlayer, SmartDecisionMaker
 
 if __name__ == '__main__':
 
     INTF.setBuffering(True)
+    INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
 
     try:
         # Retrieve the default build area
@@ -28,7 +29,8 @@ if __name__ == '__main__':
 
         INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
 
-        simu = Simulation(build_area, 1, 1, 1, HumanPlayer())
+        # simu = Simulation(build_area, 1, 1, 1, HumanPlayer())
+        simu = Simulation(build_area, 1, 1, 1, SmartDecisionMaker(build_area), duration=100)
         # simu = Simulation(build_area, 1, 1, 1, DecisionMaker())
         simu.start()
 

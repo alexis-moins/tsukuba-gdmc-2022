@@ -5,7 +5,7 @@ from modules.blocks.collections.block_list import BlockList
 from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
 from modules.utils import loader
-from modules.utils.coordinates import Coordinates
+from modules.utils.coordinates import Coordinates, Size
 from modules.utils.criteria import Criteria
 
 
@@ -30,7 +30,7 @@ class Building:
 class City:
     def __init__(self, plot):
         self.plot = plot
-        self.buildings = [Building(loader.structures['house1'], "Town hall", None, 5, 5, 5)]
+        self.buildings = []
         self.professions = {}
         self.population = 5
         self.productivity_available = 5
@@ -105,7 +105,8 @@ class DecisionMaker:
         print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}] :: Chose {act}')
         return act
 
-    def get_coordinates(self, plot) -> Coordinates:
+    def get_coordinates(self, plot: Plot, size: Size) -> Coordinates:
+        plot = Plot(*plot.start, size=plot.size - size)
         return random.choice(plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)).coordinates
 
     def get_rotation(self) -> int:
@@ -133,7 +134,8 @@ class HumanPlayer(DecisionMaker):
                 print('Your answer is incorrect')
         return action_chose
 
-    def get_coordinates(self, plot):
+    def get_coordinates(self, plot: Plot, size: Size):
+        plot = Plot(*plot.start, size=plot.size - size)
         print(f"Choose coordinates between {plot.start} and {plot.end}")
         coord = None
         while coord is None:
@@ -166,21 +168,60 @@ class HumanPlayer(DecisionMaker):
         return rotation
 
 
+class SmartDecisionMaker(DecisionMaker):
+
+    def __init__(self, plot: Plot):
+        super().__init__()
+        self.plot = plot
+        self.chose_rotation = 0
+        self.chose_coordinates = None
+
+    def get_action(self, possible_actions):
+        print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}]')
+
+        # No point in computing anything if there is one option
+        if len(possible_actions) == 1:
+            return possible_actions[0]
+        # We check if there is a plot of a default size 20 by 20 available
+
+        # TODO : make actions an enum with buildings accessibles to get the building size and know if we can build them
+        dummy_plot = self.plot.get_subplot(Size(20, 20), occupy_coord=False)
+
+        if dummy_plot:
+            # TODO : Implement brain (Should be as good as Alexis' one (near perfect))
+            # TODO : If plot is calculated according to the correct size of the building, store the chosen coordinate
+            return random.choice(possible_actions)
+        else:
+            return 'NOTHING'
+
+    def get_coordinates(self, plot: Plot, size: Size) -> Coordinates:
+        padding = 3
+        subplot = self.plot.get_subplot(size, padding=padding)
+        return subplot.start
+
+    def get_rotation(self) -> int:
+        # TODO : Implement brain here too
+        orientation = [0, 90, 180, 270]
+        self.chose_rotation = 0
+        return random.choice(orientation)
+
+
 class Buildings(Enum):
     HOUSE = (30, Building(loader.structures['house2'], 'House', None, 5, 0, 0))
-    FARM = (30, Building(loader.structures['house3'], 'Farm', 'Farmer', 0, 1, 5))
-    FACTORY = (50, Building(loader.structures['house3'], 'Factory', None, 0, 20, 0))
+    FARM = (30, Building(loader.structures['farm'], 'Farm', 'Farmer', 0, 1, 5))
+    FORGE = (30, Building(loader.structures['forge'], 'Forge', None, 0, 20, 0))
+    SAWMILL = (30, Building(loader.structures['sawmill'], 'Sawmill', None, 0, 20, 0))
 
 
 class Simulation:
     def __init__(self, plot: Plot, friendliness: float, field_productivity: float, humidity: float,
-                 decision_maker: DecisionMaker):
+                 decision_maker: DecisionMaker, duration:int = 30):
         self.decision_maker = decision_maker
         self.humidity = humidity
         self.field_productivity = field_productivity
         self.friendliness = friendliness
         self.plot = plot
-        self.duration = 30
+        self.duration = duration
 
         self.city = None
         self.events = []
@@ -191,6 +232,14 @@ class Simulation:
 
         # If you have multiple cities, just give a subplot here
         self.city = City(self.plot)
+
+        print('Starting Game !!')
+        print('Give a rotation and a location for the Town hall')
+
+        town_hall = Building(loader.structures['house1'], "Town hall", None, 5, 5, 5)
+        r = self.decision_maker.get_rotation()
+        coord = self.decision_maker.get_coordinates(self.city.plot, town_hall.structure.get_size(r))
+        self.city.add_building(town_hall, coord, r)
 
         while year < self.duration:
 
@@ -205,9 +254,11 @@ class Simulation:
                 if action == build:
                     if self.city.productivity_available >= cost:
                         self.city.productivity_available -= cost
+                        rotation = self.decision_maker.get_rotation()
                         self.city.add_building(build,
-                                               self.decision_maker.get_coordinates(Plot(*self.city.plot.start, size=self.city.plot.size - build.structure.size)),
-                                               self.decision_maker.get_rotation())
+                                               self.decision_maker.get_coordinates(self.city.plot, build.structure.get_size(rotation)),
+                                               rotation
+                                               )
                         print(f'Added building {build}')
                     else:
                         print(f'Not enough productivity available for this ! {self.city.productivity_available}/{cost}')

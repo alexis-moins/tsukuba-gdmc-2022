@@ -151,7 +151,7 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500) -> Plot | None:
+    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
         # TODO add .lower_than(max_height=200)
@@ -198,8 +198,9 @@ class Plot:
 
         sub_plot = Plot(*best_coordinates, size=size)
 
-        for coordinates in sub_plot.surface(padding):
-            self.occupied_coordinates.add(coordinates.as_2D())
+        if occupy_coord:
+            for coordinates in sub_plot.surface(padding):
+                self.occupied_coordinates.add(coordinates.as_2D())
 
         return sub_plot
 
