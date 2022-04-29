@@ -108,7 +108,6 @@ class City:
         if plot:
             plot.remove_trees()
             plot.build_foundation()
-            plot.visualize()
 
             structure.build(plot.start, rotation=rotation)
 

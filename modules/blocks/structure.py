@@ -11,12 +11,13 @@ from modules.utils.coordinates import Coordinates, Size
 
 class Structure:
     """Class representing the minecraft construction of a structure block"""
-    __slots__ = ['name', 'size', 'blocks', 'variations']
+    __slots__ = ['name', 'size', 'blocks', 'entrance', 'variations']
 
     def __init__(self, name: str, size: Size, blocks: BlockList) -> None:
         """Parameterized constructor creating a new minecraft structure"""
         self.name = name
         self.size = size
+        self.entrance = Coordinates(0, 0, 0)
         self.blocks: tuple[BlockList] = tuple(blocks)
         self.variations: dict[str, BlockList] = dict()
 
