@@ -17,11 +17,11 @@ class Structure:
         """Parameterized constructor creating a new minecraft structure"""
         self.name = name
         self.size = size
-        self.entrance = Coordinates(0, 0, 0)
+
         self.blocks: tuple[BlockList] = tuple(blocks)
         self.variations: dict[str, BlockList] = dict()
 
-    @staticmethod
+    @ staticmethod
     def parse_nbt_file(file_name: str, ) -> Structure:
         """Parse the nbt file found under resources.structure.{file_name}.nbt and return a structure object"""
         file = NBTFile(f'resources/structures/{file_name}.nbt')
@@ -33,7 +33,7 @@ class Structure:
         print(f'=> Parsed structure <{file_name}>')
         return Structure(name=file_name, size=Size(dimensions[0], dimensions[2]), blocks=blocks)
 
-    @staticmethod
+    @ staticmethod
     def __parse_blocks(blocks: TAG_List, palette: TAG_List) -> BlockList:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
@@ -74,5 +74,12 @@ class Structure:
 
         for block in blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
+
+        doors = blocks.filter('emerald')
+        entrance: Block = doors[0].coordinates.shift(0, 1, 0) if doors else None
+
+        print(f'structure <{self.name}> entrance: {entrance}')
+        if entrance:
+            INTERFACE.placeBlock(*entrance, 'minecraft:glowstone')
 
         INTERFACE.sendBlocks()

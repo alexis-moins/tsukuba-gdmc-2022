@@ -269,18 +269,21 @@ class Plot:
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
 
-    def build_foundation(self, block: str = 'minecraft:stone_bricks') -> None:
-        """"""
-        for coord in self.__iterate_over_air(self.start.y - 1):
+    def build_foundation(self) -> None:
+        """Build the foundations under the house"""
+        blocks = ('stone_bricks', 'diorite', 'cobblestone')
+        weights = (75, 15, 10)
+
+        for coord in self.__iterate_over_air(self.start.y):
+            block = random.choices(blocks, weights)
             INTF.placeBlock(*coord, block)
         INTF.sendBlocks()
 
     def __iterate_over_air(self, max_y: int) -> Coordinates:
-        for block in self.get_blocks(Criteria.WORLD_SURFACE):
-            y_shift = 1
-            while block.coordinates.y + y_shift <= max_y:
-                yield block.coordinates.shift(0, y_shift, 0)
-                y_shift += 1
+        """"""
+        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
+            for new_y in range(block.coordinates.y, max_y):
+                yield block.coordinates.with_points(y=new_y)
 
     def __contains__(self, coordinates: Coordinates) -> bool:
         """Return true if the current plot contains the given coordinates"""

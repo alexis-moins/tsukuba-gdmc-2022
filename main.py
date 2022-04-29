@@ -35,10 +35,10 @@ if __name__ == '__main__':
         simulation = Simulation(build_area, population=10, years=40)
 
         simulation.start()
-        #
-        # # Clearing drops & getting back to default tick speed
-        # INTF.runCommand('kill @e[type=minecraft:item]')
-        # INTF.runCommand('gamerule randomTickSpeed 3')
+
+        # Clearing drops & getting back to default tick speed
+        INTF.runCommand('kill @e[type=minecraft:item]')
+        INTF.runCommand('gamerule randomTickSpeed 3')
 
         # surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
