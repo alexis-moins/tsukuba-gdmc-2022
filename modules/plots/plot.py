@@ -198,7 +198,7 @@ class Plot:
 
         sub_plot = Plot(*best_coordinates, size=size)
 
-        for coordinates in sub_plot:
+        for coordinates in sub_plot.surface(padding):
             self.occupied_coordinates.add(coordinates.as_2D())
 
         return sub_plot
@@ -287,9 +287,8 @@ class Plot:
             self.start.y <= coordinates.y < self.end.y and \
             self.start.z <= coordinates.z < self.end.z
 
-    def __iter__(self) -> Generator[Coordinates]:
+    def surface(self, padding: int = 0) -> Generator[Coordinates]:
         """Return a generator over the coordinates of the current plot"""
-        padding = 5
         for x in range(-padding, self.size.x + padding):
             for z in range(-padding, self.size.z + padding):
                 yield self.start.shift(x, 0, z)
