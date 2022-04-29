@@ -113,7 +113,6 @@ class City:
             plot.remove_trees(area_with_padding)
 
             plot.build_foundation()
-            plot.visualize()
 
             structure.build(plot.start, rotation=rotation)
 

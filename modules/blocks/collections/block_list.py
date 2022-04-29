@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 from collections import Counter
 from collections.abc import MutableSequence
-from typing import Any, Collection, Iterable, Generator, SupportsIndex
+from typing import Any, Iterable, Generator, SupportsIndex
 
 from modules.blocks.block import Block
 from modules.blocks.collections.block_set import BlockSet
@@ -83,10 +83,9 @@ class BlockList(MutableSequence):
         """Return the block at the given index"""
         return BlockList(self.__blocks[i])
 
-    def __setitem__(self, i: slice | SupportsIndex, o: Block | Iterable[Block]) -> None:
+    def __setitem__(self, a: slice | SupportsIndex, b: Block | Iterable[Block]) -> None:
         """Set a block at a certain index or slice"""
-        self.__blocks[i] = o
-        # TODO add to self.__coordinates
+        self.__blocks[a] = b
 
     def __delitem__(self, *args) -> None:
         """Delete the block at the given index or slice"""
