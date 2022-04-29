@@ -3,7 +3,7 @@ import gdpc.interface as INTERFACE
 from gdpc.worldLoader import WorldSlice
 
 from typing import Iterator
-from dataclasses import astuple, dataclass
+from dataclasses import dataclass
 
 from nbt.nbt import MalformedFileError
 from modules.blocks.structure import Structure

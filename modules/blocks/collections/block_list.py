@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from collections import Counter
-from collections.abc import MutableSequence
+from collections.abc import Sequence
 from typing import Any, Iterable, Generator, SupportsIndex
 
 from modules.blocks.block import Block
@@ -10,13 +10,12 @@ from modules.blocks.collections.block_set import BlockSet
 from modules.utils.coordinates import Coordinates, Size
 
 
-class BlockList(MutableSequence):
-    """Class representing a list of blocks, implements the abstract MutableSequence"""
+class BlockList(Sequence):
+    """Class representing a list of blocks, implements the abstract Sequence"""
     __slots__ = ['__blocks', '__coordinates']
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""
-
         self.__blocks: list[Block] = list(iterable) if iterable else list()
         self.__coordinates = {block.coordinates.as_2D(): block for block in self.__blocks}
 
@@ -82,14 +81,6 @@ class BlockList(MutableSequence):
     def __getitem__(self, *arguments) -> Any:
         """Return the block at the given index"""
         return self.__blocks.__getitem__(*arguments)
-
-    def __setitem__(self, *arguments) -> None:
-        """Set a block at a certain index or slice"""
-        self.__blocks.__setitem__(*arguments)
-
-    def __delitem__(self, *arguments) -> None:
-        """Delete the block at the given index or slice"""
-        self.__blocks.__delitem__(*arguments)
 
     def __str__(self) -> str:
         """Return the string representation of the current list"""
