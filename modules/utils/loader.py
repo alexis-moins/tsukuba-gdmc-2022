@@ -12,7 +12,8 @@ from modules.utils.coordinates import Coordinates
 # Mapping of structure name -> Structure object
 structures: dict[str, Structure] = {}
 
-files = ('house1', 'house2', 'house3')
+files = ('house1', 'house2', 'house3', 'farm', 'forge', 'sawmill',
+         'extensions/sawmill1', 'extensions/sawmill2')
 
 for file in files:
     structure = Structure.parse_nbt_file(file)

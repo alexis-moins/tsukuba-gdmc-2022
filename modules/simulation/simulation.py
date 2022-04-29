@@ -21,10 +21,10 @@ class Profession(Enum):
     """Enumeration of the available professions for agents"""
 
     # Cultivate the ground to get food
-    FARMER = structures['house1']
+    FARMER = structures['farm']
 
     # Cuts down trees to get wood
-    LUMBERJACK = structures['house2']
+    LUMBERJACK = structures['sawmill']
 
 
 class Building:
