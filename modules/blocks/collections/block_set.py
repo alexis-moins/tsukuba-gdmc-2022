@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import MutableSet
-from typing import Iterable, Generator, Set, Tuple
+from typing import Iterable, Generator
 
 from modules.blocks.block import Block
 
 
 class BlockSet(MutableSet):
-    """Class representing a set of blocks, implements the abstract MutableSet"""
+    """Class representing a set of blocks, implements the abstract Set"""
     __slots__ = ('__blocks', )
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new set of blocks"""
-        self.__blocks: Set[Block] = set(iterable) if iterable else set()
+        self.__blocks: set[Block] = set(iterable) if iterable else set()
 
     @property
     def counter(self) -> Counter[str]:
@@ -27,7 +27,7 @@ class BlockSet(MutableSet):
         occurences = self.counter.most_common(1)
         return occurences[0][0] if occurences else None
 
-    def filter(self, pattern: str | Tuple[str]) -> BlockSet:
+    def filter(self, pattern: str | tuple[str]) -> BlockSet:
         """Return a subset of blocks containing the given pattern in their name"""
         if type(pattern) == str:
             pattern = (pattern, )
