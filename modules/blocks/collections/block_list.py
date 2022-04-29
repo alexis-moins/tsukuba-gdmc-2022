@@ -77,17 +77,17 @@ class BlockList(MutableSequence):
         """Return true if the current list is not empty, false otherwise"""
         return len(self.__blocks) > 0
 
-    def __getitem__(self, i: slice | SupportsIndex) -> Any:
+    def __getitem__(self, *arguments) -> Any:
         """Return the block at the given index"""
-        return BlockList(self.__blocks[i])
+        return self.__blocks.__getitem__(*arguments)
 
-    def __setitem__(self, a: slice | SupportsIndex, b: Block | Iterable[Block]) -> None:
+    def __setitem__(self, *arguments) -> None:
         """Set a block at a certain index or slice"""
-        self.__blocks[a] = b
+        self.__blocks.__setitem__(*arguments)
 
-    def __delitem__(self, *args) -> None:
+    def __delitem__(self, *arguments) -> None:
         """Delete the block at the given index or slice"""
-        self.__blocks.__delitem__(*args)
+        self.__blocks.__delitem__(*arguments)
 
     def __str__(self) -> str:
         """Return the string representation of the current list"""
