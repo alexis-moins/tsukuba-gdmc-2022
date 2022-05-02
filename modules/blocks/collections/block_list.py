@@ -66,6 +66,11 @@ class BlockList(Sequence):
             return self.__coordinates[coordinates.as_2D()]
         return None
 
+    def near(self, coordinates: Coordinates, distance: int):
+        """Return the list of block with a distance < the given distance"""
+        iterable = [block for block in self.__blocks if block.coordinates.distance(coordinates) <= distance]
+        return BlockList(iterable)
+
     def to_set(self) -> BlockSet:
         """Return the current block list converted into a block set"""
         return BlockSet(self)

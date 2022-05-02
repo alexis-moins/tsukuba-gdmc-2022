@@ -11,6 +11,7 @@ from numpy import ndarray
 import env
 from modules.blocks.block import Block
 from modules.blocks.collections.block_list import BlockList
+from modules.utils.building_types import BuildingTypes
 from modules.utils.coordinates import Coordinates
 from modules.utils.coordinates import Size
 from modules.utils.criteria import Criteria
@@ -37,6 +38,10 @@ class Plot:
         self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
 
         self.steep_map = None
+        self.__tree_blocks = None
+        self.__water_blocks = None
+        self.__grass_blocks = None
+        self.__stone_blocks = None
         self.priority_blocks: BlockList | None = None
 
     @staticmethod
@@ -154,7 +159,8 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True) -> Plot | None:
+    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True,
+                    building_type: BuildingTypes = BuildingTypes.NONE) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
         # TODO add .lower_than(max_height=200)
@@ -168,6 +174,10 @@ class Plot:
 
         if self.priority_blocks is None:
             self.compute_steep_map(2)
+            self.__water_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('water')
+            self.__tree_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('log')
+            self.__grass_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('grass')
+            self.__stone_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('stone')
             if env.DEBUG:
                 self.visualize_steep_map(2)
 
@@ -207,7 +217,8 @@ class Plot:
 
         return sub_plot
 
-    def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int) -> float:
+    def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
+                    building_type: BuildingTypes = BuildingTypes.NONE) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -244,6 +255,13 @@ class Plot:
                 # Return earlier if score is already too bad
                 if score >= max_score:
                     return score
+
+        # And now modifications for specials buildings
+
+        if building_type == BuildingTypes.FARM:
+            # Farm => Better with grass and water
+
+            all_surface = .near(coordinates, 10).count()
 
         return score
 
