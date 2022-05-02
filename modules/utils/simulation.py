@@ -170,9 +170,10 @@ class HumanPlayer(DecisionMaker):
 
 class SmartDecisionMaker(DecisionMaker):
 
-    def __init__(self, plot: Plot):
+    def __init__(self, plot: Plot, city: City):
         super().__init__()
         self.plot = plot
+        self.city = city
         self.chose_rotation = 0
         self.chose_coordinates = None
 
@@ -182,6 +183,10 @@ class SmartDecisionMaker(DecisionMaker):
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
             return possible_actions[0]
+
+        city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD), (self.city.work_production, ActionTypes.WORK)]
+        next_action = min(city_stats, key=lambda item: item[0])
+
         # We check if there is a plot of a default size 20 by 20 available
 
         # TODO : make actions an enum with buildings accessibles to get the building size and know if we can build them
@@ -212,10 +217,19 @@ class Buildings(Enum):
     FORGE = (30, Building(loader.structures['forge'], 'Forge', None, 0, 20, 0))
     SAWMILL = (30, Building(loader.structures['sawmill'], 'Sawmill', None, 0, 20, 0))
 
+class ActionTypes(Enum):
+    BED = 0
+    FOOD = 1
+    WORK = 2
+
+
+action_types = {Buildings.HOUSE: ActionTypes.BED, Buildings.FARM: ActionTypes.FOOD,
+                Buildings.SAWMILL: ActionTypes.WORK, Buildings.FORGE: ActionTypes.WORK}
+
 
 class Simulation:
     def __init__(self, plot: Plot, friendliness: float, field_productivity: float, humidity: float,
-                 decision_maker: DecisionMaker, duration:int = 30):
+                 decision_maker: DecisionMaker, duration: int = 30):
         self.decision_maker = decision_maker
         self.humidity = humidity
         self.field_productivity = field_productivity
@@ -256,7 +270,8 @@ class Simulation:
                         self.city.productivity_available -= cost
                         rotation = self.decision_maker.get_rotation()
                         self.city.add_building(build,
-                                               self.decision_maker.get_coordinates(self.city.plot, build.structure.get_size(rotation)),
+                                               self.decision_maker.get_coordinates(self.city.plot,
+                                                                                   build.structure.get_size(rotation)),
                                                rotation
                                                )
                         print(f'Added building {build}')
