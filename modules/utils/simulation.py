@@ -33,7 +33,7 @@ class City:
         self.buildings = []
         self.professions = {}
         self.population = 5
-        self.productivity_available = 5
+        self.productivity = 5
         self.food_available = 5
 
     def add_building(self, building: Building, coord: Coordinates, rotation: int):
@@ -65,7 +65,7 @@ class City:
         return sum(b.food_productivity for b in self.buildings)
 
     def update(self):
-        self.productivity_available += max(0, min(self.work_production, self.population))
+        self.productivity = max(0, min(self.work_production, self.population))
         self.food_available += self.food_production
 
         # Increase population if enough food
@@ -91,14 +91,14 @@ class City:
     def __str__(self) -> str:
         return f'population : {self.population}/{self.bed_amount}' \
                f'\nFood : {self.food_available} (var: {self.food_production})' \
-               f'\nWork : {self.productivity_available} (var : {max(0, min(self.work_production, self.population))})' \
+               f'\nWork : {self.productivity} (var : {max(0, min(self.work_production, self.population))})' \
                f'\nBuildings : {len(self.buildings)}' \
                f'\n{" - ".join(str(b) for b in self.buildings)}'
 
 
 class DecisionMaker:
     def __init__(self):
-        pass
+        self.city = None
 
     def get_action(self, possible_actions):
         act = random.choice(possible_actions)
@@ -170,10 +170,9 @@ class HumanPlayer(DecisionMaker):
 
 class SmartDecisionMaker(DecisionMaker):
 
-    def __init__(self, plot: Plot, city: City):
+    def __init__(self, plot: Plot):
         super().__init__()
         self.plot = plot
-        self.city = city
         self.chose_rotation = 0
         self.chose_coordinates = None
 
@@ -185,7 +184,13 @@ class SmartDecisionMaker(DecisionMaker):
             return possible_actions[0]
 
         city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD), (self.city.work_production, ActionTypes.WORK)]
-        next_action = min(city_stats, key=lambda item: item[0])
+        next_action_type = min(city_stats, key=lambda item: item[0])[1]
+
+        priority_actions = []
+        for a in possible_actions:
+            if a in action_types and action_types[a] == next_action_type:
+                priority_actions.append(a)
+
 
         # We check if there is a plot of a default size 20 by 20 available
 
@@ -195,7 +200,10 @@ class SmartDecisionMaker(DecisionMaker):
         if dummy_plot:
             # TODO : Implement brain (Should be as good as Alexis' one (near perfect))
             # TODO : If plot is calculated according to the correct size of the building, store the chosen coordinate
-            return random.choice(possible_actions)
+            if priority_actions:
+                return random.choice(priority_actions)
+            else:
+                return random.choice(possible_actions)
         else:
             return 'NOTHING'
 
@@ -212,10 +220,11 @@ class SmartDecisionMaker(DecisionMaker):
 
 
 class Buildings(Enum):
-    HOUSE = (30, Building(loader.structures['house2'], 'House', None, 5, 0, 0))
-    FARM = (30, Building(loader.structures['farm'], 'Farm', 'Farmer', 0, 1, 5))
-    FORGE = (30, Building(loader.structures['forge'], 'Forge', None, 0, 20, 0))
-    SAWMILL = (30, Building(loader.structures['sawmill'], 'Sawmill', None, 0, 20, 0))
+    HOUSE = (10, Building(loader.structures['house2'], 'House', None, 5, 0, 0))
+    FARM = (10, Building(loader.structures['farm'], 'Farm', 'Farmer', 0, 1, 5))
+    FORGE = (20, Building(loader.structures['forge'], 'Forge', None, 0, 20, 0))
+    SAWMILL = (10, Building(loader.structures['sawmill'], 'Sawmill', None, 0, 5, 0))
+
 
 class ActionTypes(Enum):
     BED = 0
@@ -246,11 +255,12 @@ class Simulation:
 
         # If you have multiple cities, just give a subplot here
         self.city = City(self.plot)
+        self.decision_maker.city = self.city
 
         print('Starting Game !!')
         print('Give a rotation and a location for the Town hall')
 
-        town_hall = Building(loader.structures['house1'], "Town hall", None, 5, 5, 5)
+        town_hall = Building(loader.structures['house1'], "Town hall", None, 10, 10, 10)
         r = self.decision_maker.get_rotation()
         coord = self.decision_maker.get_coordinates(self.city.plot, town_hall.structure.get_size(r))
         self.city.add_building(town_hall, coord, r)
@@ -266,8 +276,7 @@ class Simulation:
             for building in Buildings:
                 cost, build = building.value
                 if action == build:
-                    if self.city.productivity_available >= cost:
-                        self.city.productivity_available -= cost
+                    if self.city.productivity >= cost:
                         rotation = self.decision_maker.get_rotation()
                         self.city.add_building(build,
                                                self.decision_maker.get_coordinates(self.city.plot,
@@ -276,7 +285,7 @@ class Simulation:
                                                )
                         print(f'Added building {build}')
                     else:
-                        print(f'Not enough productivity available for this ! {self.city.productivity_available}/{cost}')
+                        print(f'Not enough productivity available for this ! {self.city.productivity}/{cost}')
                     break
 
             # Get event
@@ -295,6 +304,6 @@ class Simulation:
     def get_available_actions(self):
         actions = ['Nothing']
         for b in Buildings:
-            if b.value[0] <= self.city.productivity_available:
+            if b.value[0] <= self.city.productivity:
                 actions.append(b.value[1])
         return actions
