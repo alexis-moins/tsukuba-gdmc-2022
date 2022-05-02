@@ -14,6 +14,7 @@ from modules.utils.simulation import HumanPlayer
 from modules.utils.simulation import Simulation
 from modules.utils.simulation import SmartDecisionMaker
 
+
 @click.command()
 @click.option('-t', '--tick-speed', default=200, type=int, show_default=True, help='Set the number of entities checked at each tick')
 @click.option('-d', '--debug', is_flag=True, default=False, help='Launch the simulation in debug mode')
