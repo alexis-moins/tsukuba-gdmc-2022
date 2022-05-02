@@ -1,6 +1,9 @@
 import random
 from enum import Enum
 
+import networkx as nx
+from gdpc import interface as INTERFACE
+
 from modules.blocks.collections.block_list import BlockList
 from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
@@ -26,6 +29,7 @@ class Building:
         self.work_productivity = productivity
         self.food_productivity = food
         self.build_type = build_type
+        self.plot: Plot = None
 
     def __str__(self):
         return self.name
@@ -34,17 +38,30 @@ class Building:
 class City:
     def __init__(self, plot):
         self.plot = plot
-        self.buildings = []
+        self.buildings: list[Building] = []
         self.professions = {}
         self.population = 5
         self.productivity = 5
         self.food_available = 5
+
+        self.graph = nx.Graph()
+        self.roads: list[Coordinates] = list()
+
+        for block in self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
+            self.graph.add_node(block.coordinates)
+
+        for coordinates in self.graph.nodes.keys():
+            for coord in coordinates.neighbours():
+                if coord in self.graph.nodes.keys():
+                    self.graph.add_edge(coordinates, coord)
 
     def add_building(self, building: Building, coord: Coordinates, rotation: int):
         padding = 3
         structure = building.structure
         size = structure.get_size(rotation)
         plot = Plot(*coord, size=size)
+
+        building.plot = plot
 
         area_with_padding = BlockList(
             list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
@@ -55,6 +72,35 @@ class City:
         structure.build(coord, rotation=rotation)
 
         self.buildings.append(building)
+
+        coordinates = plot.start
+
+        if len(self.buildings) == 2:
+            print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
+            for coord in nx.dijkstra_path(self.graph, self.buildings[0].plot.start,
+                                          self.buildings[1].plot.start):
+                INTERFACE.placeBlock(*coord, 'minecraft:glowstone')
+                self.roads.append(coord)
+
+        elif len(self.buildings) >= 3 and self.roads:
+            closest_road = self.closest_coordinates(coordinates)
+
+            for coord in nx.dijkstra_path(self.graph, coordinates, closest_road):
+                INTERFACE.placeBlock(*coord, 'minecraft:glowstone')
+
+    def closest_coordinates(self, coordinates: Coordinates):
+        """"""
+        if len(self.roads) == 1:
+            return self.roads[0]
+
+        closest_coord = self.roads[0]
+        min_distance = coordinates.distance(closest_coord)
+        for coord in self.roads[1:]:
+            if distance := coordinates.distance(coord) < min_distance:
+                closest_coord = coord
+                min_distance = distance
+
+        return closest_coord
 
     @property
     def bed_amount(self):
@@ -237,11 +283,14 @@ class Buildings(Enum):
         20, Building(loader.structures['extensions/farm_wheat_1'], 'farm_wheat_1', 'Farmer', 0, 0, 5, BuildingTypes.FARM))
     WHEAT_PACK_2 = (
         20, Building(loader.structures['extensions/farm_wheat_2'], 'farm_wheat_2', 'Farmer', 0, 0, 5, BuildingTypes.FARM))
-    ORE_PACK = (50, Building(loader.structures['extensions/forge_ore_pack'], 'forge_ore_pack', None, 0, 5, 0, BuildingTypes.FORGING))
+    ORE_PACK = (50, Building(loader.structures['extensions/forge_ore_pack'],
+                'forge_ore_pack', None, 0, 5, 0, BuildingTypes.FORGING))
     FORGE = (20, Building(loader.structures['forge'], 'forge', None, 0, 20, 0, BuildingTypes.FORGING))
     SAWMILL = (20, Building(loader.structures['sawmill'], 'sawmill', None, 0, 10, 0, BuildingTypes.WOODCUTTING))
-    WOOD_STACK = (10, Building(loader.structures['extensions/sawmill2'], 'sawmill2', None, 0, 5, 0, BuildingTypes.WOODCUTTING))
-    CUT_TREE = (50, Building(loader.structures['extensions/sawmill1'], 'sawmill1', None, 0, 20, 0, BuildingTypes.WOODCUTTING))
+    WOOD_STACK = (10, Building(loader.structures['extensions/sawmill2'],
+                  'sawmill2', None, 0, 5, 0, BuildingTypes.WOODCUTTING))
+    CUT_TREE = (50, Building(loader.structures['extensions/sawmill1'],
+                'sawmill1', None, 0, 20, 0, BuildingTypes.WOODCUTTING))
 
 
 class ActionTypes(Enum):
