@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import MutableSet
-from typing import Iterable, Generator
+from typing import Generator
+from typing import Iterable
 
 from modules.blocks.block import Block
 

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import astuple
+from dataclasses import dataclass
+from typing import Any
+from typing import Iterator
+
 import numpy as np
 from nbt.nbt import TAG_List
-from typing import Any, Iterator
-from dataclasses import astuple, dataclass
 
 from modules.utils.direction import Direction
 

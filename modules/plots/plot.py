@@ -1,19 +1,22 @@
 from __future__ import annotations
+
+import random
 from typing import Generator
 
 import numpy as np
+from gdpc import interface as INTF
+from gdpc import lookup
 from numpy import ndarray
-from gdpc import interface as INTF, lookup
 
-import random
-import launch_env
-from modules.utils.criteria import Criteria
-from modules.utils.coordinates import Coordinates, Size
-
+import env
 from modules.blocks.block import Block
 from modules.blocks.collections.block_list import BlockList
-
-from modules.utils.loader import WORLD, BUILD_AREA, update_world_slice
+from modules.utils.coordinates import Coordinates
+from modules.utils.coordinates import Size
+from modules.utils.criteria import Criteria
+from modules.utils.loader import BUILD_AREA
+from modules.utils.loader import update_world_slice
+from modules.utils.loader import WORLD
 
 
 class Plot:
@@ -165,14 +168,14 @@ class Plot:
 
         if self.priority_blocks is None:
             self.compute_steep_map(2)
-            if launch_env.DEBUG:
+            if env.DEBUG:
                 self.visualize_steep_map(2)
 
         blocks_to_check = self.priority_blocks + blocks_to_check
         print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
 
         # DEBUG
-        if launch_env.DEBUG and False:
+        if env.DEBUG and False:
             colors = list(lookup.COLORS)
             random.shuffle(colors)
             for block in surface:
@@ -190,7 +193,7 @@ class Plot:
                 best_coordinates = block.coordinates
                 min_score = block_score
 
-        if launch_env.DEBUG:
+        if env.DEBUG:
             print(f'Best score : {min_score}')
 
         if min_score >= max_score:

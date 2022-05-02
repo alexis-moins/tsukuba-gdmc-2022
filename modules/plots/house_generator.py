@@ -1,22 +1,18 @@
-
-
 # Class utility is only to load modules 1 time and store them
 # Should be a singleton so
 import random
 from functools import reduce
-from typing import Tuple, List
+from typing import List
+from typing import Tuple
 
-
+from gdpc import geometry
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
-from gdpc import geometry
-
-
+from modules.blocks.structure import Structure
 from modules.plots.construction_plot import ConstructionPlot
 from modules.utils.coordinates import Coordinates
 from modules.utils.direction import Direction
-from modules.blocks.structure import Structure
 
 
 class HouseGenerator:
@@ -72,11 +68,11 @@ class HouseGenerator:
         # + 2 because of each corners having one intersecting point with the wall
         """Long explanation for the + 2
         our pattern joins elements (corners/walls) by having on all of them the same extremities and superposing them.
-        
+
         So, for example, a wall of size 4 has : [extremity , block , block , extremity]
         and if we add another wall of size 4 we obtain : [extremity , block , block , extremity , block , block , extremity]
         which would be a wall of size 7
-        
+
         Since our corners make up for 2 intersections, we add + 2 to the length needed
         """
         if size[0] != size[1]:
