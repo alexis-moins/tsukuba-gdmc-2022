@@ -6,7 +6,8 @@ from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
 from modules.utils import loader
 from modules.utils.building_types import BuildingTypes
-from modules.utils.coordinates import Coordinates, Size
+from modules.utils.coordinates import Coordinates
+from modules.utils.coordinates import Size
 from modules.utils.criteria import Criteria
 
 
@@ -230,10 +231,17 @@ class SmartDecisionMaker(DecisionMaker):
 
 
 class Buildings(Enum):
-    HOUSE = (10, Building(loader.structures['house2'], 'House', None, 5, 0, 0))
-    FARM = (10, Building(loader.structures['farm'], 'Farm', 'Farmer', 0, 1, 5))
-    FORGE = (20, Building(loader.structures['forge'], 'Forge', None, 0, 20, 0))
-    SAWMILL = (10, Building(loader.structures['sawmill'], 'Sawmill', None, 0, 5, 0))
+    HOUSE = (10, Building(loader.structures['house2'], 'house2', None, 5, 0, 0, BuildingTypes.HOUSING))
+    FARM = (10, Building(loader.structures['farm'], 'farm', 'Farmer', 0, 1, 5, BuildingTypes.FARM))
+    WHEAT_PACK_1 = (
+        20, Building(loader.structures['extensions/farm_wheat_1'], 'farm_wheat_1', 'Farmer', 0, 0, 5, BuildingTypes.FARM))
+    WHEAT_PACK_2 = (
+        20, Building(loader.structures['extensions/farm_wheat_2'], 'farm_wheat_2', 'Farmer', 0, 0, 5, BuildingTypes.FARM))
+    ORE_PACK = (50, Building(loader.structures['extensions/forge_ore_pack'], 'forge_ore_pack', None, 0, 5, 0, BuildingTypes.FORGING))
+    FORGE = (20, Building(loader.structures['forge'], 'forge', None, 0, 20, 0, BuildingTypes.FORGING))
+    SAWMILL = (20, Building(loader.structures['sawmill'], 'sawmill', None, 0, 10, 0, BuildingTypes.WOODCUTTING))
+    WOOD_STACK = (10, Building(loader.structures['extensions/sawmill2'], 'sawmill2', None, 0, 5, 0, BuildingTypes.WOODCUTTING))
+    CUT_TREE = (50, Building(loader.structures['extensions/sawmill1'], 'sawmill1', None, 0, 20, 0, BuildingTypes.WOODCUTTING))
 
 
 class ActionTypes(Enum):

@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import click
-
 from gdpc import interface as INTF
 
 import env
 from modules.blocks.block import Block
 from modules.plots.plot import Plot
 from modules.utils import simulation
-from modules.utils.loader import BUILD_AREA
-
 from modules.utils.criteria import Criteria
-from modules.utils.simulation import Simulation, DecisionMaker, HumanPlayer, SmartDecisionMaker
+from modules.utils.loader import BUILD_AREA
+from modules.utils.simulation import DecisionMaker
+from modules.utils.simulation import HumanPlayer
+from modules.utils.simulation import Simulation
+from modules.utils.simulation import SmartDecisionMaker
 
 @click.command()
 @click.option('-t', '--tick-speed', default=200, type=int, show_default=True, help='Set the number of entities checked at each tick')
