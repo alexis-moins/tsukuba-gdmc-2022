@@ -65,3 +65,29 @@ Once the environment is ready, simply starta single-player minecraft game and la
 ```bash
 python main.py
 ```
+
+## Simulation rules
+
+- We have 3 main variables
+  1. The population, driven by the bed amount
+  2. The food, driven by the food production
+  3. The work productivity, driven by the population and the building work capacity
+
+
+- Each turn:
+  - The city is updated:
+    - Food is produced then consumed
+    - Each inhabitant consume 1 food
+    - If there is not enough food, all unfed inhabitants die
+    - Productivity is computed as the minimum of the population and the buildings work capacity
+  
+
+  - The player plays:
+    - Depending on its city's productivity, he can place some building that will increase : the bed amount, the food production or the work capacity
+    
+
+
+In the futur, environment will have effect on productivity : farm will be less effective in cold biomes, wood cutting will depend on the tree frequency, etc.
+
+We could also add an 'oldness' variable for our buildings, the oldest, the more deteriorated
+
