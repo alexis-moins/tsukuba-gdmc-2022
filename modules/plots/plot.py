@@ -38,7 +38,7 @@ class Plot:
         self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
 
         self.steep_map = None
-        self.__tree_blocks = None
+        self.__trees_blocks = None
         self.__water_blocks = None
         self.__grass_blocks = None
         self.__stone_blocks = None
@@ -175,7 +175,7 @@ class Plot:
         if self.priority_blocks is None:
             self.compute_steep_map(2)
             self.__water_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('water')
-            self.__tree_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('log')
+            self.__trees_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('log')
             self.__grass_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('grass')
             self.__stone_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('stone')
             if env.DEBUG:
@@ -197,7 +197,7 @@ class Plot:
         min_score = max_score
 
         for block in blocks_to_check:
-            block_score = self.__get_score(block.coordinates, surface, size, max_score)
+            block_score = self.__get_score(block.coordinates, surface, size, max_score, building_type=building_type)
 
             if block_score < min_score:
                 best_coordinates = block.coordinates
@@ -259,9 +259,27 @@ class Plot:
         # And now modifications for specials buildings
 
         if building_type == BuildingTypes.FARM:
-            # Farm => Better with grass and water
+            # Farm => Better near grass and water
 
-            all_surface = .near(coordinates, 10).count()
+            water_bonus = len(self.__water_blocks.near(coordinates, 5)) * 0.5
+            # grass_bonus = len(self.__grass_blocks.near(coordinates, 10)) * 0.03
+            # grass take too much time
+            score -= water_bonus
+            # score -= grass_bonus
+
+        elif building_type == BuildingTypes.WOODCUTTING:
+            # Woodcutting => Better near trees
+
+            trees_bonus = len(self.__trees_blocks.near(coordinates, 10)) * 0.5
+
+            score -= trees_bonus
+
+        elif building_type == building_type.FORGING:
+            # Forging => Better with stone
+
+            stone_bonus = len(self.__stone_blocks.near(coordinates, 10)) * 0.5
+
+            score -= stone_bonus
 
         return score
 

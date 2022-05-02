@@ -13,7 +13,8 @@ from modules.utils.coordinates import Coordinates
 structures: dict[str, Structure] = {}
 
 files = ('house1', 'house2', 'house3', 'farm', 'forge', 'sawmill',
-         'extensions/sawmill1', 'extensions/sawmill2')
+         'extensions/sawmill1', 'extensions/sawmill2', 'extensions/farm_wheat_1', 'extensions/farm_wheat_2',
+         'extensions/forge_ore_pack')
 
 for file in files:
     structure = Structure.parse_nbt_file(file)

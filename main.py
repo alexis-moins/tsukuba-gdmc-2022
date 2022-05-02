@@ -42,7 +42,7 @@ def start_simulation(years: int, population: int) -> None:
 
     INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
 
-    # find_building_materials(build_area)
+    find_building_materials(build_area)
     # simulation.start()
     # simu = Simulation(build_area, 1, 1, 1, HumanPlayer())
     simu = Simulation(build_area, 1, 1, 1, SmartDecisionMaker(build_area), duration=100)

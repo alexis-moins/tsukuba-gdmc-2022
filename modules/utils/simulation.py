@@ -5,6 +5,7 @@ from modules.blocks.collections.block_list import BlockList
 from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
 from modules.utils import loader
+from modules.utils.building_types import BuildingTypes
 from modules.utils.coordinates import Coordinates, Size
 from modules.utils.criteria import Criteria
 
@@ -15,13 +16,15 @@ class Event:
 
 
 class Building:
-    def __init__(self, structure, name, profession, bed_amount, productivity, food):
+    def __init__(self, structure, name, profession, bed_amount, productivity, food,
+                 build_type: BuildingTypes = BuildingTypes.NONE):
         self.structure = structure
         self.name = name
         self.profession = profession
         self.bed_amount = bed_amount
         self.work_productivity = productivity
         self.food_productivity = food
+        self.build_type = build_type
 
     def __str__(self):
         return self.name
@@ -175,15 +178,17 @@ class SmartDecisionMaker(DecisionMaker):
         self.plot = plot
         self.chose_rotation = 0
         self.chose_coordinates = None
+        self.action_choose: Building | None = None
 
-    def get_action(self, possible_actions):
+    def get_action(self, possible_actions: list[Building]):
         print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}]')
 
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
             return possible_actions[0]
 
-        city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD), (self.city.work_production, ActionTypes.WORK)]
+        city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD),
+                      (self.city.work_production, ActionTypes.WORK)]
         next_action_type = min(city_stats, key=lambda item: item[0])[1]
         priority_actions = []
         for a in possible_actions:
@@ -199,15 +204,22 @@ class SmartDecisionMaker(DecisionMaker):
             # TODO : Implement brain (Should be as good as Alexis' one (near perfect))
             # TODO : If plot is calculated according to the correct size of the building, store the chosen coordinate
             if priority_actions:
-                return random.choice(priority_actions)
+                action = random.choice(priority_actions)
+                self.action_choose = action
+                return action
             else:
-                return random.choice(possible_actions)
+                action = random.choice(possible_actions)
+                self.action_choose = action
+                return action
         else:
             return 'NOTHING'
 
     def get_coordinates(self, plot: Plot, size: Size) -> Coordinates:
         padding = 3
-        subplot = self.plot.get_subplot(size, padding=padding)
+        if self.action_choose:
+            subplot = self.plot.get_subplot(size, padding=padding, building_type=self.action_choose.build_type)
+        else:
+            subplot = self.plot.get_subplot(size, padding=padding)
         return subplot.start
 
     def get_rotation(self) -> int:
