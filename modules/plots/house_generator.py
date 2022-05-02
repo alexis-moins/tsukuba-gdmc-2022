@@ -12,8 +12,7 @@ from gdpc import interface as INTF
 
 from gdpc import geometry
 
-
-from modules.plots.construction_plot import ConstructionPlot
+from modules.plots.plot import Plot
 from modules.utils.coordinates import Coordinates
 from modules.utils.direction import Direction
 from modules.blocks.structure import Structure
@@ -37,7 +36,7 @@ class HouseGenerator:
 
 
     # Could be a function in construction plot ?
-    def build_house(self, storey_amount: int, profession: str, construction_plot: ConstructionPlot):
+    def build_house(self, storey_amount: int, profession: str, construction_plot: Plot):
 
         size = construction_plot.size
         short_side = min(size)
