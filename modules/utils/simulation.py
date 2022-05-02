@@ -87,6 +87,7 @@ class City:
 
             for coord in nx.dijkstra_path(self.graph, coordinates, closest_road):
                 INTERFACE.placeBlock(*coord, 'minecraft:glowstone')
+                self.roads.append(coord)
 
     def closest_coordinates(self, coordinates: Coordinates):
         """"""
