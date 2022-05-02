@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import click
-from distutils.command.build import build
+
 from gdpc import interface as INTF
 
 import env
