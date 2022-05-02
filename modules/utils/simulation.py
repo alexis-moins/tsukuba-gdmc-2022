@@ -5,7 +5,9 @@ from modules.blocks.collections.block_list import BlockList
 from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
 from modules.utils import loader
-from modules.utils.coordinates import Coordinates, Size
+from modules.utils.building_types import BuildingTypes
+from modules.utils.coordinates import Coordinates
+from modules.utils.coordinates import Size
 from modules.utils.criteria import Criteria
 
 
@@ -15,13 +17,15 @@ class Event:
 
 
 class Building:
-    def __init__(self, structure, name, profession, bed_amount, productivity, food):
+    def __init__(self, structure, name, profession, bed_amount, productivity, food,
+                 build_type: BuildingTypes = BuildingTypes.NONE):
         self.structure = structure
         self.name = name
         self.profession = profession
         self.bed_amount = bed_amount
         self.work_productivity = productivity
         self.food_productivity = food
+        self.build_type = build_type
 
     def __str__(self):
         return self.name
@@ -175,22 +179,22 @@ class SmartDecisionMaker(DecisionMaker):
         self.plot = plot
         self.chose_rotation = 0
         self.chose_coordinates = None
+        self.action_choose: Building | None = None
 
-    def get_action(self, possible_actions):
+    def get_action(self, possible_actions: list[Building]):
         print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}]')
 
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
             return possible_actions[0]
 
-        city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD), (self.city.work_production, ActionTypes.WORK)]
+        city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD),
+                      (self.city.work_production, ActionTypes.WORK)]
         next_action_type = min(city_stats, key=lambda item: item[0])[1]
-
         priority_actions = []
         for a in possible_actions:
             if a in action_types and action_types[a] == next_action_type:
                 priority_actions.append(a)
-
 
         # We check if there is a plot of a default size 20 by 20 available
 
@@ -201,15 +205,22 @@ class SmartDecisionMaker(DecisionMaker):
             # TODO : Implement brain (Should be as good as Alexis' one (near perfect))
             # TODO : If plot is calculated according to the correct size of the building, store the chosen coordinate
             if priority_actions:
-                return random.choice(priority_actions)
+                action = random.choice(priority_actions)
+                self.action_choose = action
+                return action
             else:
-                return random.choice(possible_actions)
+                action = random.choice(possible_actions)
+                self.action_choose = action
+                return action
         else:
             return 'NOTHING'
 
     def get_coordinates(self, plot: Plot, size: Size) -> Coordinates:
         padding = 3
-        subplot = self.plot.get_subplot(size, padding=padding)
+        if self.action_choose:
+            subplot = self.plot.get_subplot(size, padding=padding, building_type=self.action_choose.build_type)
+        else:
+            subplot = self.plot.get_subplot(size, padding=padding)
         return subplot.start
 
     def get_rotation(self) -> int:
@@ -220,10 +231,17 @@ class SmartDecisionMaker(DecisionMaker):
 
 
 class Buildings(Enum):
-    HOUSE = (10, Building(loader.structures['house2'], 'House', None, 5, 0, 0))
-    FARM = (10, Building(loader.structures['farm'], 'Farm', 'Farmer', 0, 1, 5))
-    FORGE = (20, Building(loader.structures['forge'], 'Forge', None, 0, 20, 0))
-    SAWMILL = (10, Building(loader.structures['sawmill'], 'Sawmill', None, 0, 5, 0))
+    HOUSE = (10, Building(loader.structures['house2'], 'house2', None, 5, 0, 0, BuildingTypes.HOUSING))
+    FARM = (10, Building(loader.structures['farm'], 'farm', 'Farmer', 0, 1, 5, BuildingTypes.FARM))
+    WHEAT_PACK_1 = (
+        20, Building(loader.structures['extensions/farm_wheat_1'], 'farm_wheat_1', 'Farmer', 0, 0, 5, BuildingTypes.FARM))
+    WHEAT_PACK_2 = (
+        20, Building(loader.structures['extensions/farm_wheat_2'], 'farm_wheat_2', 'Farmer', 0, 0, 5, BuildingTypes.FARM))
+    ORE_PACK = (50, Building(loader.structures['extensions/forge_ore_pack'], 'forge_ore_pack', None, 0, 5, 0, BuildingTypes.FORGING))
+    FORGE = (20, Building(loader.structures['forge'], 'forge', None, 0, 20, 0, BuildingTypes.FORGING))
+    SAWMILL = (20, Building(loader.structures['sawmill'], 'sawmill', None, 0, 10, 0, BuildingTypes.WOODCUTTING))
+    WOOD_STACK = (10, Building(loader.structures['extensions/sawmill2'], 'sawmill2', None, 0, 5, 0, BuildingTypes.WOODCUTTING))
+    CUT_TREE = (50, Building(loader.structures['extensions/sawmill1'], 'sawmill1', None, 0, 20, 0, BuildingTypes.WOODCUTTING))
 
 
 class ActionTypes(Enum):
@@ -232,8 +250,8 @@ class ActionTypes(Enum):
     WORK = 2
 
 
-action_types = {Buildings.HOUSE: ActionTypes.BED, Buildings.FARM: ActionTypes.FOOD,
-                Buildings.SAWMILL: ActionTypes.WORK, Buildings.FORGE: ActionTypes.WORK}
+action_types = {Buildings.HOUSE.value[1]: ActionTypes.BED, Buildings.FARM.value[1]: ActionTypes.FOOD,
+                Buildings.SAWMILL.value[1]: ActionTypes.WORK, Buildings.FORGE.value[1]: ActionTypes.WORK}
 
 
 class Simulation:

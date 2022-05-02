@@ -11,6 +11,7 @@ from gdpc import interface as INTF
 
 from gdpc import geometry
 
+from modules.blocks.structure import Structure
 from modules.plots.plot import Plot
 from modules.utils.coordinates import Coordinates
 from modules.utils.direction import Direction

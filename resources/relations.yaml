@@ -1,3 +1,24 @@
 forge:
-  buildings: {ore_pack: -5, forge: 30}
-  blocks: {stone: -2}
+  buildings: {ore_pack: -5, forge: 30, HOUSING: 20}
+  blocks: {stone: -1}
+
+ore_pack:
+  buildings: {ore_pack: -5, forge: -15, HOUSING: 10}
+  blocks: {stone: -1}
+
+HOUSING:
+  buildings: {FORGING: 15, FARMING: 10, WOODCUTTING: 15, HOUSING: -10}
+  blocks: {}
+
+sawmill:
+  buildings: {sawmill: 30, HOUSING: 20}
+  blocks: {log: -1}
+
+WOODCUTTING:
+  buildings: {WOODCUTTING: -5, HOUSING: 20}
+  blocks: {log: -1}
+
+FARMING:
+  buildings: {FARMING: -5, HOUSING: 20}
+  blocks: {grass: -1, water: -3}
+
