@@ -1,7 +1,6 @@
 from modules.blocks.block import Block
-
-from modules.utils.direction import Direction
 from modules.utils.coordinates import Coordinates
+from modules.utils.direction import Direction
 
 
 def test_deserialize() -> None:

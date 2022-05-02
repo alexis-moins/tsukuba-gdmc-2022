@@ -3,11 +3,15 @@ from __future__ import annotations
 import random
 from collections import Counter
 from collections.abc import Sequence
-from typing import Any, Iterable, Generator, SupportsIndex
+from typing import Any
+from typing import Generator
+from typing import Iterable
+from typing import SupportsIndex
 
 from modules.blocks.block import Block
 from modules.blocks.collections.block_set import BlockSet
-from modules.utils.coordinates import Coordinates, Size
+from modules.utils.coordinates import Coordinates
+from modules.utils.coordinates import Size
 
 
 class BlockList(Sequence):

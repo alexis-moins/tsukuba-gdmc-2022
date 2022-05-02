@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 from gdpc.lookup import BLOCKS
-from nbt.nbt import TAG_Compound, TAG_List
+from nbt.nbt import TAG_Compound
+from nbt.nbt import TAG_List
 
-from modules.utils.direction import Direction
 from modules.utils.coordinates import Coordinates
+from modules.utils.direction import Direction
 
 
 @dataclass(frozen=True)
@@ -66,14 +71,14 @@ class Block:
         """Return true if the given block name exists in minecraft"""
         return block_name.split('[')[0] in BLOCKS
 
-    def replace_first(self, materials: Dict[str, str]) -> Block:
+    def replace_first(self, materials: Dict[str, tuple[str, bool]]) -> Block:
         """Return a new block whose material has been replaced by the first match of the given building materials"""
         for material, replacement in materials.items():
             if material in self.name:
-                name = self.name.replace(material, replacement)
+                name = self.name.replace(material, replacement[0])
 
                 if Block.exists(name):
-                    return Block(name, self.coordinates, properties=self.properties)
+                    return Block(name, self.coordinates, properties=self.properties if replacement[1] else {})
         return self
 
     def neighbouring_coordinates(self) -> List[Coordinates]:
