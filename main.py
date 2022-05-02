@@ -51,6 +51,8 @@ def start_simulation(years: int, population: int) -> None:
     # simu = Simulation(build_area, 1, 1, 1, DecisionMaker())
     simu.start()
 
+    INTF.sendBlocks()
+
     INTF.runCommand('gamerule randomTickSpeed 3')
     INTF.runCommand('gamerule doEntityDrops true')
 
