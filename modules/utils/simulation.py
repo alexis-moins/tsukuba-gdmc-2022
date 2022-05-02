@@ -185,12 +185,10 @@ class SmartDecisionMaker(DecisionMaker):
 
         city_stats = [(self.city.bed_amount, ActionTypes.BED), (self.city.food_production, ActionTypes.FOOD), (self.city.work_production, ActionTypes.WORK)]
         next_action_type = min(city_stats, key=lambda item: item[0])[1]
-
         priority_actions = []
         for a in possible_actions:
             if a in action_types and action_types[a] == next_action_type:
                 priority_actions.append(a)
-
 
         # We check if there is a plot of a default size 20 by 20 available
 
@@ -232,8 +230,8 @@ class ActionTypes(Enum):
     WORK = 2
 
 
-action_types = {Buildings.HOUSE: ActionTypes.BED, Buildings.FARM: ActionTypes.FOOD,
-                Buildings.SAWMILL: ActionTypes.WORK, Buildings.FORGE: ActionTypes.WORK}
+action_types = {Buildings.HOUSE.value[1]: ActionTypes.BED, Buildings.FARM.value[1]: ActionTypes.FOOD,
+                Buildings.SAWMILL.value[1]: ActionTypes.WORK, Buildings.FORGE.value[1]: ActionTypes.WORK}
 
 
 class Simulation:
