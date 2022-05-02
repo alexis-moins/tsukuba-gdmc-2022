@@ -1,19 +1,16 @@
 from enum import Enum
-from random import choice, shuffle
-
-from modules.blocks.collections.block_list import BlockList
-
-from modules.blocks.structure import Structure
-
-from modules.plots.plot import Plot
-
-from networkx import Graph, dijkstra_path
+from random import choice
+from random import shuffle
 
 import gdpc.interface as INTF
+from networkx import dijkstra_path
+from networkx import Graph
 
+from modules.blocks.collections.block_list import BlockList
+from modules.blocks.structure import Structure
+from modules.plots.plot import Plot
 from modules.utils.coordinates import Coordinates
 from modules.utils.criteria import Criteria
-
 from modules.utils.loader import structures
 
 

@@ -14,7 +14,7 @@ git clone git@github.com:AlexisMoins/tsukuba-gdmc-2022.git ~/GDMC && cd ~/GDMC
 
 ### Setup the environment
 
-**Note:** This repository relies on multiple python packages. You can find out which ones are used in the `pyprojet.toml` file. To manage our packages, We used [poetry](https://python-poetry.org). If you are not using this tool, you should try to install the packages directly via `pip`.  
+**Note:** This repository relies on multiple python packages. You can find out which ones are used in the `pyprojet.toml` file. To manage our packages, We used [poetry](https://python-poetry.org). If you are not using this tool, you should try to install the packages directly via `pip`.
 
 As a final note, please notice that the syntax used across the projet is python version **3.10** so you might want to install version 3.10 via python's [official website](https://www.python.org) or via tools like [pyenv](https://github.com/pyenv/pyenv).
 
@@ -46,8 +46,8 @@ Otherwise, use one of the following (depending on your case)
   ```bash
   poetry run pre-commit install
   ```
- 
-- or, if you use pip: 
+
+- or, if you use pip:
 
   ```bash
   python -m pre-commit install

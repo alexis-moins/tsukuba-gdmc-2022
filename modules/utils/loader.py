@@ -1,11 +1,11 @@
+from dataclasses import dataclass
 from time import sleep
+from typing import Iterator
+
 import gdpc.interface as INTERFACE
 from gdpc.worldLoader import WorldSlice
-
-from typing import Iterator
-from dataclasses import dataclass
-
 from nbt.nbt import MalformedFileError
+
 from modules.blocks.structure import Structure
 from modules.utils.coordinates import Coordinates
 

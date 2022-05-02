@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import gdpc.interface as INTERFACE
-from nbt.nbt import NBTFile, TAG_List
+from gdpc import lookup
+from nbt.nbt import NBTFile
+from nbt.nbt import TAG_List
 
+import env
 from modules.blocks.block import Block
 from modules.blocks.collections.block_list import BlockList
-
-from modules.utils.coordinates import Coordinates, Size
+from modules.utils.coordinates import Coordinates
+from modules.utils.coordinates import Size
 
 
 class Structure:
@@ -40,7 +43,7 @@ class Structure:
 
     def __get_blocks(self, start: Coordinates, angle: int, materials: dict[str, str]) -> BlockList:
         """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
-        blocks = self.__get_variation(materials) if materials else self.blocks
+        blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
 
         shift_due_to_rotation = Coordinates(0, 0, 0)
         if angle == 90:
@@ -55,7 +58,7 @@ class Structure:
 
     def __get_variation(self, materials: dict[str, str]) -> BlockList:
         """Return the variation of the structure with the given materials"""
-        variation = ', '.join([f'{k}: {v}' for k, v in materials.items()])
+        variation = ', '.join([f'{k}: {v[0]}' for k, v in materials.items()])
         if variation in self.variations.keys():
             return self.variations[variation]
 
@@ -73,7 +76,10 @@ class Structure:
         blocks = self.__get_blocks(start, rotation, materials=materials)
 
         for block in blocks:
-            INTERFACE.placeBlock(*block.coordinates, block.full_name)
+            try:
+                INTERFACE.placeBlock(*block.coordinates, block.full_name)
+            except Exception:
+                INTERFACE.placeBlock(*block.coordinates, block.name)
 
         doors = blocks.filter('emerald')
         entrance: Block = doors[0].coordinates.shift(0, 1, 0) if doors else None
