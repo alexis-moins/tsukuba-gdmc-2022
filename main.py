@@ -7,10 +7,11 @@ from gdpc import interface as INTF
 import env
 from modules.blocks.block import Block
 from modules.plots.plot import Plot
-from modules.simulation.simulation import Simulation
-from modules.utils.criteria import Criteria
+from modules.utils import simulation
 from modules.utils.loader import BUILD_AREA
 
+from modules.utils.criteria import Criteria
+from modules.utils.simulation import Simulation, DecisionMaker, HumanPlayer, SmartDecisionMaker
 
 @click.command()
 @click.option('-t', '--tick-speed', default=200, type=int, show_default=True, help='Set the number of entities checked at each tick')
@@ -40,10 +41,13 @@ def start_simulation(years: int, population: int) -> None:
     build_area = Plot.from_coordinates(start, end)
 
     INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')
-    simulation = Simulation(build_area, population=population, years=years)
 
-    find_building_materials(build_area)
-    simulation.start()
+    # find_building_materials(build_area)
+    # simulation.start()
+    # simu = Simulation(build_area, 1, 1, 1, HumanPlayer())
+    simu = Simulation(build_area, 1, 1, 1, SmartDecisionMaker(build_area), duration=100)
+    # simu = Simulation(build_area, 1, 1, 1, DecisionMaker())
+    simu.start()
 
     INTF.runCommand('gamerule randomTickSpeed 3')
     INTF.runCommand('gamerule doEntityDrops true')

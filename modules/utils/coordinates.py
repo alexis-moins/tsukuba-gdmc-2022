@@ -29,6 +29,19 @@ class Size:
         distance = abs(start - end)
         return Size(distance.x, distance.z)
 
+    def __add__(self, other):
+        if isinstance(other, Size):
+            return Size(self.x + other.x, self.z + other.z)
+        else:
+            return Size(self.x + other, self.z + other)
+
+    def __sub__(self, other):
+        if isinstance(other, Size):
+            return Size(self.x - other.x, self.z - other.z)
+        else:
+            return Size(self.x - other, self.z - other)
+
+
 
 @dataclass(frozen=True)
 class Coordinates:
