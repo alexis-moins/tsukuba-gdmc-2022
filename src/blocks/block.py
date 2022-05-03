@@ -11,8 +11,8 @@ from gdpc.lookup import BLOCKS
 from nbt.nbt import TAG_Compound
 from nbt.nbt import TAG_List
 
-from modules.utils.coordinates import Coordinates
-from modules.utils.direction import Direction
+from src.utils.coordinates import Coordinates
+from src.utils.direction import Direction
 
 
 @dataclass(frozen=True)

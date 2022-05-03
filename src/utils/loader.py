@@ -6,8 +6,8 @@ import gdpc.interface as INTERFACE
 from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
-from modules.blocks.structure import Structure
-from modules.utils.coordinates import Coordinates
+from src.blocks.structure import Structure
+from src.utils.coordinates import Coordinates
 
 # Mapping of structure name -> Structure object
 structures: dict[str, Structure] = {}

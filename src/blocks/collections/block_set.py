@@ -5,7 +5,7 @@ from collections.abc import MutableSet
 from typing import Generator
 from typing import Iterable
 
-from modules.blocks.block import Block
+from src.blocks.block import Block
 
 
 class BlockSet(MutableSet):

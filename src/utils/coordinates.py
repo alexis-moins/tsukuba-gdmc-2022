@@ -8,7 +8,7 @@ from typing import Iterator
 import numpy as np
 from nbt.nbt import TAG_List
 
-from modules.utils.direction import Direction
+from src.utils.direction import Direction
 
 
 def R(a: float):
@@ -40,7 +40,6 @@ class Size:
             return Size(self.x - other.x, self.z - other.z)
         else:
             return Size(self.x - other, self.z - other)
-
 
 
 @dataclass(frozen=True)
