@@ -67,7 +67,6 @@ class Simulation:
             self.city.display()
             # input('Enter to go to next year')
             year += 1
-
             # input('Enter to go to next year')
 
     def get_constructible_buildings(self) -> list[Building]:

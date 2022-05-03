@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import networkx as nx
 import random
 from typing import Generator
 
@@ -40,6 +41,37 @@ class Plot:
         self.__grass_blocks = None
         self.__stone_blocks = None
         self.priority_blocks: BlockList | None = None
+
+        self.graph = nx.Graph()
+        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
+            self.graph.add_node(block.coordinates)
+
+        for coordinates in self.graph.nodes.keys():
+            for coord in coordinates.neighbours():
+                if coord in self.graph.nodes.keys():
+                    self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
+        self.roads: list[Coordinates] = list()
+
+    def build_road(self, start: Coordinates, end: Coordinates):
+
+        path = nx.dijkstra_path(self.graph, start, end)
+
+        for coord in path:
+            INTF.placeBlock(*coord, 'minecraft:glowstone')
+            self.occupied_coordinates.add(coord)
+            self.occupied_coordinates.add(coord.shift(x=1))
+            self.occupied_coordinates.add(coord.shift(x=-1))
+            self.occupied_coordinates.add(coord.shift(z=1))
+            self.occupied_coordinates.add(coord.shift(z=-1))
+
+            self.roads.append(coord)
+
+        # Update weights to use the roads
+        for c1, c2 in zip(path[:-2], path[1:]):
+            if self.graph.has_edge(c1, c2):
+                self.graph[c1][c2]['weight'] = 10
+
+        INTF.sendBlocks()
 
     @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
@@ -90,12 +122,38 @@ class Plot:
                 blocks.append(block)
         self.priority_blocks = BlockList(blocks)
 
+    def visualize_occupied_area(self):
+        for coord in self.occupied_coordinates:
+            block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord)
+            if block:
+                INTF.placeBlock(*(block.coordinates.shift(y=1)), 'red_stained_glass')
+        INTF.sendBlocks()
+
+    def visualize_graph(self):
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        for coord in self.graph.nodes():
+            weights = list(map(lambda edge: self.graph[edge[0]][edge[1]]['weight'], self.graph.edges(coord)))
+            if len(weights) == 0:
+                chose_color = 'blue'
+            else:
+                coord_access_value = min(weights)
+                chose_color = 'black'
+                if coord_access_value < 50:
+                    chose_color = colors[0]
+                elif coord_access_value < 110:
+                    continue  # 'default' value, don't show
+                elif coord_access_value < 150:
+                    chose_color = colors[2]
+            INTF.placeBlock(*(coord.shift(y=1)), chose_color + '_stained_glass')
+        INTF.sendBlocks()
+
     def visualize_steep_map(self, span):
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         for i, value in enumerate(self.steep_map):
             block = self.flat_heightmap_to_plot_block(i, span)
             if block:
                 INTF.placeBlock(*block.coordinates, colors[min(int(value // span), 8)] + '_stained_glass')
+        INTF.sendBlocks()
 
     def visualize(self, ground: str = 'orange_wool', criteria: Criteria = Criteria.MOTION_BLOCKING_NO_TREES) -> None:
         """Change the blocks at the surface of the plot to visualize it"""
@@ -105,8 +163,11 @@ class Plot:
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the env.WORLD"""
-        name = env.WORLD.getBlockAt(x, y, z)
-        return Block.deserialize(name, Coordinates(x, y, z))
+        try:
+            name = env.WORLD.getBlockAt(x, y, z)
+            return Block.deserialize(name, Coordinates(x, y, z))
+        except IndexError:
+            return Block('out of bound', None)
 
     def get_heightmap(self, criteria: Criteria) -> ndarray:
         """Return the desired heightmap of the given type"""
@@ -213,6 +274,14 @@ class Plot:
             for coordinates in sub_plot.surface(padding):
                 self.occupied_coordinates.add(coordinates.as_2D())
 
+                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
+                if block and not block.coordinates in self.roads:
+                    for edges in self.graph.edges(block.coordinates):
+                        self.graph.add_edge(*edges, weight=100_000)
+
+        if env.DEBUG:
+            self.visualize_graph()
+
         return sub_plot
 
     def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
@@ -237,7 +306,7 @@ class Plot:
                 current_coord = coordinates.shift(x, 0, z)
                 current_block = surface.find(current_coord)
 
-                if not current_block:
+                if not current_block or current_block.coordinates in self.occupied_coordinates:
                     return 100_000_000
 
                 # putting foundation isn't a problem compared to digging in the terrain, so we apply a
@@ -303,6 +372,7 @@ class Plot:
     def __yield_until_ground(self, coordinates: Coordinates):
         """Yield the coordinates """
         current_coord: Coordinates = coordinates
+
         while self.get_block_at(*current_coord).is_one_of(('air', 'leaves', 'log', 'vine')):
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)

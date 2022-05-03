@@ -1,8 +1,13 @@
+
+
+from gdpc import interface as INTERFACE
+
 import textwrap
 from typing import Counter
 
 import networkx as nx
 
+from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
 from src.utils.coordinates import Coordinates
@@ -18,37 +23,26 @@ class City:
         self.productivity = 5
         self.food_available = 5
 
-        self.graph = nx.Graph()
-        self.roads: list[Coordinates] = list()
-
-        for block in self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
-            self.graph.add_node(block.coordinates)
-
-        for coordinates in self.graph.nodes.keys():
-            for coord in coordinates.neighbours():
-                if coord in self.graph.nodes.keys():
-                    self.graph.add_edge(coordinates, coord)
-
     def add_building(self, building: Building, plot: Plot, rotation: int) -> None:
         """Add a new building to the current city"""
+
+        area_with_padding = BlockList(
+            list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
+                     filter(lambda coord: coord in self.plot, plot.surface(3)))))
+        plot.remove_trees(area_with_padding)
+
         plot.build_foundation()
 
         building.build(plot, rotation)
         self.buildings.append(building)
 
-    def closest_coordinates(self, coordinates: Coordinates):
-        """"""
-        if len(self.roads) == 1:
-            return self.roads[0]
-
-        closest_coord = self.roads[0]
-        min_distance = coordinates.distance(closest_coord)
-        for coord in self.roads[1:]:
-            if distance := coordinates.distance(coord) < min_distance:
-                closest_coord = coord
-                min_distance = distance
-
-        return closest_coord
+        if len(self.buildings) > 1:
+            print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
+            # start = self.buildings[0].structure.entrance if self.buildings[0].structure.entrance is not None else self.buildings[0].plot.start
+            # end = self.buildings[-1].structure.entrance if self.buildings[-1].structure.entrance is not None else self.buildings[-1].plot.start
+            start = self.buildings[0].plot.start
+            end = self.buildings[-1].plot.start
+            self.plot.build_road(start, end)
 
     @property
     def number_of_beds(self) -> int:
