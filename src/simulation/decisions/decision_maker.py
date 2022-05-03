@@ -13,7 +13,7 @@ class DecisionMaker:
         """"""
         self.city = None
 
-    def get_action(self, possible_actions):
+    def choose_building(self, possible_actions, rotation: int):
         act = random.choice(possible_actions)
         print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}] :: Chose {act}')
         return act

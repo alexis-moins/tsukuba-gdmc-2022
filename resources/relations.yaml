@@ -21,4 +21,3 @@ WOODCUTTING:
 FARMING:
   buildings: {FARMING: -5, HOUSING: 20}
   blocks: {grass: -1, water: -3}
-

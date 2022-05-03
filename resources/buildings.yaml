@@ -1,0 +1,74 @@
+# List of the different buildings you can generate in the simulation.
+# Documentation of the attrubutes used below :
+#
+# - name: name of the structure (arbitrary)
+# - path: path to the NBT file (relative to the ./resources/structures directory)
+# - properties: mapping of the building properties. Each entry is optional (0 by default)
+#   {
+#     cost: cost of the building (in production points),
+#     number of beds: number of inhabitants the building can host,
+#     work production: how many points the building can produce in a year
+#     food production: how many food the building can produce in a year
+#   }
+# - action: action associated with the building
+# - type: type of the building
+
+- name: TOWN_HALL
+  path: house1.nbt
+  properties: { cost: 999, number of beds: 10, work production: 10, food production: 10 }
+  action: BED
+  type: HABITATION
+
+- name: HOUSE
+  path: house2.nbt
+  properties: { cost: 10, number of beds: 5 }
+  action: BED
+  type: HABITATION
+
+- name: FARM
+  path: farm.nbt
+  properties: { cost: 10, work production: 1, food production: 5 }
+  action: FOOD
+  type: FARM
+
+- name: WHEAT_PACK_1
+  path: extensions/farm_wheat_1.nbt
+  properties: { cost: 20, food production: 5 }
+  action: FOOD
+  type: FARM
+
+- name: WHEAT_PACK_2
+  path: extensions/farm_wheat_2.nbt
+  properties: { cost: 20, food production: 5 }
+  action: FOOD
+  type: FARM
+
+- name: FORGE
+  path: forge.nbt
+  properties: { cost: 20, work production: 20 }
+  action: WORK
+  type: FORGING
+
+- name: ORE_PACK
+  path: extensions/forge_ore_pack.nbt
+  properties: { cost: 50, work production: 5 }
+  action: WORK
+  type: FORGING
+
+- name: SAWMILL
+  path: sawmill.nbt
+  properties: { cost: 20, work production: 10 }
+  action: WORK
+  type: WOODCUTTING
+
+- name: CUT_TREE
+  path: extensions/sawmill1.nbt
+  properties: { cost: 10, work production: 5 }
+  action: WORK
+  type: WOODCUTTING
+
+- name: WOOD_STACK
+  path: extensions/sawmill2.nbt
+  properties: { cost: 50, work production: 20 }
+  action: WORK
+  type: WOODCUTTING

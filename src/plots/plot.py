@@ -9,16 +9,13 @@ from gdpc import interface as INTF
 from gdpc import lookup
 from numpy import ndarray
 
-import src.env as env
+from src import env
 from src.blocks.block import Block
 from src.blocks.collections.block_list import BlockList
-from src.simulation.buildings.building_types import BuildingTypes
+from src.simulation.buildings.building_type import BuildingType
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
 from src.utils.criteria import Criteria
-from src.utils.loader import BUILD_AREA
-from src.utils.loader import update_world_slice
-from src.utils.loader import WORLD
 
 
 class Plot:
@@ -33,7 +30,7 @@ class Plot:
         self.occupied_coordinates: set[Coordinates] = set()
 
         self.surface_blocks: dict[Criteria, BlockList] = {}
-        self.offset = self.start - BUILD_AREA.start, self.end - BUILD_AREA.start
+        self.offset = self.start - env.BUILD_AREA.start, self.end - env.BUILD_AREA.start
 
         # TODO change center into coordinates
         self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
@@ -82,8 +79,8 @@ class Plot:
         return Plot(*start, Size.from_coordinates(start, end))
 
     def update(self) -> None:
-        """Update the world slice and most importantly the heightmaps"""
-        update_world_slice()
+        """Update the env.WORLD slice and most importantly the heightmaps"""
+        env.update_world_slice()
         self.surface_blocks.clear()
 
     @staticmethod
@@ -165,10 +162,9 @@ class Plot:
         INTF.sendBlocks()
 
     def get_block_at(self, x: int, y: int, z: int) -> Block:
-        """Return the block found at the given x, y, z coordinates in the world"""
+        """Return the block found at the given x, y, z coordinates in the env.WORLD"""
         try:
-            name = WORLD.getBlockAt(x, y, z)
-
+            name = env.WORLD.getBlockAt(x, y, z)
             return Block.deserialize(name, Coordinates(x, y, z))
         except IndexError:
             return Block('out of bound', None)
@@ -176,11 +172,11 @@ class Plot:
     def get_heightmap(self, criteria: Criteria) -> ndarray:
         """Return the desired heightmap of the given type"""
         # Add our custom
-        if Criteria.MOTION_BLOCKING_NO_TREES not in WORLD.heightmaps:
-            WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_TREES.name] = self.__get_heightmap_no_trees()
+        if Criteria.MOTION_BLOCKING_NO_TREES not in env.WORLD.heightmaps:
+            env.WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_TREES.name] = self.__get_heightmap_no_trees()
 
-        if criteria.name in WORLD.heightmaps.keys():
-            return WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
+        if criteria.name in env.WORLD.heightmaps.keys():
+            return env.WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
 
         raise Exception(f'Invalid criteria: {criteria}')
 
@@ -206,11 +202,11 @@ class Plot:
 
         It is not perfect as sometimes, there can be flower or grass or other blocks between the ground and the '
         floating' logs, but it is good enough for our use"""
-        heightmap = np.copy(WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_LEAVES.name])
+        heightmap = np.copy(env.WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_LEAVES.name])
 
         for x, rest in enumerate(heightmap):
             for z, h in enumerate(rest):
-                base_coord = Coordinates(BUILD_AREA.start.x + x, h - 1, BUILD_AREA.start.z + z)
+                base_coord = Coordinates(env.BUILD_AREA.start.x + x, h - 1, env.BUILD_AREA.start.z + z)
 
                 ground_coord = None
                 # To get to the last block until the ground
@@ -222,7 +218,7 @@ class Plot:
         return heightmap
 
     def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True,
-                    building_type: BuildingTypes = BuildingTypes.NONE) -> Plot | None:
+                    building_type: BuildingType = BuildingType.NONE) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
         # TODO add .lower_than(max_height=200)
@@ -240,6 +236,7 @@ class Plot:
             self.__trees_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('log')
             self.__grass_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('grass')
             self.__stone_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('stone')
+
             if env.DEBUG:
                 self.visualize_steep_map(2)
 
@@ -278,7 +275,7 @@ class Plot:
                 self.occupied_coordinates.add(coordinates.as_2D())
 
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
-                if block:
+                if block and not block.coordinates in self.roads:
                     for edges in self.graph.edges(block.coordinates):
                         self.graph.add_edge(*edges, weight=100_000)
 
@@ -288,7 +285,7 @@ class Plot:
         return sub_plot
 
     def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
-                    building_type: BuildingTypes = BuildingTypes.NONE) -> float:
+                    building_type: BuildingType = BuildingType.NONE) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -328,7 +325,7 @@ class Plot:
 
         # And now modifications for specials buildings
 
-        if building_type == BuildingTypes.FARM:
+        if building_type == BuildingType.FARM:
             # Farm => Better near grass and water
 
             water_bonus = len(self.__water_blocks.near(coordinates, 5)) * 0.5
@@ -337,7 +334,7 @@ class Plot:
             score -= water_bonus
             # score -= grass_bonus
 
-        elif building_type == BuildingTypes.WOODCUTTING:
+        elif building_type == BuildingType.WOODCUTTING:
             # Woodcutting => Better near trees
 
             trees_bonus = len(self.__trees_blocks.near(coordinates, 10)) * 0.5

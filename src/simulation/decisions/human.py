@@ -9,7 +9,7 @@ class HumanPlayer(DecisionMaker):
     def __init__(self):
         super().__init__()
 
-    def get_action(self, possible_actions):
+    def choose_building(self, possible_actions):
 
         action_chose = None
         while action_chose is None:
