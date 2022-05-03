@@ -1,4 +1,4 @@
-import networkx as nx
+
 from gdpc import interface as INTERFACE
 
 from src.blocks.collections.block_list import BlockList
@@ -16,17 +16,6 @@ class City:
         self.population = 5
         self.productivity = 5
         self.food_available = 5
-
-        self.graph = nx.Graph()
-        self.roads: list[Coordinates] = list()
-
-        for block in self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
-            self.graph.add_node(block.coordinates)
-
-        for coordinates in self.graph.nodes.keys():
-            for coord in coordinates.neighbours():
-                if coord in self.graph.nodes.keys():
-                    self.graph.add_edge(coordinates, coord)
 
     def add_building(self, building: Building, coord: Coordinates, rotation: int):
         padding = 3
@@ -48,33 +37,14 @@ class City:
 
         coordinates = plot.start
 
-        if len(self.buildings) == 2:
+        if len(self.buildings) > 1:
             print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
-            for coord in nx.dijkstra_path(self.graph, self.buildings[0].plot.start,
-                                          self.buildings[1].plot.start):
-                INTERFACE.placeBlock(*coord, 'minecraft:glowstone')
-                self.roads.append(coord)
+            # start = self.buildings[0].structure.entrance if self.buildings[0].structure.entrance is not None else self.buildings[0].plot.start
+            # end = self.buildings[-1].structure.entrance if self.buildings[-1].structure.entrance is not None else self.buildings[-1].plot.start
+            start = self.buildings[0].plot.start
+            end = self.buildings[-1].plot.start
+            self.plot.build_road(start, end)
 
-        elif len(self.buildings) >= 3 and self.roads:
-            closest_road = self.closest_coordinates(coordinates)
-
-            for coord in nx.dijkstra_path(self.graph, coordinates, closest_road):
-                INTERFACE.placeBlock(*coord, 'minecraft:glowstone')
-                self.roads.append(coord)
-
-    def closest_coordinates(self, coordinates: Coordinates):
-        """"""
-        if len(self.roads) == 1:
-            return self.roads[0]
-
-        closest_coord = self.roads[0]
-        min_distance = coordinates.distance(closest_coord)
-        for coord in self.roads[1:]:
-            if distance := coordinates.distance(coord) < min_distance:
-                closest_coord = coord
-                min_distance = distance
-
-        return closest_coord
 
     @property
     def bed_amount(self):

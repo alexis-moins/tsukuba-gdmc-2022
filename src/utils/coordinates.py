@@ -78,7 +78,7 @@ class Coordinates:
         difference = abs(self - other)
         return difference.x + difference.y + difference.z
 
-    def shift(self, x: int, y: int, z: int) -> Coordinates:
+    def shift(self, x: int = 0, y: int = 0, z: int = 0) -> Coordinates:
         """Return a new coordinates formed with the current coordinates whose values where shifted"""
         return Coordinates(self.x + x, self.y + y, self.z + z)
 
