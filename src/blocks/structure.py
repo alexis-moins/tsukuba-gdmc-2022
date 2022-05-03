@@ -26,7 +26,7 @@ class Structure:
     @staticmethod
     def parse_nbt_file(file_name: str, ) -> Structure:
         """Parse the nbt file found under resources.structure.{file_name}.nbt and return a structure object"""
-        file = NBTFile(f'resources/structures/{file_name}.nbt')
+        file = NBTFile(f'resources/structures/{file_name}')
         dimensions = [int(i.valuestr()) for i in file['size']]
 
         palette = file['palette']
@@ -40,19 +40,19 @@ class Structure:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
 
-    def __get_blocks(self, start: Coordinates, angle: int, materials: dict[str, str]) -> BlockList:
+    def get_blocks(self, start: Coordinates, rotation: int) -> BlockList:
         """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
         blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
 
         shift_due_to_rotation = Coordinates(0, 0, 0)
-        if angle == 90:
+        if rotation == 90:
             shift_due_to_rotation = Coordinates(self.size.z - 1, 0, 0)
-        elif angle == 180:
+        elif rotation == 180:
             shift_due_to_rotation = Coordinates(self.size.x, 0, self.size.z - 1)
-        elif angle == 270:
+        elif rotation == 270:
             shift_due_to_rotation = Coordinates(0, 0, self.size.x - 1)
 
-        iterable = [block.rotate(angle).shift_position_to(start + shift_due_to_rotation) for block in blocks]
+        iterable = [block.rotate(rotation).shift_position_to(start + shift_due_to_rotation) for block in blocks]
         return BlockList(iterable)
 
     def __get_variation(self, materials: dict[str, str]) -> BlockList:
@@ -69,19 +69,3 @@ class Structure:
         """Return the size of the structure after the given rotation"""
         return Size(self.size.z, self.size.x) if rotation == 90 or \
             rotation == 270 else Size(self.size.x, self.size.z)
-
-    def build(self, start: Coordinates, rotation: int = 0, materials: dict[str, str] = None) -> None:
-        """Build the given structure onto the current construction spot"""
-        blocks = self.__get_blocks(start, rotation, materials=materials)
-
-        for block in blocks:
-            INTERFACE.placeBlock(*block.coordinates, block.full_name)
-
-        doors = blocks.filter('emerald')
-        entrance: Block = doors[0].coordinates.shift(0, 1, 0) if doors else None
-
-        print(f'structure <{self.name}> entrance: {entrance}')
-        if entrance:
-            INTERFACE.placeBlock(*entrance, 'minecraft:glowstone')
-
-        INTERFACE.sendBlocks()

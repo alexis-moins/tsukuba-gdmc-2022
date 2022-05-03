@@ -9,7 +9,6 @@ from src.plots.plot import Plot
 from src.simulation.decisions.smart import SmartDecisionMaker
 from src.simulation.simulation import Simulation
 from src.utils.criteria import Criteria
-from src.utils.loader import BUILD_AREA
 
 
 @click.command()
@@ -34,7 +33,7 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, drops:
 
 def start_simulation(years: int) -> None:
     """Launch the simulation"""
-    start, end = BUILD_AREA
+    start, end = env.BUILD_AREA
     build_area = Plot.from_coordinates(start, end)
 
     INTF.runCommand(f'tp @a {build_area.start.x} 110 {build_area.start.z}')

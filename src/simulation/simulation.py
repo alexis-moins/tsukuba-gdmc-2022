@@ -1,22 +1,13 @@
-from enum import Enum
-
+from src import env
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
-from src.simulation.buildings.building import Buildings
 from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
-from src.utils import loader
 
 
 class Event:
     def __init__(self, name):
         self.name = name
-
-
-class ActionTypes(Enum):
-    BED = 0
-    FOOD = 1
-    WORK = 2
 
 
 class Simulation:
@@ -31,7 +22,7 @@ class Simulation:
         self.plot = plot
         self.years = years
 
-        self.city = None
+        self.city: City = None
         self.events = []
         self.actions = []
 
@@ -45,50 +36,44 @@ class Simulation:
         print('Starting Game !!')
         print('Give a rotation and a location for the Town hall')
 
-        town_hall = Building(loader.structures['house1'], "Town hall", None, 10, 10, 10)
-        r = self.decision_maker.get_rotation()
-        coord = self.decision_maker.get_coordinates(self.city.plot, town_hall.structure.get_size(r))
-        self.city.add_building(town_hall, coord, r)
+        town_hall = env.BUILDINGS['TOWN_HALL']
+        rotation = self.decision_maker.get_rotation()
+
+        size = town_hall.get_size(rotation)
+        plot = self.city.plot.get_subplot(size)
+        self.city.add_building(town_hall, plot, rotation)
 
         while year < self.years:
+            print(f'\n=> Start of year {year}, current stats : {self.city}')
 
-            # Update city
             self.city.update()
+            buildings = self.get_constructible_buildings()
 
-            action = self.decision_maker.get_action(self.get_available_actions())
+            if buildings:
+                rotation = self.decision_maker.get_rotation()
+                choice, plot = self.decision_maker.choose_building(buildings, rotation)
 
-            # Execute action
-            for building in Buildings:
-                cost, build = building.value
-                if action == build:
-                    if self.city.productivity >= cost:
-                        rotation = self.decision_maker.get_rotation()
-                        self.city.add_building(build,
-                                               self.decision_maker.get_coordinates(self.city.plot,
-                                                                                   build.structure.get_size(rotation)),
-                                               rotation
-                                               )
-                        print(f'Added building {build}')
-                    else:
-                        print(f'Not enough productivity available for this ! {self.city.productivity}/{cost}')
-                    break
+                if choice is not None and plot is not None:
+                    self.city.add_building(choice, plot, rotation)
 
             # Get event
-            print('No event this year')
+            print('=> No event this year')
 
             # Update city
             # self.update_city()
 
             # End turn
-            print(f'End of year {year}, current stats : {self.city}')
+            print(f'=> End of year {year}, settlement status:')
+            self.city.display()
             # input('Enter to go to next year')
             year += 1
 
             # input('Enter to go to next year')
 
-    def get_available_actions(self):
-        actions = ['Nothing']
-        for b in Buildings:
-            if b.value[0] <= self.city.productivity:
-                actions.append(b.value[1])
+    def get_constructible_buildings(self) -> list[Building]:
+        """Return the available buildings for the year"""
+        actions = [building for building in env.BUILDINGS.values()
+                   if building.properties.cost <= self.city.productivity]
+
+        # TODO Change ActionType enum to be NOTHING, CONSTUCTION, REPARATION, etc
         return actions
