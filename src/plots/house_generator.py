@@ -1,4 +1,4 @@
-# Class utility is only to load modules 1 time and store them
+# Class utility is only to load src 1 time and store them
 # Should be a singleton so
 import random
 from functools import reduce
@@ -9,32 +9,29 @@ from gdpc import geometry
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 
-from gdpc import geometry
-
-from modules.blocks.structure import Structure
-from modules.plots.plot import Plot
-from modules.utils.coordinates import Coordinates
-from modules.utils.direction import Direction
+from src.blocks.structure import Structure
+from src.plots.plot import Plot
+from src.utils.coordinates import Coordinates
+from src.utils.direction import Direction
 
 
 class HouseGenerator:
     def __init__(self):
         self.walls: dict[tuple, list[Structure]] = dict()
-        self.walls[(2, 2)] = [Structure.parse_nbt_file('modules/walls/wall_2x1_plain_a')]
-        self.walls[(3, 2)] = [Structure.parse_nbt_file('modules/walls/wall_3x2_plain_a')]
-        self.walls[(4, 2)] = [Structure.parse_nbt_file('modules/walls/wall_4x2_plain_a')]
-        self.walls[(5, 2)] = [Structure.parse_nbt_file('modules/walls/wall_5x2_window_a')]
-        self.walls[(6, 2)] = [Structure.parse_nbt_file('modules/walls/wall_6x2_window_a')]
-        self.walls[(7, 2)] = [Structure.parse_nbt_file('modules/walls/wall_7x2_window_a')]
+        self.walls[(2, 2)] = [Structure.parse_nbt_file('src/walls/wall_2x1_plain_a')]
+        self.walls[(3, 2)] = [Structure.parse_nbt_file('src/walls/wall_3x2_plain_a')]
+        self.walls[(4, 2)] = [Structure.parse_nbt_file('src/walls/wall_4x2_plain_a')]
+        self.walls[(5, 2)] = [Structure.parse_nbt_file('src/walls/wall_5x2_window_a')]
+        self.walls[(6, 2)] = [Structure.parse_nbt_file('src/walls/wall_6x2_window_a')]
+        self.walls[(7, 2)] = [Structure.parse_nbt_file('src/walls/wall_7x2_window_a')]
 
         self.corners: dict[tuple, list[Structure]] = dict()
-        self.corners[(2, 2)] = [Structure.parse_nbt_file('modules/corners/corner_2x2_plain_a')]
-        self.corners[(3, 3)] = [Structure.parse_nbt_file('modules/corners/corner_3x3_plain_a')]
-        self.corners[(4, 4)] = [Structure.parse_nbt_file('modules/corners/corner_4x4_plain_a')]
-
-
+        self.corners[(2, 2)] = [Structure.parse_nbt_file('src/corners/corner_2x2_plain_a')]
+        self.corners[(3, 3)] = [Structure.parse_nbt_file('src/corners/corner_3x3_plain_a')]
+        self.corners[(4, 4)] = [Structure.parse_nbt_file('src/corners/corner_4x4_plain_a')]
 
     # Could be a function in construction plot ?
+
     def build_house(self, storey_amount: int, profession: str, construction_plot: Plot):
 
         size = construction_plot.size
@@ -48,22 +45,19 @@ class HouseGenerator:
         if profession != 'none':
             min_indoor_size = 5
 
-
         # Check validity
         min_house_size = min_indoor_size + 2 * outline_width
         if short_side < min_house_size:
             raise Exception(f'Not enough space ({size}) ! (min : {min_house_size})')
 
-
         # define corners size
 
-        # Define this depending on available corners modules sizes
+        # Define this depending on available corners src sizes
         max_available_corner_size = 4
 
         max_corner_size = (short_side - min_indoor_size) // 2
         max_corner_size = min(max_corner_size, max_available_corner_size)
         corner_size = random.randint(outline_width, max_corner_size)
-
 
         # define wall sequence
         # explanation of length_needed
@@ -87,7 +81,6 @@ class HouseGenerator:
             wall_sq = self.get_wall_sequence(length_needed)
             sides = [(size[0], wall_sq), (size[1], wall_sq)]
 
-
         construction_plot.build_foundation(construction_plot.build_start.y)
 
         print(f'wall sequence : {sides[0][1]}')
@@ -106,7 +99,6 @@ class HouseGenerator:
                 INTF.placeBlock(*b.coordinates.shift(x_shift, 1, 0), b.name)
             x_shift += wall - 1
 
-
         z_shift = 0
         for b in random.choice(self.corners[(corner_size, corner_size)]).get_blocks_for(construction_plot):
             INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
@@ -117,15 +109,11 @@ class HouseGenerator:
                 INTF.placeBlock(*b.coordinates.shift(0, 1, z_shift), b.name)
             z_shift += wall - 1
 
-
-
-
-
     @staticmethod
     def get_wall_sequence(length_needed: int):
         """Return a wall sequence for a needed length"""
 
-        # Defined by modules
+        # Defined by src
         max_available_wall = 7
         min_available_wall = 2
         even_walls = [2, 4, 6]
@@ -168,10 +156,8 @@ class HouseGenerator:
         return values, weights
 
 
-
 if __name__ == "__main__":
     print("TESTING HOUSE GENERATOR")
-
 
     print(Direction.EAST.get_rotated_direction(90))
 

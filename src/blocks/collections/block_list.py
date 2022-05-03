@@ -8,10 +8,10 @@ from typing import Generator
 from typing import Iterable
 from typing import SupportsIndex
 
-from modules.blocks.block import Block
-from modules.blocks.collections.block_set import BlockSet
-from modules.utils.coordinates import Coordinates
-from modules.utils.coordinates import Size
+from src.blocks.block import Block
+from src.blocks.collections.block_set import BlockSet
+from src.utils.coordinates import Coordinates
+from src.utils.coordinates import Size
 
 
 class BlockList(Sequence):

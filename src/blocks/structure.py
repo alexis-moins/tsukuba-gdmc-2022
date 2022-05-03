@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import gdpc.interface as INTERFACE
-from gdpc import lookup
 from nbt.nbt import NBTFile
 from nbt.nbt import TAG_List
 
-import env
-from modules.blocks.block import Block
-from modules.blocks.collections.block_list import BlockList
-from modules.utils.coordinates import Coordinates
-from modules.utils.coordinates import Size
+from src import env
+from src.blocks.block import Block
+from src.blocks.collections.block_list import BlockList
+from src.utils.coordinates import Coordinates
+from src.utils.coordinates import Size
 
 
 class Structure:
@@ -24,7 +23,7 @@ class Structure:
         self.blocks: tuple[BlockList] = tuple(blocks)
         self.variations: dict[str, BlockList] = dict()
 
-    @ staticmethod
+    @staticmethod
     def parse_nbt_file(file_name: str, ) -> Structure:
         """Parse the nbt file found under resources.structure.{file_name}.nbt and return a structure object"""
         file = NBTFile(f'resources/structures/{file_name}.nbt')
@@ -36,7 +35,7 @@ class Structure:
         print(f'=> Parsed structure <{file_name}>')
         return Structure(name=file_name, size=Size(dimensions[0], dimensions[2]), blocks=blocks)
 
-    @ staticmethod
+    @staticmethod
     def __parse_blocks(blocks: TAG_List, palette: TAG_List) -> BlockList:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
@@ -76,10 +75,7 @@ class Structure:
         blocks = self.__get_blocks(start, rotation, materials=materials)
 
         for block in blocks:
-            try:
-                INTERFACE.placeBlock(*block.coordinates, block.full_name)
-            except Exception:
-                INTERFACE.placeBlock(*block.coordinates, block.name)
+            INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
         doors = blocks.filter('emerald')
         entrance: Block = doors[0].coordinates.shift(0, 1, 0) if doors else None

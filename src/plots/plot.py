@@ -8,16 +8,16 @@ from gdpc import interface as INTF
 from gdpc import lookup
 from numpy import ndarray
 
-import env
-from modules.blocks.block import Block
-from modules.blocks.collections.block_list import BlockList
-from modules.utils.building_types import BuildingTypes
-from modules.utils.coordinates import Coordinates
-from modules.utils.coordinates import Size
-from modules.utils.criteria import Criteria
-from modules.utils.loader import BUILD_AREA
-from modules.utils.loader import update_world_slice
-from modules.utils.loader import WORLD
+import src.env as env
+from src.blocks.block import Block
+from src.blocks.collections.block_list import BlockList
+from src.simulation.buildings.building_types import BuildingTypes
+from src.utils.coordinates import Coordinates
+from src.utils.coordinates import Size
+from src.utils.criteria import Criteria
+from src.utils.loader import BUILD_AREA
+from src.utils.loader import update_world_slice
+from src.utils.loader import WORLD
 
 
 class Plot:
