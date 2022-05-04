@@ -1,5 +1,3 @@
-
-
 from gdpc import interface as INTERFACE
 
 import textwrap
@@ -42,7 +40,16 @@ class City:
             # end = self.buildings[-1].structure.entrance if self.buildings[-1].structure.entrance is not None else self.buildings[-1].plot.start
             start = self.buildings[0].plot.start
             end = self.buildings[-1].plot.start
-            self.plot.build_road(start, end)
+            self.plot.compute_roads(start, end)
+
+            road_pattern = {'INNER': {'grass_path': 100}, 'MIDDLE': {'grass_path': 85, 'grass_block': 15},
+                            'OUTER': {'grass_path': 75, 'grass_block': 15, 'coarse_dirt': 10}}
+
+            slab_pattern = {'INNER': {'cobblestone_slab': 25, 'stone_slab': 25, 'andesite_slab': 25, 'granite_slab': 25},
+                            'MIDDLE': {'cobblestone_slab': 25, 'stone_slab': 25, 'andesite_slab': 25, 'granite_slab': 25},
+                            'OUTER': {'cobblestone_slab': 25, 'stone_slab': 25, 'andesite_slab': 25, 'granite_slab': 25}}
+
+            self.plot.build_roads(road_pattern, slab_pattern)
 
     @property
     def number_of_beds(self) -> int:
