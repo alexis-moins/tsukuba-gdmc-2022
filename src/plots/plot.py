@@ -59,6 +59,49 @@ class Plot:
                                                                       'OUTER': defaultdict(int)}
         self.__recently_added_roads = None
 
+    def equalize_roads(self):
+        if len(self.all_roads) < 1:
+            return
+        roads_y = dict()
+
+        for road in self.all_roads:
+            neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
+                                   filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(3)))
+
+            neighbors_y = list(map(lambda block: block.coordinates.y, filter(lambda block: block, neighbors_blocks)))
+
+            average_y = sum(neighbors_y) / len(neighbors_y)
+            roads_y[road.as_2D()] = average_y
+
+        return roads_y
+
+    def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
+        roads_y = self.equalize_roads()
+
+        # clean above roads
+        for road in self.all_roads:
+            for i in range(1, 6):
+                INTF.placeBlock(*(road.with_points(y=int(roads_y[road]) + i)), 'air')
+
+        # place blocks
+        for key in self.roads_infos:
+            for road in self.roads_infos[key]:
+
+                # Default : place a block
+                chose_pattern = floor_pattern
+                shift = 0
+
+                # If the average block y is near half :
+                if slab_pattern and 0.5 < roads_y[road] - int(roads_y[road]):
+                    # place a slab
+                    chose_pattern = slab_pattern
+                    shift = 1
+
+                INTF.placeBlock(*(road.with_points(y=int(roads_y[road]) + shift)),
+                                random.choices(list(chose_pattern[key].keys()), k=1, weights=list(chose_pattern[key].values())))
+
+        INTF.sendBlocks()
+
     def __add_road_block(self, coordinates: Coordinates, placement: str):
 
         road_coord = coordinates.as_2D()
@@ -77,10 +120,10 @@ class Plot:
                         return
 
         self.__recently_added_roads[placement].add(road_coord)
-        self.all_roads.add(coordinates)
-        self.occupied_coordinates.add(coordinates)
+        self.all_roads.add(road_coord)
+        self.occupied_coordinates.add(road_coord)
 
-    def build_road(self, start: Coordinates, end: Coordinates):
+    def compute_roads(self, start: Coordinates, end: Coordinates):
 
         try:
             path = nx.dijkstra_path(self.graph, start, end)
@@ -89,8 +132,6 @@ class Plot:
 
         self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
         for coord in path:
-            INTF.placeBlock(*coord, 'minecraft:glowstone')
-
             # INNER PART
             self.__add_road_block(coord, 'INNER')
 
@@ -169,11 +210,14 @@ class Plot:
     def visualize_roads(self):
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         materials = ('concrete', 'wool', 'stained_glass')
+        ys = self.equalize_roads()
         for i, key in enumerate(self.roads_infos):
             for road in self.roads_infos[key]:
-                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(road)
+                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(
+                    road)  # to be sure that we are in the plot
                 if block:
-                    INTF.placeBlock(*block.coordinates, colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
+                    INTF.placeBlock(*(road.with_points(y=ys[road])),
+                                    colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
 
         INTF.sendBlocks()
 
