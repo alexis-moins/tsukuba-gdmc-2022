@@ -6,6 +6,7 @@ import networkx as nx
 import random
 from typing import Generator
 
+import networkx as nx
 import numpy as np
 from gdpc import interface as INTF
 from gdpc import lookup
@@ -276,7 +277,7 @@ class Plot:
 
         if criteria.name in env.WORLD.heightmaps.keys():
             return env.WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x,
-                   self.offset[0].z:self.offset[1].z]
+                                                       self.offset[0].z:self.offset[1].z]
 
         raise Exception(f'Invalid criteria: {criteria}')
 
@@ -496,8 +497,8 @@ class Plot:
     def __contains__(self, coordinates: Coordinates) -> bool:
         """Return true if the current plot contains the given coordinates"""
         return self.start.x <= coordinates.x < self.end.x and \
-               self.start.y <= coordinates.y <= self.end.y and \
-               self.start.z <= coordinates.z < self.end.z
+            self.start.y <= coordinates.y <= self.end.y and \
+            self.start.z <= coordinates.z < self.end.z
 
     def surface(self, padding: int = 0) -> Generator[Coordinates]:
         """Return a generator over the coordinates of the current plot"""

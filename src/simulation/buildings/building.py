@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 from dataclasses import replace
 from typing import Any
@@ -7,15 +8,18 @@ from typing import Any
 from gdpc import interface as INTERFACE
 from gdpc import toolbox as TOOLBOX
 
+<<<<<<< HEAD
 from src import env
 from src.blocks.collections import palette
+=======
+from src.blocks.block import Block
+>>>>>>> acd05c3 (feat(building): added method to deprecate a building)
 from src.blocks.collections.block_list import BlockList
 from src.blocks.collections.palette import Palette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
 from src.utils.action_type import ActionType
-from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
 
 
@@ -42,7 +46,7 @@ class Building:
         self.plot: Plot = None
         self.rotation: int = None
         self.blocks: BlockList = None
-        self.entrances: BlockList = []
+        self.entrances: BlockList = None
 
     @staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
@@ -104,6 +108,7 @@ class Building:
             if block_name is not None:
                 INTERFACE.placeBlock(*entrance.coordinates, block_name)
 
+<<<<<<< HEAD
     def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
                             text4: str = ""):
         x, y, z = coord
@@ -116,6 +121,41 @@ class Building:
         data += f'Text3:\'{{"text":"{text3}"}}\','
         data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
         INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
+=======
+    def grow_old(self, amount: int) -> None:
+        """Make a building grow old"""
+
+        # ensure it stays between 0 and 100
+        amount = abs(amount) % 100
+        sample: list[Block] = random.sample(self.blocks.without('air'), amount * len(self.blocks.without('air')) // 100)
+
+        new_blocks = self.blocks.to_set()
+        for block in sample:
+
+            materials = {
+                'cobblestone': 'mossy_cobblestone',
+                'stairs': 'slab',
+                'planks': 'stairs'
+            }
+
+            replacement = block.replace_first(materials)
+
+            if replacement is not block:
+                new_blocks.add(replacement)
+            else:
+                population = (block.name, 'air', 'cobweb')
+                weights = (90, 7, 3)
+
+                name = random.choices(population, weights, k=1)
+                replacement = Block(name[0], block.coordinates)
+                new_blocks.add(replacement)
+
+            new_blocks.remove(block)
+            INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
+        INTERFACE.sendBlocks()
+
+        self.blocks = BlockList(new_blocks)
+>>>>>>> acd05c3 (feat(building): added method to deprecate a building)
 
     def __str__(self) -> str:
         """Return the string representation of the current building"""

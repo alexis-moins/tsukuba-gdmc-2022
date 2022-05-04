@@ -66,6 +66,9 @@ WORLD = get_world_slice()
 # Wether the simulation runs in debug mode or not
 DEBUG = False
 
+# Wether to teleport the player automatically or not
+TP = True
+
 # Mapping of a material and its replacement and keepProperties (tuple)
 BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}
 
