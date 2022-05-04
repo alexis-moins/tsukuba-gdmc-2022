@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from dataclasses import replace
 from typing import Any
 
-from gdpc import interface as INTERFACE
-from gdpc import toolbox as TOOLBOX
+from gdpc import interface as INTERFACE, toolbox
 
+from src import env
 from src.blocks.collections.block_list import BlockList
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
@@ -20,11 +20,11 @@ from src.utils.coordinates import Size
 class BuildingProperties:
     """Class representing the properties of a building"""
     cost: int
+    building_type: BuildingType
+    action_type: ActionType
     number_of_beds: int = 0
     work_production: float = 0
     food_production: float = 0
-    building_type: BuildingType
-    action_type: ActionType
 
 
 class Building:
@@ -81,7 +81,11 @@ class Building:
             return None
 
         sign_coord = self.entrances[0].coordinates.shift(y=1)
-        TOOLBOX.placeSign(*sign_coord, rotation=0, text1=self.name)
+        if env.DEBUG:
+            self.build_sign_in_world(sign_coord, text1=self.name, text2=f'rotation : {self.rotation}')
+        else:
+            # TODO : Generate name here
+            self.build_sign_in_world(sign_coord, text1=self.name)
 
         for entrance in self.entrances:
             neighbours = [self.plot.get_block_at(*coordinates)
@@ -92,6 +96,19 @@ class Building:
 
             if block_name is not None:
                 INTERFACE.placeBlock(*entrance.coordinates, block_name)
+
+    def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
+                            text4: str = ""):
+        x, y, z = coord
+
+        INTERFACE.placeBlock(x, y, z, "oak_sign")
+        INTERFACE.sendBlocks()
+
+        data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
+        data += f'Text2:\'{{"text":"{text2}"}}\','
+        data += f'Text3:\'{{"text":"{text3}"}}\','
+        data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
+        INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
 
     def __str__(self) -> str:
         """Return the string representation of the current building"""
