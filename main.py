@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import click
-from gdpc import interface as INTF
+from gdpc import interface as INTF, lookup
 
 from src import env
 from src.blocks.block import Block
+from src.blocks.collections import palette
+from src.blocks.structure import Structure
 from src.plots.plot import Plot
+from src.simulation.buildings.building import BuildingProperties, Building
+from src.simulation.buildings.building_type import BuildingType
 from src.simulation.decisions.smart import SmartDecisionMaker
 from src.simulation.simulation import Simulation
+from src.utils.action_type import ActionType
 from src.utils.criteria import Criteria
 
 
@@ -76,8 +81,38 @@ def find_building_materials(build_area: Plot):
             env.BUILDING_MATERIALS['dirt'] = ('sand', False)
 
 
+def test_palette():
+    INTF.setBuffering(True)
+    INTF.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
+
+    struct = Structure.parse_nbt_file('house2_test_palette.nbt')
+
+    building = Building('testHouse2', BuildingProperties(cost=10, building_type=BuildingType.NONE,
+                                                         action_type=ActionType.BED), struct)
+
+    palettes = {'lapis_block': palette.RandomSequencePalette(['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
+                'gold_block': palette.RandomPalette(['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
+                'gold_ore' : palette.OneBlockPalette([color + '_carpet' for color in lookup.COLORS]),
+                'diamond_block': palette.OneBlockPalette([color + '_bed' for color in lookup.COLORS]),
+                'iron_block': palette.RandomPalette(['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
+                'diamond_ore': palette.RandomPalette(['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel', 'hay_block']),
+                'white_terracotta': palette.OneBlockPalette([color + '_terracotta' for color in lookup.COLORS]),
+                'white_stained_glass': palette.OneBlockPalette([color + '_stained_glass' for color in lookup.COLORS])}
+
+    rotation = 0
+    start, end = env.BUILD_AREA
+    build_area = Plot.from_coordinates(start, end)
+
+    plot = build_area.get_subplot(building.get_size(rotation))
+
+    building.build(plot, rotation, palettes)
+
+
+
 if __name__ == '__main__':
     try:
-        prepare_environment()
+        test_palette()
+
+        # prepare_environment()
     except KeyboardInterrupt:
         print("Pressed Ctrl-C to kill program.")

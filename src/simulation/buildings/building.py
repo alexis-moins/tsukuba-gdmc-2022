@@ -8,6 +8,7 @@ from gdpc import interface as INTERFACE, toolbox
 
 from src import env
 from src.blocks.collections.block_list import BlockList
+from src.blocks.collections.palette import Palette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
@@ -59,12 +60,15 @@ class Building:
         """Return the size of the building considering the given rotation"""
         return self.__structure.get_size(rotation)
 
-    def build(self, plot: Plot, rotation: int):
+    def build(self, plot: Plot, rotation: int, palettes: dict[str, Palette] = None):
         """Build the current building onto the building's plot"""
         self.plot = plot
         self.rotation = rotation
 
         self.blocks = self.__structure.get_blocks(plot.start, rotation)
+
+        if palettes:
+            self.__randomize_building(palettes)
 
         self.entrances = self.blocks.filter('emerald')
         print(f'=> Building entrances: {len(self.entrances)}')
@@ -113,3 +117,17 @@ class Building:
     def __str__(self) -> str:
         """Return the string representation of the current building"""
         return self.name.upper()
+
+    def __randomize_building(self, palettes: dict[str, Palette]):
+        """Create a new block list with modified blocks according to given palettes"""
+        new_block_list = []
+
+        for b in self.blocks:
+            current_name = b.name.replace('minecraft:', '')
+            if current_name in palettes:
+                new_block_list.append(b.with_name(palettes[current_name].get_block_name()))
+            else:
+                new_block_list.append(b)
+
+        self.blocks = BlockList(new_block_list)
+

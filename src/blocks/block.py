@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -108,9 +109,19 @@ class Block:
         return self.full_name
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
-
+        """Rotate the block coordinates and modify its properties to mimic rotation around a given rotation point"""
         properties = self.properties.copy()
         if 'facing' in properties:
             properties['facing'] = properties['facing'].get_rotated_direction(angle)
 
+        if 'axis' in properties and (angle == 90 or angle == 270):
+            properties['axis'] = 'z' if properties['axis'] == 'x' else 'x'  # invert axis between x and z
+
         return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
+
+    def with_name(self, new_name: str, erase_properties: bool = False):
+        """Return a block with the same properties and coordinates but different name"""
+        if erase_properties:
+            return dataclasses.replace(self, name=new_name, properties={})
+        else:
+            return dataclasses.replace(self, name=new_name)
