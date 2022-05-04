@@ -1,5 +1,3 @@
-from gdpc import interface as INTERFACE
-
 import textwrap
 from typing import Counter
 

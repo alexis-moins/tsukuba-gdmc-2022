@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from dataclasses import replace
 from typing import Any
 
-from gdpc import interface as INTERFACE, toolbox
+from gdpc import interface as INTERFACE
+from gdpc import toolbox as TOOLBOX
 
 from src import env
 from src.blocks.collections import palette
@@ -137,4 +138,3 @@ class Building:
                 new_block_list.append(b)
 
         self.blocks = BlockList(new_block_list)
-
