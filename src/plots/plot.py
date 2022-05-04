@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import defaultdict
+
 import networkx as nx
 import random
 from typing import Generator
@@ -50,21 +52,63 @@ class Plot:
             for coord in coordinates.neighbours():
                 if coord in self.graph.nodes.keys():
                     self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
-        self.roads: list[Coordinates] = list()
+
+        self.all_roads: set[Coordinates] = set()
+        self.roads_infos: dict[str, defaultdict[Coordinates, int]] = {'INNER': defaultdict(int),
+                                                                      'MIDDLE': defaultdict(int),
+                                                                      'OUTER': defaultdict(int)}
+        self.__recently_added_roads = None
+
+    def __add_road_block(self, coordinates: Coordinates, placement: str):
+
+        road_coord = coordinates.as_2D()
+
+        delete = False
+        for key in self.roads_infos:
+            if key == placement:
+                if road_coord not in self.__recently_added_roads[placement]:
+                    self.roads_infos[key][road_coord] += 1
+                delete = True
+            else:
+                if road_coord in self.roads_infos[key]:
+                    if delete:
+                        self.roads_infos[key].pop(road_coord)
+                    else:
+                        return
+
+        self.__recently_added_roads[placement].add(road_coord)
+        self.all_roads.add(coordinates)
+        self.occupied_coordinates.add(coordinates)
 
     def build_road(self, start: Coordinates, end: Coordinates):
 
-        path = nx.dijkstra_path(self.graph, start, end)
+        try:
+            path = nx.dijkstra_path(self.graph, start, end)
+        except nx.NetworkXException:
+            return
 
+        self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
         for coord in path:
             INTF.placeBlock(*coord, 'minecraft:glowstone')
-            self.occupied_coordinates.add(coord)
-            self.occupied_coordinates.add(coord.shift(x=1))
-            self.occupied_coordinates.add(coord.shift(x=-1))
-            self.occupied_coordinates.add(coord.shift(z=1))
-            self.occupied_coordinates.add(coord.shift(z=-1))
 
-            self.roads.append(coord)
+            # INNER PART
+            self.__add_road_block(coord, 'INNER')
+
+            # MIDDLE PART
+            self.__add_road_block(coord.shift(x=1), 'MIDDLE')
+            self.__add_road_block(coord.shift(x=-1), 'MIDDLE')
+            self.__add_road_block(coord.shift(z=1), 'MIDDLE')
+            self.__add_road_block(coord.shift(z=-1), 'MIDDLE')
+
+            # OUTER PART
+            self.__add_road_block(coord.shift(x=1, z=1), 'OUTER')
+            self.__add_road_block(coord.shift(x=-1, z=1), 'OUTER')
+            self.__add_road_block(coord.shift(x=1, z=-1), 'OUTER')
+            self.__add_road_block(coord.shift(x=-1, z=-1), 'OUTER')
+            self.__add_road_block(coord.shift(x=2), 'OUTER')
+            self.__add_road_block(coord.shift(x=-2), 'OUTER')
+            self.__add_road_block(coord.shift(z=2), 'OUTER')
+            self.__add_road_block(coord.shift(z=-2), 'OUTER')
 
         # Update weights to use the roads
         for c1, c2 in zip(path[:-2], path[1:]):
@@ -122,6 +166,17 @@ class Plot:
                 blocks.append(block)
         self.priority_blocks = BlockList(blocks)
 
+    def visualize_roads(self):
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        materials = ('concrete', 'wool', 'stained_glass')
+        for i, key in enumerate(self.roads_infos):
+            for road in self.roads_infos[key]:
+                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(road)
+                if block:
+                    INTF.placeBlock(*block.coordinates, colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
+
+        INTF.sendBlocks()
+
     def visualize_occupied_area(self):
         for coord in self.occupied_coordinates:
             block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord)
@@ -176,7 +231,8 @@ class Plot:
             env.WORLD.heightmaps[Criteria.MOTION_BLOCKING_NO_TREES.name] = self.__get_heightmap_no_trees()
 
         if criteria.name in env.WORLD.heightmaps.keys():
-            return env.WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x, self.offset[0].z:self.offset[1].z]
+            return env.WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x,
+                   self.offset[0].z:self.offset[1].z]
 
         raise Exception(f'Invalid criteria: {criteria}')
 
@@ -275,7 +331,7 @@ class Plot:
                 self.occupied_coordinates.add(coordinates.as_2D())
 
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
-                if block and not block.coordinates in self.roads:
+                if block and block.coordinates not in self.all_roads:
                     for edges in self.graph.edges(block.coordinates):
                         self.graph.add_edge(*edges, weight=100_000)
 
@@ -396,8 +452,8 @@ class Plot:
     def __contains__(self, coordinates: Coordinates) -> bool:
         """Return true if the current plot contains the given coordinates"""
         return self.start.x <= coordinates.x < self.end.x and \
-            self.start.y <= coordinates.y <= self.end.y and \
-            self.start.z <= coordinates.z < self.end.z
+               self.start.y <= coordinates.y <= self.end.y and \
+               self.start.z <= coordinates.z < self.end.z
 
     def surface(self, padding: int = 0) -> Generator[Coordinates]:
         """Return a generator over the coordinates of the current plot"""
