@@ -133,15 +133,20 @@ class Building:
         for block in sample:
 
             materials = {
-                'cobblestone': 'mossy_cobblestone',
-                'stairs': 'slab',
-                'planks': 'stairs'
+                'cobblestone': ('mossy_cobblestone', True),
+                'stairs': ('slab', False),
+                'planks': ('stairs', False)
             }
 
             replacement = block.replace_first(materials)
 
             if replacement is not block:
                 new_blocks.add(replacement)
+
+            elif block.name.endswith('log') and 'stripped' not in block.name:
+                replacement = replace(block, name=block.name.replace(':', ':stripped_'))
+                new_blocks.add(replacement)
+
             else:
                 population = (block.name, 'air', 'cobweb')
                 weights = (90, 7, 3)

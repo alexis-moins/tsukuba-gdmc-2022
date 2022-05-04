@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from collections import defaultdict
-
-import networkx as nx
 import random
+from collections import defaultdict
 from typing import Generator
 
 import networkx as nx

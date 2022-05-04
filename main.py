@@ -17,17 +17,24 @@ from src.utils.criteria import Criteria
 
 
 @click.command()
+<<<<<<< HEAD
 @click.option('-t', '--tick-speed', default=200, type=int, show_default=True,
               help='Set the number of entities checked at each tick')
 @click.option('-d', '--debug', is_flag=True, default=False, help='Launch the simulation in debug mode')
+=======
+@click.option('-t', '--tick-speed', default=200, type=int, show_default=True, help='Set the number of entities checked at each tick')
+@click.option('--debug', is_flag=True, default=False, help='Launch the simulation in debug mode')
+>>>>>>> 2427965 (feat: better deterioration of buildings)
 @click.option('--no-buffering', is_flag=True, default=False, help='Send blocks one at a time, without using a buffer')
 @click.option('--tp/--no-tp', default=True, show_default=True, help='Teleport the player to the start of the building area')
 @click.option('--drops', is_flag=True, default=False, help='Enable drops from entities (may cause issues)')
 @click.option('-y', '--years', default=40, type=int, show_default=True, help='The number of years during which the simulation will run')
-def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bool, drops: bool, years: int) -> None:
+@click.option('-d', '--deterioration', default=5, type=int, show_default=True, help='The percentage of blocks in a building that will suffer from the passing of time')
+def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bool, drops: bool, years: int, deterioration: int) -> None:
     """Prepare the environment using CLI options"""
     env.DEBUG = debug
     env.TP = tp
+    env.DETERIORATION = deterioration
 
     INTERFACE.setBuffering(not no_buffering)
     INTERFACE.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')

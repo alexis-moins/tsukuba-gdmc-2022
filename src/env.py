@@ -69,6 +69,9 @@ DEBUG = False
 # Wether to teleport the player automatically or not
 TP = True
 
+# The percentage of blocks in a building that will suffer from the passing of time
+DETERIORATION = 5
+
 # Mapping of a material and its replacement and keepProperties (tuple)
 BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}
 

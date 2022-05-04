@@ -4,6 +4,7 @@ from typing import Counter
 
 from colorama import Fore
 
+from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
@@ -95,7 +96,7 @@ class City:
         buildings: list[Building] = random.sample(self.buildings, amount * len(self.buildings) // 100)
 
         for building in buildings:
-            building.grow_old(2)
+            building.grow_old(env.DETERIORATION)
 
     def display(self) -> None:
         """Display a summary of the city at the end of the current year"""
