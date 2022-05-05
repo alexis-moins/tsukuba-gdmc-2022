@@ -39,7 +39,7 @@ class Block:
     @staticmethod
     def __parse_properties(properties: TAG_Compound) -> Dict[str, Any]:
         """Return a dictionary of the given pared properties"""
-        return {key: (Direction.parse_nbt(value) if key == 'facing' else value)
+        return {key: (Direction.parse_nbt(value) if key == 'facing' else value.valuestr())
                 for key, value in properties.iteritems()}
 
     @staticmethod
@@ -114,9 +114,13 @@ class Block:
         if 'facing' in properties:
             properties['facing'] = properties['facing'].get_rotated_direction(angle)
 
+        # invert axis between x and z
         if 'axis' in properties and (angle == 90 or angle == 270):
-            properties['axis'] = 'z' if properties['axis'] == 'x' else 'x'  # invert axis between x and z
-
+            if properties['axis'] == 'x':
+                properties['axis'] = 'z'
+            if properties['axis'] == 'z':
+                properties['axis'] = 'x'
+                
         return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
 
     def with_name(self, new_name: str, erase_properties: bool = False):
