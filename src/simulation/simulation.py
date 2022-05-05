@@ -1,3 +1,7 @@
+import random
+
+from gdpc import toolbox, interface
+
 from src import env
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
@@ -8,6 +12,10 @@ from src.simulation.decisions.decision_maker import DecisionMaker
 class Event:
     def __init__(self, name):
         self.name = name
+
+
+events = (Event('Wedding'), Event('Fire'), Event('Wolves attack'), Event('Wandering trader'),
+          Event('Barbarian attack'), Event('Town Celebration'))
 
 
 class Simulation:
@@ -33,6 +41,8 @@ class Simulation:
         self.city = City(self.plot)
         self.decision_maker.city = self.city
 
+        history = []
+
         print('Starting Game !!')
         print('Give a rotation and a location for the Town hall')
 
@@ -57,7 +67,13 @@ class Simulation:
                     self.city.add_building(choice, plot, rotation)
 
             # Get event
-            print('=> No event this year')
+
+            if random.randint(0, 1):
+                event = random.choice(events)
+                print(event.name)
+                history.append((year, event))
+            else:
+                print('=> No event this year')
 
             # Update city
             # self.update_city()
@@ -69,6 +85,25 @@ class Simulation:
             # input('Enter to go to next year')
             year += 1
             # input('Enter to go to next year')
+
+
+        history_string = "\n".join(f'year {year} : {event.name}' for year, event in history)
+        print(f'City history : {history_string}')
+
+        # make a book
+        book_data = toolbox.writeBook(history_string, title='City history', author='No one')
+        lectern_list = self.city.buildings[0].blocks.filter('lectern')
+        if len(lectern_list):
+            x, y, z = lectern_list[0].coordinates
+            command = (f'data merge block {x} {y} {z} '
+                       f'{{Book: {{id: "minecraft:written_book", '
+                       f'Count: 1b, tag: {book_data}'
+                       '}, Page: 0}')
+
+            interface.runCommand(command)
+            print(f'placed history book at {x}, {y}, {z}')
+
+
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""
