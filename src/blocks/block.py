@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -38,7 +39,7 @@ class Block:
     @staticmethod
     def __parse_properties(properties: TAG_Compound) -> Dict[str, Any]:
         """Return a dictionary of the given pared properties"""
-        return {key: (Direction.parse_nbt(value) if key == 'facing' else value)
+        return {key: (Direction.parse_nbt(value) if key == 'facing' else value.valuestr())
                 for key, value in properties.iteritems()}
 
     @staticmethod
@@ -108,9 +109,23 @@ class Block:
         return self.full_name
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
-
+        """Rotate the block coordinates and modify its properties to mimic rotation around a given rotation point"""
         properties = self.properties.copy()
         if 'facing' in properties:
             properties['facing'] = properties['facing'].get_rotated_direction(angle)
 
+        # invert axis between x and z
+        if 'axis' in properties and (angle == 90 or angle == 270):
+            if properties['axis'] == 'x':
+                properties['axis'] = 'z'
+            if properties['axis'] == 'z':
+                properties['axis'] = 'x'
+                
         return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
+
+    def with_name(self, new_name: str, erase_properties: bool = False):
+        """Return a block with the same properties and coordinates but different name"""
+        if erase_properties:
+            return dataclasses.replace(self, name=new_name, properties={})
+        else:
+            return dataclasses.replace(self, name=new_name)

@@ -44,7 +44,7 @@ class Simulation:
         self.city.add_building(town_hall, plot, rotation)
 
         while year < self.years:
-            print(f'\n=> Start of year {year}, current stats : {self.city}')
+            print(f'\n=> Start of year {year}:')
 
             self.city.update()
             buildings = self.get_constructible_buildings()
@@ -63,7 +63,8 @@ class Simulation:
             # self.update_city()
 
             # End turn
-            print(f'=> End of year {year}, settlement status:')
+            print(f'=> End of year {year}')
+            print('==== Summary ====')
             self.city.display()
             # input('Enter to go to next year')
             year += 1

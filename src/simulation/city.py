@@ -4,6 +4,7 @@ import textwrap
 from typing import Counter
 
 import networkx as nx
+from gdpc import toolbox as TOOLBOX
 
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
@@ -89,9 +90,10 @@ class City:
             self.food_available = 0
 
     def display(self) -> None:
-        print(f'population: {self.population}/{self.number_of_beds}')
-        print(f'Food : {self.food_available} (since last year: +{self.food_production})')
-        print(f'Work : {self.productivity} (since last year: +{max(0, min(self.work_production, self.population))})')
+        print(f'\n   Population: {self.population}/{self.number_of_beds}')
+        print(f'   Food: {self.food_available} (since last year: +{self.food_production})')
+        print(f'   Work : {self.productivity} (since last year: +{max(0, min(self.work_production, self.population))})')
+
         print(f'\nBuildings ({len(self.buildings)}) :')
 
         counter = Counter(self.buildings)
