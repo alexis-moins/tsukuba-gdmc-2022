@@ -80,14 +80,13 @@ python main.py
     - Each inhabitant consume 1 food
     - If there is not enough food, all unfed inhabitants die
     - Productivity is computed as the minimum of the population and the buildings work capacity
-  
+
 
   - The player plays:
     - Depending on its city's productivity, he can place some building that will increase : the bed amount, the food production or the work capacity
-    
+
 
 
 In the futur, environment will have effect on productivity : farm will be less effective in cold biomes, wood cutting will depend on the tree frequency, etc.
 
 We could also add an 'oldness' variable for our buildings, the oldest, the more deteriorated
-

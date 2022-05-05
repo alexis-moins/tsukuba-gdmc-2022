@@ -1,3 +1,7 @@
+from textwrap import wrap
+
+from colorama import Fore
+
 from src import env
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
@@ -27,26 +31,27 @@ class Simulation:
         self.actions = []
 
     def start(self):
-        year = 0
+        year = 1
 
         # If you have multiple cities, just give a subplot here
         self.city = City(self.plot)
         self.decision_maker.city = self.city
 
-        print('Starting Game !!')
-        print('Give a rotation and a location for the Town hall')
+        print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
-        town_hall = env.BUILDINGS['TOWN_HALL']
+        town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
-
         size = town_hall.get_size(rotation)
         plot = self.city.plot.get_subplot(size)
+
         self.city.add_building(town_hall, plot, rotation)
 
         while year < self.years:
-            print(f'\n=> Start of year {year}:')
+            print(f'\n=> Start of year {Fore.RED}[{year}]{Fore.WHITE}')
 
+            # Update city
             self.city.update()
+
             buildings = self.get_constructible_buildings()
 
             if buildings:
@@ -60,20 +65,22 @@ class Simulation:
             print('=> No event this year')
 
             # Update city
-            # self.update_city()
+            self.city.update()
 
-            # End turn
-            print(f'=> End of year {year}')
-            print('==== Summary ====')
+            # End of turn
             self.city.display()
-            # input('Enter to go to next year')
             year += 1
-            # input('Enter to go to next year')
+
+        print(
+            f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""
         actions = [building for building in env.BUILDINGS.values()
                    if building.properties.cost <= self.city.productivity]
+
+        formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
+        print(f'Available buildings: [{formatted}]')
 
         # TODO Change ActionType enum to be NOTHING, CONSTUCTION, REPARATION, etc
         return actions

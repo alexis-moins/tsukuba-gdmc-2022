@@ -13,62 +13,62 @@
 # - action: action associated with the building
 # - type: type of the building
 
-- name: TOWN_HALL
-  path: house1.nbt
+- name: Town Hall
+  path: town_hall.nbt
   properties: { cost: 999, number of beds: 10, work production: 10, food production: 10 }
   action: BED
   type: HABITATION
 
-- name: HOUSE
-  path: house2.nbt
+- name: House
+  path: house.nbt
   properties: { cost: 10, number of beds: 5 }
   action: BED
   type: HABITATION
 
-- name: FARM
+- name: Farm
   path: farm.nbt
   properties: { cost: 10, work production: 1, food production: 5 }
   action: FOOD
   type: FARM
 
-- name: WHEAT_PACK_1
-  path: extensions/farm_wheat_1.nbt
+- name: Wheat Pack 1
+  path: extensions/wheat_pack_1.nbt
   properties: { cost: 20, food production: 5 }
   action: FOOD
   type: FARM
 
-- name: WHEAT_PACK_2
-  path: extensions/farm_wheat_2.nbt
+- name: Wheat Pack 2
+  path: extensions/wheat_pack_2.nbt
   properties: { cost: 20, food production: 5 }
   action: FOOD
   type: FARM
 
-- name: FORGE
+- name: Forge
   path: forge.nbt
   properties: { cost: 20, work production: 20 }
   action: WORK
   type: FORGING
 
-- name: ORE_PACK
-  path: extensions/forge_ore_pack.nbt
+- name: Ore Pack
+  path: extensions/ore_pack.nbt
   properties: { cost: 50, work production: 5 }
   action: WORK
   type: FORGING
 
-- name: SAWMILL
+- name: Sawmill
   path: sawmill.nbt
   properties: { cost: 20, work production: 10 }
   action: WORK
   type: WOODCUTTING
 
-- name: CUT_TREE
-  path: extensions/sawmill1.nbt
+- name: Cut Tree
+  path: extensions/cut_tree.nbt
   properties: { cost: 10, work production: 5 }
   action: WORK
   type: WOODCUTTING
 
-- name: WOOD_STACK
-  path: extensions/sawmill2.nbt
+- name: Wood Stack
+  path: extensions/wood_stack.nbt
   properties: { cost: 50, work production: 20 }
   action: WORK
   type: WOODCUTTING

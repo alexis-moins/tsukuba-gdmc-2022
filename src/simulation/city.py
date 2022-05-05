@@ -1,20 +1,18 @@
-from gdpc import interface as INTERFACE
-
+import random
 import textwrap
 from typing import Counter
 
-import networkx as nx
-from gdpc import toolbox as TOOLBOX
+from colorama import Fore
 
+from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
-from src.utils.coordinates import Coordinates
 from src.utils.criteria import Criteria
 
 
 class City:
-    def __init__(self, plot):
+    def __init__(self, plot: Plot):
         self.plot = plot
         self.buildings: list[Building] = []
         self.professions = {}
@@ -32,23 +30,35 @@ class City:
 
         plot.build_foundation()
 
+        print(f'{building} added to the settlement')
+
         building.build(plot, rotation)
         self.buildings.append(building)
 
-        if len(self.buildings) > 1:
-            print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
-            # start = self.buildings[0].structure.entrance if self.buildings[0].structure.entrance is not None else self.buildings[0].plot.start
-            # end = self.buildings[-1].structure.entrance if self.buildings[-1].structure.entrance is not None else self.buildings[-1].plot.start
+        if len(self.buildings) > 1 and not self.buildings[-1].is_extension:
+            if env.DEBUG:
+                print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
+
+            # start = random.choice(
+            #     self.buildings[0].entrances).coordinates if self.buildings[0].entrances else self.buildings[0].plot.start
+            # end = random.choice(
+            #     self.buildings[-1].entrances).coordinates if self.buildings[-1].entrances else self.buildings[-1].plot.start
+
             start = self.buildings[0].plot.start
             end = self.buildings[-1].plot.start
             self.plot.compute_roads(start, end)
 
-            road_pattern = {'INNER': {'grass_path': 100}, 'MIDDLE': {'grass_path': 85, 'grass_block': 15},
-                            'OUTER': {'grass_path': 75, 'grass_block': 15, 'coarse_dirt': 10}}
+            road_pattern = {
+                'INNER': {'glowstone': 100},
+                'MIDDLE': {'birch_planks': 100},
+                'OUTER': {'note_block': 100}
+            }
 
-            slab_pattern = {'INNER': {'cobblestone_slab': 25, 'stone_slab': 25, 'andesite_slab': 25, 'granite_slab': 25},
-                            'MIDDLE': {'cobblestone_slab': 25, 'stone_slab': 25, 'andesite_slab': 25, 'granite_slab': 25},
-                            'OUTER': {'cobblestone_slab': 25, 'stone_slab': 25, 'andesite_slab': 25, 'granite_slab': 25}}
+            slab_pattern = {
+                'INNER': {'birch_slab': 100},
+                'MIDDLE': {'birch_slab': 100},
+                'OUTER': {'dark_oak_slab': 100}
+            }
 
             self.plot.build_roads(road_pattern, slab_pattern)
 
@@ -65,7 +75,8 @@ class City:
     def food_production(self):
         return sum(building.properties.food_production for building in self.buildings)
 
-    def update(self):
+    def update(self) -> None:
+        """Update the city's indicators and make the buildings grow old"""
         self.productivity = max(0, min(self.work_production, self.population))
         self.food_available += self.food_production
 
@@ -89,14 +100,29 @@ class City:
             # reset food
             self.food_available = 0
 
-    def display(self) -> None:
-        print(f'\n   Population: {self.population}/{self.number_of_beds}')
-        print(f'   Food: {self.food_available} (since last year: +{self.food_production})')
-        print(f'   Work : {self.productivity} (since last year: +{max(0, min(self.work_production, self.population))})')
+        self.make_buildings_grow_old()
 
-        print(f'\nBuildings ({len(self.buildings)}) :')
+    def make_buildings_grow_old(self, amount: int = 35) -> None:
+        """"""
+        amount = abs(amount) % 100
+        buildings: list[Building] = random.sample(self.buildings, amount * len(self.buildings) // 100)
+
+        for building in buildings:
+            building.grow_old(env.DETERIORATION)
+
+    def display(self) -> None:
+        """Display a summary of the city at the end of the current year"""
+        print('==== Summary ====')
+        print(
+            f'\n   Population: {Fore.GREEN}{self.population}/{self.number_of_beds}{Fore.WHITE}')
+        print(f'   Food: {Fore.GREEN}{self.food_available}{Fore.WHITE} ({Fore.GREEN}+{self.food_production}{Fore.WHITE})')
+
+        work_variation = max(0, min(self.work_production, self.population))
+        print(f'   Work: {Fore.GREEN}{self.productivity}{Fore.WHITE} ({Fore.GREEN}+{work_variation}{Fore.WHITE})')
+
+        print(f'\n   Buildings ({Fore.GREEN}{len(self.buildings)}{Fore.WHITE}):')
 
         counter = Counter(self.buildings)
-        buildings = "\n   ".join(textwrap.wrap(
-            ", ".join([f"{building}: {value}" for building, value in counter.items()])))
-        print(f'\n   {buildings}')
+        buildings = "\n      ".join(textwrap.wrap(
+            ", ".join([f"{building.name.lower().replace('_', ' ')}: {Fore.GREEN}{value}{Fore.WHITE}" for building, value in counter.items()])))
+        print(f'\n      {buildings}')

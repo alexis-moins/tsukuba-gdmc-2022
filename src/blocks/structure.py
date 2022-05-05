@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import gdpc.interface as INTERFACE
+from colorama import Fore
 from nbt.nbt import NBTFile
 from nbt.nbt import TAG_List
 
@@ -20,7 +20,7 @@ class Structure:
         self.name = name
         self.size = size
 
-        self.blocks: tuple[BlockList] = tuple(blocks)
+        self.blocks: BlockList = tuple(blocks)
         self.variations: dict[str, BlockList] = dict()
 
     @staticmethod
@@ -32,7 +32,7 @@ class Structure:
         palette = file['palette']
         blocks = Structure.__parse_blocks(file['blocks'], palette)
 
-        print(f'=> Parsed structure <{file_name}>')
+        print(f'parsed structure {Fore.RED}<{file_name}>{Fore.WHITE}')
         return Structure(name=file_name, size=Size(dimensions[0], dimensions[2]), blocks=blocks)
 
     @staticmethod

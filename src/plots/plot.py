@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from collections import defaultdict
-
-import networkx as nx
 import random
+from collections import defaultdict
 from typing import Generator
 
+import networkx as nx
 import numpy as np
 from gdpc import interface as INTF
 from gdpc import lookup
@@ -78,14 +77,26 @@ class Plot:
     def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
         roads_y = self.equalize_roads()
 
+        roads = []
+
         # clean above roads
         for road in self.all_roads:
-            for i in range(1, 6):
-                INTF.placeBlock(*(road.with_points(y=int(roads_y[road]) + i)), 'air')
+            for i in range(1, 5):
+                coordinates = road.with_points(y=int(roads_y[road]) + i)
+
+                if coordinates in self:
+                    roads.append(self.get_block_at(*coordinates))
+                    INTF.placeBlock(*coordinates, 'air')
+
+        # TODO Ça marche pas parce que je suis teubé
+        self.remove_trees(BlockList(roads))
 
         # place blocks
         for key in self.roads_infos:
             for road in self.roads_infos[key]:
+
+                if coordinates not in self:
+                    continue
 
                 # Default : place a block
                 chose_pattern = floor_pattern
@@ -158,7 +169,7 @@ class Plot:
 
         INTF.sendBlocks()
 
-    @staticmethod
+    @ staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
         """Return a new plot created from the given start and end coordinates"""
         return Plot(*start, Size.from_coordinates(start, end))
@@ -168,7 +179,7 @@ class Plot:
         env.update_world_slice()
         self.surface_blocks.clear()
 
-    @staticmethod
+    @ staticmethod
     def _delta_sum(values: list, base: int) -> int:
         return sum(abs(base - v) for v in values)
 
@@ -276,7 +287,7 @@ class Plot:
 
         if criteria.name in env.WORLD.heightmaps.keys():
             return env.WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x,
-                   self.offset[0].z:self.offset[1].z]
+                                                       self.offset[0].z:self.offset[1].z]
 
         raise Exception(f'Invalid criteria: {criteria}')
 
@@ -341,7 +352,8 @@ class Plot:
                 self.visualize_steep_map(2)
 
         blocks_to_check = self.priority_blocks + blocks_to_check
-        print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
+        if env.DEBUG:
+            print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
 
         # DEBUG
         if env.DEBUG and False:
@@ -458,7 +470,10 @@ class Plot:
 
         amount = 0
         unwanted_blocks = surface.filter(pattern).to_set()
-        print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
+
+        if env.DEBUG:
+            print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
+
         while unwanted_blocks:
             block = unwanted_blocks.pop()
             for coord in self.__yield_until_ground(block.coordinates):
@@ -466,8 +481,9 @@ class Plot:
                 amount += 1
 
         INTF.sendBlocks()
-        print(f'=> Deleted {amount} blocs\n')
-        self.update()
+        if env.DEBUG:
+            print(f'=> Deleted {amount} blocs\n')
+        # self.update()
 
     def __yield_until_ground(self, coordinates: Coordinates):
         """Yield the coordinates """
@@ -496,8 +512,8 @@ class Plot:
     def __contains__(self, coordinates: Coordinates) -> bool:
         """Return true if the current plot contains the given coordinates"""
         return self.start.x <= coordinates.x < self.end.x and \
-               self.start.y <= coordinates.y <= self.end.y and \
-               self.start.z <= coordinates.z < self.end.z
+            self.start.y <= coordinates.y <= self.end.y and \
+            self.start.z <= coordinates.z < self.end.z
 
     def surface(self, padding: int = 0) -> Generator[Coordinates]:
         """Return a generator over the coordinates of the current plot"""

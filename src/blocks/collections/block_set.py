@@ -10,7 +10,7 @@ from src.blocks.block import Block
 
 class BlockSet(MutableSet):
     """Class representing a set of blocks, implements the abstract Set"""
-    __slots__ = ('__blocks', )
+    __slots__ = ['__blocks']
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new set of blocks"""
