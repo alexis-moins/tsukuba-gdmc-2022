@@ -118,7 +118,7 @@ class Block:
         if 'axis' in properties and (angle == 90 or angle == 270):
             if properties['axis'] == 'x':
                 properties['axis'] = 'z'
-            if properties['axis'] == 'z':
+            elif properties['axis'] == 'z':
                 properties['axis'] = 'x'
                 
         return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
