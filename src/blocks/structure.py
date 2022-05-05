@@ -48,7 +48,7 @@ class Structure:
         if rotation == 90:
             shift_due_to_rotation = Coordinates(self.size.z - 1, 0, 0)
         elif rotation == 180:
-            shift_due_to_rotation = Coordinates(self.size.x, 0, self.size.z - 1)
+            shift_due_to_rotation = Coordinates(self.size.x - 1, 0, self.size.z - 1)
         elif rotation == 270:
             shift_due_to_rotation = Coordinates(0, 0, self.size.x - 1)
 
