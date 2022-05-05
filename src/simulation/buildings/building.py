@@ -5,19 +5,22 @@ from dataclasses import dataclass
 from dataclasses import replace
 from typing import Any
 
+from colorama import Fore
 from gdpc import interface as INTERFACE
+from gdpc import toolbox
 from gdpc import toolbox as TOOLBOX
 
 from src import env
-from src.blocks.collections import palette
 from src.blocks.block import Block
+from src.blocks.collections import palette
 from src.blocks.collections.block_list import BlockList
 from src.blocks.collections.palette import Palette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
 from src.utils.action_type import ActionType
-from src.utils.coordinates import Coordinates, Size
+from src.utils.coordinates import Coordinates
+from src.utils.coordinates import Size
 
 
 @dataclass(kw_only=True)
@@ -34,11 +37,13 @@ class BuildingProperties:
 class Building:
     """Class representing a list of blocks (structure) on a given plot"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, palettes: dict = None):
+    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, is_extension: bool):
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
         self.__structure = structure
+        self.old_blocks: dict[Block, Block] = {}
+        self.is_extension = is_extension
 
         self.plot: Plot = None
         self.rotation: int = None
@@ -57,7 +62,7 @@ class Building:
                                         action_type=action_type, building_type=building_type)
 
         structure = Structure.parse_nbt_file(building['path'])
-        return Building(building['name'], properties, structure)
+        return Building(building['name'], properties, structure, is_extension=('extensions' in building['path']))
 
     def get_size(self, rotation: int) -> Size:
         """Return the size of the building considering the given rotation"""
@@ -75,8 +80,6 @@ class Building:
             self.__randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
 
         self.entrances = self.blocks.filter('emerald')
-        print(f'=> Building entrances: {len(self.entrances)}')
-
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
@@ -105,6 +108,49 @@ class Building:
             if block_name is not None:
                 INTERFACE.placeBlock(*entrance.coordinates, block_name)
 
+    def grow_old(self, amount: int) -> None:
+        """Make a building grow old"""
+
+        # ensure it stays between 0 and 100
+        amount = abs(amount) % 100
+        sample: list[Block] = random.sample(self.blocks.without('air'), amount * len(self.blocks.without('air')) // 100)
+
+        for block in sample:
+
+            materials = {
+                'cobblestone': ('mossy_cobblestone', True),
+                'mossy_stone': ('cracked_stone', True),
+                'stone': ('mossy_stone', True),
+                'planks': ('stairs', False)
+            }
+
+            replacement = block.replace_first(materials)
+
+            if replacement is not block and Block.exists(replacement.name):
+                if 'stairs' in replacement.name:
+                    facing = random.choice(['north', 'east', 'south', 'west'])
+                    half = random.choice(['top', 'bottom'])
+                    shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
+                    replacement = replace(replacement, properties={'facing': facing, 'half': half, 'shape': shape})
+                self.old_blocks[block] = replacement
+
+            else:
+                population = (block.name, 'oak_leaves', 'cobweb', 'air')
+                weights = (60, 30, 7, 3)
+
+                name = random.choices(population, weights, k=1)
+
+                if name == block.name:
+                    continue
+
+                replacement = Block(name[0], block.coordinates, properties={
+                                    'persistent': 'true'} if name[0] == 'oak_leaves' else {})
+                self.old_blocks[block] = replacement
+
+            INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
+
+        INTERFACE.sendBlocks()
+
     def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
                             text4: str = ""):
         x, y, z = coord
@@ -118,43 +164,9 @@ class Building:
         data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
         INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
 
-    def grow_old(self, amount: int) -> None:
-        """Make a building grow old"""
-
-        # ensure it stays between 0 and 100
-        amount = abs(amount) % 100
-        sample: list[Block] = random.sample(self.blocks.without('air'), amount * len(self.blocks.without('air')) // 100)
-
-        new_blocks = self.blocks.to_set()
-        for block in sample:
-
-            materials = {
-                'cobblestone': 'mossy_cobblestone',
-                'stairs': 'slab',
-                'planks': 'stairs'
-            }
-
-            replacement = block.replace_first(materials)
-
-            if replacement is not block:
-                new_blocks.add(replacement)
-            else:
-                population = (block.name, 'air', 'cobweb')
-                weights = (90, 7, 3)
-
-                name = random.choices(population, weights, k=1)
-                replacement = Block(name[0], block.coordinates)
-                new_blocks.add(replacement)
-
-            new_blocks.remove(block)
-            INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
-        INTERFACE.sendBlocks()
-
-        self.blocks = BlockList(new_blocks)
-
     def __str__(self) -> str:
         """Return the string representation of the current building"""
-        return self.name.upper()
+        return f'{Fore.MAGENTA}{self.name}{Fore.WHITE}'
 
     def __randomize_building(self, palettes: dict[str, Palette | list]):
         """Create a new block list with modified blocks according to given palettes"""
