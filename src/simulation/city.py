@@ -24,7 +24,7 @@ class City:
         """Add a new building to the current city"""
 
         area_with_padding = BlockList(
-            list(map(lambda coord: self.plot.get_block_name(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
+            list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
                      filter(lambda coord: coord in self.plot, plot.surface(3)))))
         plot.remove_trees(area_with_padding)
 
