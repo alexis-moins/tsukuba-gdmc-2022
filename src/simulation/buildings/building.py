@@ -8,19 +8,16 @@ from typing import Any
 from gdpc import interface as INTERFACE
 from gdpc import toolbox as TOOLBOX
 
-<<<<<<< HEAD
 from src import env
 from src.blocks.collections import palette
-=======
 from src.blocks.block import Block
->>>>>>> acd05c3 (feat(building): added method to deprecate a building)
 from src.blocks.collections.block_list import BlockList
 from src.blocks.collections.palette import Palette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
 from src.utils.action_type import ActionType
-from src.utils.coordinates import Size
+from src.utils.coordinates import Coordinates, Size
 
 
 @dataclass(kw_only=True)
@@ -108,7 +105,6 @@ class Building:
             if block_name is not None:
                 INTERFACE.placeBlock(*entrance.coordinates, block_name)
 
-<<<<<<< HEAD
     def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
                             text4: str = ""):
         x, y, z = coord
@@ -121,7 +117,7 @@ class Building:
         data += f'Text3:\'{{"text":"{text3}"}}\','
         data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
         INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
-=======
+
     def grow_old(self, amount: int) -> None:
         """Make a building grow old"""
 
@@ -133,20 +129,15 @@ class Building:
         for block in sample:
 
             materials = {
-                'cobblestone': ('mossy_cobblestone', True),
-                'stairs': ('slab', False),
-                'planks': ('stairs', False)
+                'cobblestone': 'mossy_cobblestone',
+                'stairs': 'slab',
+                'planks': 'stairs'
             }
 
             replacement = block.replace_first(materials)
 
             if replacement is not block:
                 new_blocks.add(replacement)
-
-            elif block.name.endswith('log') and 'stripped' not in block.name:
-                replacement = replace(block, name=block.name.replace(':', ':stripped_'))
-                new_blocks.add(replacement)
-
             else:
                 population = (block.name, 'air', 'cobweb')
                 weights = (90, 7, 3)
@@ -160,7 +151,6 @@ class Building:
         INTERFACE.sendBlocks()
 
         self.blocks = BlockList(new_blocks)
->>>>>>> acd05c3 (feat(building): added method to deprecate a building)
 
     def __str__(self) -> str:
         """Return the string representation of the current building"""

@@ -15,6 +15,22 @@ from src.simulation.buildings.building_type import BuildingType
 from src.utils.coordinates import Coordinates
 
 
+# The default build are
+BUILD_AREA = None
+
+# The world slice of the build area
+WORLD = None
+
+# Wether the simulation runs in debug mode or not
+DEBUG = False
+
+# Wether to teleport the player automatically or not
+TP = True
+
+# The percentage of blocks in a building that will suffer from the passing of time
+DETERIORATION = 5
+
+
 @dataclass(frozen=True)
 class BuildArea:
     """Light container class for the build area"""
@@ -27,14 +43,16 @@ class BuildArea:
             yield coordinates
 
 
-def get_build_area() -> BuildArea:
-    """Fetch a new world slice either with a default area, """
-    x1, y1, z1, x2, y2, z2 = INTERFACE.requestBuildArea()
+def get_build_area(auto_build_area: bool = False) -> BuildArea:
+    """Get the BUILD_AREA"""
+    request_build_area = INTERFACE.requestPlayerArea if auto_build_area else INTERFACE.requestBuildArea
+
+    x1, y1, z1, x2, y2, z2 = request_build_area()
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
 
 
-def get_world_slice() -> WorldSlice | None:
-    """Return a new WorldSlice object, snapshot of the world at the instant of the capture"""
+def get_world_slice() -> None:
+    """Set the WORLD attribute"""
     while retry_amount := 10:
         try:
             return WorldSlice(BUILD_AREA.start.x, BUILD_AREA.start.z,
@@ -43,12 +61,6 @@ def get_world_slice() -> WorldSlice | None:
             retry_amount -= 1
             sleep(2)
     print(f'Error: Could not get a world slice in {retry_amount} try')
-    return None
-
-
-def update_world_slice() -> None:
-    """Fetch a new snapshot of the world. The new snapshot will override the last one"""
-    WORLD = get_world_slice()
 
 
 def get_content(file_name: str) -> Any:
@@ -56,21 +68,6 @@ def get_content(file_name: str) -> Any:
     with open(f'resources/{file_name}', 'r') as content:
         return yaml.safe_load(content)
 
-
-# The default build are
-BUILD_AREA = get_build_area()
-
-# The world slice of the build area
-WORLD = get_world_slice()
-
-# Wether the simulation runs in debug mode or not
-DEBUG = False
-
-# Wether to teleport the player automatically or not
-TP = True
-
-# The percentage of blocks in a building that will suffer from the passing of time
-DETERIORATION = 5
 
 # Mapping of a material and its replacement and keepProperties (tuple)
 BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}

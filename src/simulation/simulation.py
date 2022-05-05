@@ -1,3 +1,5 @@
+from textwrap import wrap
+
 from colorama import Fore
 
 from src import env
@@ -35,10 +37,9 @@ class Simulation:
         self.city = City(self.plot)
         self.decision_maker.city = self.city
 
-        print('*** Starting simulation ***')
+        print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
-        print('Building the settlement\'s Town Hall')
-        town_hall = env.BUILDINGS['TOWN_HALL']
+        town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
         size = town_hall.get_size(rotation)
         plot = self.city.plot.get_subplot(size)
@@ -46,7 +47,7 @@ class Simulation:
         self.city.add_building(town_hall, plot, rotation)
 
         while year < self.years:
-            print(f'\n=> Start of year {year}')
+            print(f'\n=> Start of year {Fore.RED}[{year}]{Fore.WHITE}')
 
             # Update city
             self.city.update()
@@ -70,10 +71,16 @@ class Simulation:
             self.city.display()
             year += 1
 
+        print(
+            f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
+
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""
         actions = [building for building in env.BUILDINGS.values()
                    if building.properties.cost <= self.city.productivity]
+
+        formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
+        print(f'Available buildings: [{formatted}]')
 
         # TODO Change ActionType enum to be NOTHING, CONSTUCTION, REPARATION, etc
         return actions

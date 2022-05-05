@@ -22,9 +22,6 @@ class SmartDecisionMaker(DecisionMaker):
     def choose_building(self, possible_actions: list[Building], rotation: int) -> tuple[Building, Plot] | tuple[None, None]:
         """"""
 
-        # TODO wrap the text, par pitié
-        print(f'Possible actions [{", ".join(str(a) for a in possible_actions)}]')
-
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
             return possible_actions[0]
