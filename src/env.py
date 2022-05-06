@@ -106,4 +106,11 @@ ALL_PALETTES = {
         'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
         'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
     },
+
+    BuildingType.MINING: {
+        'stone_bricks': palette.RandomPalette({'stone_bricks': 75, 'diorite': 15, 'cobblestone': 10}),
+        'cobblestone': palette.RandomPalette({'cobblestone': 50, 'andesite': 50}),
+        'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 50, 'andesite_stairs': 50}),
+        'gold_block': palette.RandomPalette({'air': 75, 'lantern[hanging=true]': 25}),
+    },
 }
