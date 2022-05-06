@@ -218,7 +218,7 @@ class Plot:
                 blocks.append(block)
         self.priority_blocks = BlockList(blocks)
 
-    def visualize_roads(self):
+    def visualize_roads(self, y_offset: int = 0):
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         materials = ('concrete', 'wool', 'stained_glass')
         ys = self.equalize_roads()
@@ -227,7 +227,7 @@ class Plot:
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(
                     road)  # to be sure that we are in the plot
                 if block:
-                    INTF.placeBlock(*(road.with_points(y=ys[road])),
+                    INTF.placeBlock(*(road.with_points(y=ys[road] + y_offset)),
                                     colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
 
         INTF.sendBlocks()
@@ -387,11 +387,12 @@ class Plot:
                 self.occupied_coordinates.add(coordinates.as_2D())
 
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
-                if block and block.coordinates not in self.all_roads:
+                if block and block.coordinates.as_2D() not in self.all_roads:
                     for edges in self.graph.edges(block.coordinates):
                         self.graph.add_edge(*edges, weight=100_000)
 
         if env.DEBUG:
+            self.visualize_roads(10)
             self.visualize_graph()
 
         return sub_plot
