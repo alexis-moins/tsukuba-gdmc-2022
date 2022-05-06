@@ -51,7 +51,7 @@ def get_build_area(auto_build_area: bool = False) -> BuildArea:
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
 
 
-def get_world_slice() -> None:
+def get_world_slice() -> WorldSlice | None:
     """Set the WORLD attribute"""
     while retry_amount := 10:
         try:
@@ -93,5 +93,17 @@ ALL_PALETTES = {
 
     BuildingType.FORGING: {
         'lapis_block': palette.RandomSequencePalette(['air', 'grindstone[face=floor]', 'smithing_table', 'anvil', 'chest'])
-    }
+    },
+
+    BuildingType.FARM: {
+        'lapis_block': palette.RandomSequencePalette(['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
+        'gold_block': palette.RandomPalette(['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
+        'gold_ore': [color + '_carpet' for color in lookup.COLORS],
+        'white_bed': [color + '_bed' for color in lookup.COLORS],
+        'iron_block': palette.RandomPalette(['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
+        'diamond_ore': palette.RandomPalette(['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel', 'hay_block']),
+        'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
+        'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
+        'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
+    },
 }
