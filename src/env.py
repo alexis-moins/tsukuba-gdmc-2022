@@ -93,5 +93,12 @@ ALL_PALETTES = {
 
     BuildingType.FORGING: {
         'lapis_block': palette.RandomSequencePalette(['air', 'grindstone[face=floor]', 'smithing_table', 'anvil', 'chest'])
+    },
+
+    BuildingType.MINING: {
+        'stone_bricks': palette.RandomPalette({'stone_bricks': 75, 'diorite': 15, 'cobblestone': 10}),
+        'cobblestone': palette.RandomPalette({'cobblestone': 50, 'andesite': 50}),
+        'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 50, 'andesite_stairs': 50}),
+        'gold_block': palette.RandomPalette({'air': 75, 'lantern[hanging=true]': 25}),
     }
 }
