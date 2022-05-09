@@ -12,8 +12,8 @@ from nbt.nbt import MalformedFileError
 from src.blocks.collections import palette
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
+from src.simulation.buildings.relations import RelationsHandler
 from src.utils.coordinates import Coordinates
-
 
 # The default build are
 BUILD_AREA = None
@@ -76,32 +76,45 @@ BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}
 BUILDINGS: dict[str, Building] = {building['name']: Building.deserialize(building)
                                   for building in get_content('buildings.yaml')}
 
+# Build relations
+_buildings = ()
+
+RELATIONS = RelationsHandler(get_content('relations.yaml'))
 
 # One block palettes must be generated when building the building, else the buildings would have the same blocks.
 ALL_PALETTES = {
     BuildingType.HABITATION: {
-        'lapis_block': palette.RandomSequencePalette(['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
-        'gold_block': palette.RandomPalette(['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
+        'lapis_block': palette.RandomSequencePalette(
+            ['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
+        'gold_block': palette.RandomPalette(
+            ['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
         'gold_ore': [color + '_carpet' for color in lookup.COLORS],
         'white_bed': [color + '_bed' for color in lookup.COLORS],
-        'iron_block': palette.RandomPalette(['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
-        'diamond_ore': palette.RandomPalette(['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel', 'hay_block']),
+        'iron_block': palette.RandomPalette(
+            ['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
+        'diamond_ore': palette.RandomPalette(
+            ['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel',
+             'hay_block']),
         'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
         'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
         'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
     },
 
     BuildingType.FORGING: {
-        'lapis_block': palette.RandomSequencePalette(['air', 'grindstone[face=floor]', 'smithing_table', 'anvil', 'chest'])
+        'lapis_block': palette.RandomSequencePalette(
+            ['air', 'grindstone[face=floor]', 'smithing_table', 'anvil', 'chest'])
     },
 
     BuildingType.FARM: {
-        'lapis_block': palette.RandomSequencePalette(['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
-        'gold_block': palette.RandomPalette(['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
+        'lapis_block': palette.RandomSequencePalette(
+            ['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
+        'gold_block': palette.RandomPalette(
+            ['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
         'gold_ore': [color + '_carpet' for color in lookup.COLORS],
         'white_bed': [color + '_bed' for color in lookup.COLORS],
-        'iron_block': palette.RandomPalette(['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
-        'diamond_ore': palette.RandomPalette(['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel', 'hay_block']),
+        'diamond_ore': palette.RandomPalette(
+            ['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel',
+             'hay_block']),
         'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
         'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
         'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
