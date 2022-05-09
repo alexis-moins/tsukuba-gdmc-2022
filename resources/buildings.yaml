@@ -72,3 +72,9 @@
   properties: { cost: 50, work production: 20 }
   action: WORK
   type: WOODCUTTING
+
+- name: Mine
+  path: mine_top.nbt,mine_stairs.nbt
+  properties: { cost: 10, work production: 20 }
+  action: WORK
+  type: MINING

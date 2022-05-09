@@ -9,7 +9,7 @@ from src.blocks.block import Block
 from src.blocks.collections import palette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
-from src.simulation.buildings.building import BuildingProperties, Building
+from src.simulation.buildings.building import BuildingProperties, Building, Mine
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.decisions.smart import SmartDecisionMaker
 from src.simulation.simulation import Simulation
@@ -54,6 +54,7 @@ def start_simulation(years: int) -> None:
     """Launch the simulation"""
     start, end = env.BUILD_AREA
     build_area = Plot.from_coordinates(start, end)
+    env.WORLD = env.get_world_slice()
 
     if env.TP:
         command = f'tp @a {build_area.start.x} 110 {build_area.start.z}'
@@ -61,10 +62,9 @@ def start_simulation(years: int) -> None:
         print(f'/{command}')
 
     find_building_materials(build_area)
+
     decision_maker = SmartDecisionMaker(build_area)
-
     simulation = Simulation(build_area, decision_maker, years)
-
     simulation.start()
 
     INTERFACE.sendBlocks()
@@ -101,7 +101,5 @@ def find_building_materials(build_area: Plot):
 if __name__ == '__main__':
     try:
         prepare_environment()
-
-        # prepare_environment()
     except KeyboardInterrupt:
         print("Pressed Ctrl-C to kill program.")

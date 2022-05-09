@@ -17,3 +17,6 @@ class BuildingType(Enum):
 
     #
     FORGING = 4
+
+    #
+    MINING = 5

@@ -52,8 +52,12 @@ class Building:
     @staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
+
         properties = {key.replace(' ', '_'): value
                       for key, value in building['properties'].items()}
+
+        if building['type'] == 'MINING':
+            return Mine.deserialize(building)
 
         action_type = ActionType[building['action'].upper()]
         building_type = BuildingType[building['type'].upper()]
@@ -72,16 +76,8 @@ class Building:
         self.plot = plot
         self.rotation = rotation
 
-        self.blocks = self.__structure.get_blocks(plot.start, rotation)
-
-        # Apply palette
-        if self.properties.building_type in env.ALL_PALETTES:
-            self.__randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
-
-        self.entrances = self.blocks.filter('emerald')
-        for block in self.blocks:
-            INTERFACE.placeBlock(*block.coordinates, block.full_name)
-
+        self._build_structure(self.__structure, self.plot, self.rotation)
+        
         if self.properties.building_type is BuildingType.FARM and not self.is_extension:
             for coordinates in self.plot.surface(padding=6):
                 if coordinates not in self.plot and coordinates.as_2D() not in city.all_roads:
@@ -97,10 +93,18 @@ class Building:
                     if block_name == 'farmland':
                         INTERFACE.placeBlock(*block.coordinates.shift(y=1), 'minecraft:wheat')
 
-        self.__place_sign()
+        self._place_sign()
         INTERFACE.sendBlocks()
 
-    def __place_sign(self):
+    def _build_structure(self, structure: Structure, plot: Plot, rotation: int):
+        self.blocks = structure.get_blocks(plot.start, rotation)
+        # Apply palette
+        if self.properties.building_type in env.ALL_PALETTES:
+            self._randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
+        for block in self.blocks:
+            INTERFACE.placeBlock(*block.coordinates, block.full_name)
+
+    def _place_sign(self):
         """Place a sign indicating informations about the building"""
         if not self.entrances:
             return None
@@ -158,7 +162,7 @@ class Building:
                     continue
 
                 replacement = Block(name[0], block.coordinates, properties={
-                                    'persistent': 'true'} if name[0] == 'oak_leaves' else {})
+                    'persistent': 'true'} if name[0] == 'oak_leaves' else {})
                 self.old_blocks[block] = replacement
 
             INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
@@ -182,7 +186,7 @@ class Building:
         """Return the string representation of the current building"""
         return f'{Fore.MAGENTA}{self.name}{Fore.WHITE}'
 
-    def __randomize_building(self, palettes: dict[str, Palette | list]):
+    def _randomize_building(self, palettes: dict[str, Palette | list]):
         """Create a new block list with modified blocks according to given palettes"""
         new_block_list = []
 
@@ -199,3 +203,52 @@ class Building:
                 new_block_list.append(b)
 
         self.blocks = BlockList(new_block_list)
+
+
+class Mine(Building):
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], is_extension: bool):
+        super().__init__(name, properties, structures[0], is_extension)
+        self.structures = structures
+
+    @staticmethod
+    def deserialize(building: dict[str, Any]) -> Building:
+        """Return a new building deserialized from the given dictionary"""
+
+        properties = {key.replace(' ', '_'): value
+                      for key, value in building['properties'].items()}
+
+        action_type = ActionType[building['action'].upper()]
+        building_type = BuildingType[building['type'].upper()]
+        properties = BuildingProperties(**properties,
+                                        action_type=action_type, building_type=building_type)
+
+        structures = list(map(Structure.parse_nbt_file, building['path'].split(',')))
+        return Mine(building['name'], properties, structures, is_extension=False)
+
+    def build(self, plot: Plot, rotation: int, depth: int = 0):
+        if not depth:
+            depth = random.randint(2, 10)
+
+        self.plot = plot
+        self.rotation = rotation
+
+        rotations = [270, 180, 90, 0]
+        rotation_index = rotations.index(rotation) + 2  # set as starting rotation | need a 180 rotation between the
+        # 2 modules
+
+        start = plot.start
+
+        for i in range(depth):
+            rotation_index = (rotation_index + 1) % 4
+            plot.start = plot.start.shift(y=-5)
+
+            self._build_structure(self.structures[1], plot, rotations[rotation_index])
+
+        # build top in last
+        plot.start = start  # reset start
+        self._build_structure(self.structures[0], plot, rotation)
+
+        self.entrances = self.blocks.filter('emerald')
+        self._place_sign()
+        INTERFACE.sendBlocks()
+
