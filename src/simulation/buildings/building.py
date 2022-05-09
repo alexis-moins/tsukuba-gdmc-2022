@@ -77,7 +77,7 @@ class Building:
         self.rotation = rotation
 
         self._build_structure(self.__structure, self.plot, self.rotation)
-        
+
         if self.properties.building_type is BuildingType.FARM and not self.is_extension:
             for coordinates in self.plot.surface(padding=6):
                 if coordinates not in self.plot and coordinates.as_2D() not in city.all_roads:
@@ -169,6 +169,18 @@ class Building:
 
         INTERFACE.sendBlocks()
 
+    def repair(self) -> None:
+        """"""
+        if self.old_blocks:
+            sample: list[Block] = random.sample(
+                list(self.old_blocks.keys()), env.DETERIORATION * len(self.old_blocks) // 100)
+
+            for original_block in sample:
+                INTERFACE.placeBlock(*original_block.coordinates, original_block.full_name)
+                del self.old_blocks[original_block]
+
+            INTERFACE.sendBlocks()
+
     def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
                             text4: str = ""):
         x, y, z = coord
@@ -225,7 +237,7 @@ class Mine(Building):
         structures = list(map(Structure.parse_nbt_file, building['path'].split(',')))
         return Mine(building['name'], properties, structures, is_extension=False)
 
-    def build(self, plot: Plot, rotation: int, depth: int = 0):
+    def build(self, plot: Plot, rotation: int, city: Plot, depth: int = 0):
         if not depth:
             depth = random.randint(2, 10)
 
@@ -251,4 +263,3 @@ class Mine(Building):
         self.entrances = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
-
