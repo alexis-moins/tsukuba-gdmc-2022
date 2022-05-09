@@ -7,8 +7,6 @@ from typing import Any
 
 from colorama import Fore
 from gdpc import interface as INTERFACE
-from gdpc import toolbox
-from gdpc import toolbox as TOOLBOX
 
 from src import env
 from src.blocks.block import Block
@@ -21,6 +19,7 @@ from src.simulation.buildings.building_type import BuildingType
 from src.utils.action_type import ActionType
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
+from src.utils.criteria import Criteria
 
 
 @dataclass(kw_only=True)
@@ -68,7 +67,7 @@ class Building:
         """Return the size of the building considering the given rotation"""
         return self.__structure.get_size(rotation)
 
-    def build(self, plot: Plot, rotation: int):
+    def build(self, plot: Plot, rotation: int, city: Plot):
         """Build the current building onto the building's plot"""
         self.plot = plot
         self.rotation = rotation
@@ -82,6 +81,21 @@ class Building:
         self.entrances = self.blocks.filter('emerald')
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
+
+        if self.properties.building_type is BuildingType.FARM and not self.is_extension:
+            for coordinates in self.plot.surface(padding=6):
+                if coordinates not in self.plot and coordinates.as_2D() not in city.all_roads:
+                    surface = city.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+
+                    if (block := surface.find(coordinates.as_2D())) is None:
+                        continue
+
+                    block_name = random.choices(['farmland', 'water'], [97, 3])[0]
+
+                    INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
+
+                    if block_name == 'farmland':
+                        INTERFACE.placeBlock(*block.coordinates.shift(y=1), 'minecraft:wheat')
 
         self.__place_sign()
         INTERFACE.sendBlocks()

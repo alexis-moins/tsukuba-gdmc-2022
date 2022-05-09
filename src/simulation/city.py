@@ -32,7 +32,7 @@ class City:
 
         print(f'{building} added to the settlement')
 
-        building.build(plot, rotation)
+        building.build(plot, rotation, self.plot)
         self.buildings.append(building)
 
         if len(self.buildings) > 1 and not self.buildings[-1].is_extension:
