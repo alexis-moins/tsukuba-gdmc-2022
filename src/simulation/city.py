@@ -8,6 +8,7 @@ from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
+from src.simulation.buildings.building_type import BuildingType
 from src.utils.criteria import Criteria
 
 
@@ -28,7 +29,8 @@ class City:
                      filter(lambda coord: coord in self.plot, plot.surface(3)))))
         plot.remove_trees(area_with_padding)
 
-        plot.build_foundation()
+        plot.build_foundation('grass' if building.properties.building_type in [
+                              BuildingType.DECORATION, BuildingType.FARM] else None)
 
         print(f'{building} added to the settlement')
 
@@ -50,14 +52,14 @@ class City:
 
             road_pattern = {
                 'INNER': {'glowstone': 100},
-                'MIDDLE': {'birch_planks': 100},
+                'MIDDLE': {'oak_planks'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
                 'OUTER': {'note_block': 100}
             }
 
             slab_pattern = {
-                'INNER': {'birch_slab': 100},
-                'MIDDLE': {'birch_slab': 100},
-                'OUTER': {'dark_oak_slab': 100}
+                'INNER': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
+                'MIDDLE': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
+                'OUTER': {'birch_slab': 100}
             }
 
             self.plot.build_roads(road_pattern, slab_pattern)

@@ -97,3 +97,33 @@
   properties: { cost: 10, work production: 20 }
   action: WORK
   type: MINING
+
+- name: Mine
+  path: mine_top.nbt,mine_stairs.nbt
+  properties: { cost: 10, work production: 20 }
+  action: WORK
+  type: MINING
+
+- name: Big Tree
+  path: extensions/big_tree.nbt
+  properties: { cost: 0 }
+  action: DECORATION
+  type: DECORATION
+
+- name: Medium Tree
+  path: extensions/medium_tree.nbt
+  properties: { cost: 0 }
+  action: DECORATION
+  type: DECORATION
+
+- name: Small Tree
+  path: extensions/small_tree.nbt
+  properties: { cost: 0 }
+  action: DECORATION
+  type: DECORATION
+
+- name: Fountain
+  path: extensions/fountain.nbt
+  properties: { cost: 0 }
+  action: DECORATION
+  type: DECORATION

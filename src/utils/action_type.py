@@ -5,3 +5,4 @@ class ActionType(Enum):
     BED = 0
     FOOD = 1
     WORK = 2
+    DECORATION = 3

@@ -491,13 +491,15 @@ class Plot:
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
 
-    def build_foundation(self) -> None:
+    def build_foundation(self, block: str = None) -> None:
         """Build the foundations under the house"""
+
         blocks = ('stone_bricks', 'diorite', 'cobblestone')
         weights = (75, 15, 10)
 
         for coord in self.__iterate_over_air(self.start.y):
-            block = random.choices(blocks, weights)
+            if block is None:
+                block = random.choices(blocks, weights)
             INTF.placeBlock(*coord, block)
         INTF.sendBlocks()
 

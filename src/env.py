@@ -100,7 +100,6 @@ ALL_PALETTES = {
         'gold_block': palette.RandomPalette(['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
         'gold_ore': [color + '_carpet' for color in lookup.COLORS],
         'white_bed': [color + '_bed' for color in lookup.COLORS],
-        'iron_block': palette.RandomPalette(['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
         'diamond_ore': palette.RandomPalette(['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel', 'hay_block']),
         'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
         'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
@@ -112,5 +111,10 @@ ALL_PALETTES = {
         'cobblestone': palette.RandomPalette({'cobblestone': 50, 'andesite': 50}),
         'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 50, 'andesite_stairs': 50}),
         'gold_block': palette.RandomPalette({'air': 75, 'lantern[hanging=true]': 25}),
+    },
+
+    BuildingType.DECORATION: {
+        'gold_block': [flower for flower in lookup.FLOWERS],
+        'iron_block': [flower for flower in lookup.FLOWERS],
     },
 }
