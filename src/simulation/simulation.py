@@ -1,10 +1,9 @@
+import random
 from textwrap import wrap
 
 from colorama import Fore
-
-import random
-
-from gdpc import toolbox, interface
+from gdpc import interface
+from gdpc import toolbox
 
 from src import env
 from src.plots.plot import Plot
@@ -85,13 +84,16 @@ class Simulation:
             # Update city
             self.city.update()
 
+            self.city.make_buildings_grow_old()
+
+            self.city.repair_buildings()
+
             # End of turn
             self.city.display()
             year += 1
 
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
-
 
         history_string = "\n".join(f'year {year} : {event.name}' for year, event in history)
         print(f'City history : {history_string}')
@@ -108,8 +110,6 @@ class Simulation:
 
             interface.runCommand(command)
             print(f'placed history book at {x}, {y}, {z}')
-
-
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""

@@ -100,15 +100,25 @@ class City:
             # reset food
             self.food_available = 0
 
-        self.make_buildings_grow_old()
-
     def make_buildings_grow_old(self, amount: int = 35) -> None:
         """"""
         amount = abs(amount) % 100
         buildings: list[Building] = random.sample(self.buildings, amount * len(self.buildings) // 100)
 
+        print(f'=> Deteriorating {Fore.RED}[{len(buildings)}]{Fore.WHITE} building(s)')
+
         for building in buildings:
             building.grow_old(env.DETERIORATION)
+
+    def repair_buildings(self, amount: int = 25):
+        """"""
+        amount = abs(amount) % 100
+        buildings: list[Building] = random.sample(self.buildings, amount * len(self.buildings) // 100)
+
+        print(f'=> Repairing {Fore.RED}[{len(buildings)}]{Fore.WHITE} potentially deteriorated building(s)')
+
+        for building in buildings:
+            building.repair()
 
     def display(self) -> None:
         """Display a summary of the city at the end of the current year"""
