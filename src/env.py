@@ -126,4 +126,9 @@ ALL_PALETTES = {
         'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 50, 'andesite_stairs': 50}),
         'gold_block': palette.RandomPalette({'air': 75, 'lantern[hanging=true]': 25}),
     },
+
+    BuildingType.DECORATION: {
+        'gold_block': [flower for flower in lookup.FLOWERS],
+        'iron_block': [flower for flower in lookup.FLOWERS],
+    },
 }

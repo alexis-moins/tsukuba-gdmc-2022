@@ -20,3 +20,5 @@ class BuildingType(Enum):
 
     #
     MINING = 5
+
+    DECORATION = 6

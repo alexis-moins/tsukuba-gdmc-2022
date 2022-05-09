@@ -153,8 +153,8 @@ class Building:
                 self.old_blocks[block] = replacement
 
             else:
-                population = (block.name, 'oak_leaves', 'cobweb', 'air')
-                weights = (60, 30, 7, 3)
+                population = (block.name, 'oak_leaves', 'cobweb')
+                weights = (60, 30, 10)
 
                 name = random.choices(population, weights, k=1)
 

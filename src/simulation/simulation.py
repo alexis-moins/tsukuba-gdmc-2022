@@ -8,6 +8,7 @@ from gdpc import toolbox
 from src import env
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
+from src.simulation.buildings.building_type import BuildingType
 from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
 
@@ -88,6 +89,18 @@ class Simulation:
 
             self.city.repair_buildings()
 
+            decoration_buildings = [building for building in env.BUILDINGS.values()
+                                    if building.properties.building_type is BuildingType.DECORATION]
+
+            for decoration in random.sample(decoration_buildings, k=2):
+
+                rotation = self.decision_maker.get_rotation()
+                size = decoration.get_size(rotation)
+                plot = self.city.plot.get_subplot(size)
+
+                if plot:
+                    self.city.add_building(decoration, plot, rotation)
+
             # End of turn
             self.city.display()
             year += 1
@@ -114,7 +127,8 @@ class Simulation:
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""
         actions = [building for building in env.BUILDINGS.values()
-                   if building.properties.cost <= self.city.productivity]
+                   if building.properties.cost <= self.city.productivity
+                   and building.properties.building_type is not BuildingType.DECORATION]
 
         formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
         print(f'Available buildings: [{formatted}]')
