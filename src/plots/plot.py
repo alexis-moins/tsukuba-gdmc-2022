@@ -326,7 +326,7 @@ class Plot:
         return heightmap
 
     def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True,
-                    building_type: BuildingType = BuildingType.NONE) -> Plot | None:
+                    building_specs: str | BuildingType = None, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
         # TODO add .lower_than(max_height=200)
@@ -365,7 +365,8 @@ class Plot:
         min_score = max_score
 
         for block in blocks_to_check:
-            block_score = self.__get_score(block.coordinates, surface, size, max_score, building_type=building_type)
+            block_score = self.__get_score(block.coordinates, surface, size, max_score, building_specs=building_specs,
+                                           city_buildings=city_buildings)
 
             if block_score < min_score:
                 best_coordinates = block.coordinates
@@ -395,7 +396,7 @@ class Plot:
         return sub_plot
 
     def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
-                    building_type: BuildingType = BuildingType.NONE) -> float:
+                    building_specs: str | BuildingType = None, city_buildings: list = None) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -434,31 +435,13 @@ class Plot:
                     return score
 
         # And now modifications for specials buildings
+        relation = env.RELATIONS.get_building_relation(building_specs)
+        score_modif = 0
+        if relation:
+            for build in filter(lambda b: b.plot.start.distance(coordinates) < 15, city_buildings):
+                score_modif += relation.get_building_value(build)
 
-        if building_type == BuildingType.FARM:
-            # Farm => Better near grass and water
-
-            water_bonus = len(self.__water_blocks.near(coordinates, 5)) * 0.5
-            # grass_bonus = len(self.__grass_blocks.near(coordinates, 10)) * 0.03
-            # grass take too much time
-            score -= water_bonus
-            # score -= grass_bonus
-
-        elif building_type == BuildingType.WOODCUTTING:
-            # Woodcutting => Better near trees
-
-            trees_bonus = len(self.__trees_blocks.near(coordinates, 10)) * 0.5
-
-            score -= trees_bonus
-
-        elif building_type == building_type.FORGING:
-            # Forging => Better with stone
-
-            stone_bonus = len(self.__stone_blocks.near(coordinates, 10)) * 0.5
-
-            score -= stone_bonus
-
-        return score
+        return score + score_modif
 
     def remove_trees(self, surface: BlockList = None) -> None:
         """Remove all plants at the surface of the current plot"""
