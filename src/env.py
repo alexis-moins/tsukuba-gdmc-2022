@@ -112,8 +112,6 @@ ALL_PALETTES = {
             ['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
         'gold_ore': [color + '_carpet' for color in lookup.COLORS],
         'white_bed': [color + '_bed' for color in lookup.COLORS],
-        'iron_block': palette.RandomPalette(
-            ['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
         'diamond_ore': palette.RandomPalette(
             ['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel',
              'hay_block']),

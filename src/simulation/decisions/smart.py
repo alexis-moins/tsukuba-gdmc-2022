@@ -40,21 +40,13 @@ class SmartDecisionMaker(DecisionMaker):
             return None, None
 
         building = random.choice(priority_actions)
-        plot = self.plot.get_subplot(building.get_size(rotation))
+        plot = self.plot.get_subplot(building.get_size(rotation), building_specs=building.name,
+                                     city_buildings=self.city.buildings)
 
         if plot is not None:
             return building, plot
 
         return None, None
-
-    def get_coordinates(self, plot: Plot, size: Size) -> Coordinates:
-        padding = 3
-        if self.action_choose:
-            subplot = self.plot.get_subplot(
-                size, padding=padding, building_type=self.action_choose.properties.build_type)
-        else:
-            subplot = self.plot.get_subplot(size, padding=padding)
-        return subplot.start if subplot is not None else None
 
     def get_rotation(self) -> int:
         # TODO : Implement brain here too

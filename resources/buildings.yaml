@@ -21,16 +21,15 @@
 
 - name: House
   path: house.nbt
-  properties: { cost: 30, number of beds: 5 }
+  properties: { cost: 20, number of beds: 10 }
   action: BED
   type: HABITATION
 
 - name: Little House
   path: house_little.nbt
-  properties: { cost: 10, number of beds: 2 }
+  properties: { cost: 10, number of beds: 8 }
   action: BED
   type: HABITATION
-
 
 - name: Farm
   path: farm.nbt

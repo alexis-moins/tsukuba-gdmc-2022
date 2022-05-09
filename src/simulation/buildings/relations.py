@@ -35,6 +35,7 @@ class BuildingRelation:
 
     def get_building_value(self, other_building: str | BuildingType) -> int:
         """Return the bonus/malus corresponding to the given building/building type"""
+        # print(f'type : {type(other_building)}, value : {other_building}')
         if isinstance(other_building, str):
             if other_building in self.building_relations:
                 return self.building_relations[other_building]
@@ -57,9 +58,5 @@ class BuildingRelation:
 
     @staticmethod
     def deserialize(data: dict[str, any]):
-        if 'building' in data:
-            return BuildingRelation(data['buildings'], data['blocks'])
-        else:
-            print(data['buildings'])
-            input(BuildingType)
-            return BuildingRelation({BuildingType[k]: data['buildings'][k] for k in data['buildings']}, data['blocks'])
+
+        return BuildingRelation({BuildingType[k] if k in [bt.name for bt in BuildingType] else k: data['buildings'][k] for k in data['buildings']}, data['blocks'])
