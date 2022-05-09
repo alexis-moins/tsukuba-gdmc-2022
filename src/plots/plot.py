@@ -64,7 +64,7 @@ class Plot:
             return
         roads_y = dict()
 
-        for road in (self.all_roads - self.__built_roads):
+        for road in self.all_roads:
             neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
                                    filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(3)))
 
