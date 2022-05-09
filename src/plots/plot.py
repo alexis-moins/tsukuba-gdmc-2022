@@ -383,7 +383,7 @@ class Plot:
         sub_plot = Plot(*best_coordinates, size=size)
 
         if occupy_coord:
-            for coordinates in sub_plot.surface(padding):
+            for coordinates in sub_plot.surface(8 if building_type is BuildingType.FARM else padding):
                 self.occupied_coordinates.add(coordinates.as_2D())
 
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)

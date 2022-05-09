@@ -28,7 +28,7 @@ DEBUG = False
 TP = True
 
 # The percentage of blocks in a building that will suffer from the passing of time
-DETERIORATION = 5
+DETERIORATION = 30
 
 
 @dataclass(frozen=True)
