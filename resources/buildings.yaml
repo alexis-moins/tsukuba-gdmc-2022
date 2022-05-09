@@ -21,9 +21,16 @@
 
 - name: House
   path: house.nbt
-  properties: { cost: 10, number of beds: 5 }
+  properties: { cost: 30, number of beds: 5 }
   action: BED
   type: HABITATION
+
+- name: Little House
+  path: house_little.nbt
+  properties: { cost: 10, number of beds: 2 }
+  action: BED
+  type: HABITATION
+
 
 - name: Farm
   path: farm.nbt
@@ -39,6 +46,18 @@
 
 - name: Wheat Pack 2
   path: extensions/wheat_pack_2.nbt
+  properties: { cost: 20, food production: 5 }
+  action: FOOD
+  type: FARM
+
+- name: Silo tier 1
+  path: extensions/silo_t1.nbt
+  properties: { cost: 20, food production: 5 }
+  action: FOOD
+  type: FARM
+
+- name: Silo tier 2
+  path: extensions/silo_t2.nbt
   properties: { cost: 20, food production: 5 }
   action: FOOD
   type: FARM

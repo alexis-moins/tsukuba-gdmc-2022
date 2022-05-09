@@ -65,11 +65,11 @@ class Plot:
 
         for road in self.all_roads:
             neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
-                                   filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(3)))
+                                   filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(5)))
 
             neighbors_y = list(map(lambda block: block.coordinates.y, filter(lambda block: block, neighbors_blocks)))
 
-            average_y = sum(neighbors_y) / len(neighbors_y)
+            average_y = sum(neighbors_y) / max(len(neighbors_y), 1)
             roads_y[road.as_2D()] = average_y
 
         return roads_y
@@ -85,14 +85,13 @@ class Plot:
                 coordinates = road.with_points(y=int(roads_y[road]) + i)
 
                 if coordinates in self:
-                    roads.append(self.get_block_at(*coordinates))
+                    roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
                     INTF.placeBlock(*coordinates, 'air')
 
-        # TODO Ça marche pas parce que je suis teubé
         self.remove_trees(BlockList(roads))
 
         # place blocks
-        for key in self.roads_infos:
+        for key in self.roads_infos.keys():
             for road in self.roads_infos[key]:
 
                 if coordinates not in self:
@@ -110,7 +109,6 @@ class Plot:
 
                 INTF.placeBlock(*(road.with_points(y=int(roads_y[road]) + shift)),
                                 random.choices(list(chose_pattern[key].keys()), k=1, weights=list(chose_pattern[key].values())))
-
         INTF.sendBlocks()
 
     def __add_road_block(self, coordinates: Coordinates, placement: str):
@@ -135,7 +133,6 @@ class Plot:
         self.occupied_coordinates.add(road_coord)
 
     def compute_roads(self, start: Coordinates, end: Coordinates):
-
         try:
             path = nx.dijkstra_path(self.graph, start, end)
         except nx.NetworkXException:
