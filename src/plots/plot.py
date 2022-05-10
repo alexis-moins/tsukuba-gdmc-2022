@@ -339,9 +339,12 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True,
+    def get_subplot(self, size: Size, padding: int = 5, max_score: int = None, occupy_coord: bool = True,
                     building_specs: str | BuildingType = None, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
+        if max_score is None:
+            # Auto define max score
+            max_score = size.x * size.z
 
         if self.graph is None:
             self.fill_graph()
