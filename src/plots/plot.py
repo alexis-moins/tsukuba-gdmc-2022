@@ -30,6 +30,7 @@ class Plot:
         self.size = size
 
         self.occupied_coordinates: set[Coordinates] = set()
+        self.construction_coordinates: set[Coordinates] = set()
 
         self.surface_blocks: dict[Criteria, BlockList] = {}
         self.offset = self.start - env.BUILD_AREA.start, self.end - env.BUILD_AREA.start
@@ -92,7 +93,7 @@ class Plot:
             for i in range(1, 5):
                 coordinates = road.with_points(y=int(roads_y[road]) + i)
 
-                if coordinates in self:
+                if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
                     INTF.placeBlock(*coordinates, 'air')
 
@@ -404,6 +405,9 @@ class Plot:
                 if block and block.coordinates.as_2D() not in self.all_roads:
                     for edges in self.graph.edges(block.coordinates):
                         self.graph.add_edge(*edges, weight=100_000_000)
+
+            for coordinates in sub_plot.surface():
+                self.construction_coordinates.add(coordinates.as_2D())
 
         if env.DEBUG:
             self.visualize_roads(10)
