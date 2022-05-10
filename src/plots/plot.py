@@ -63,7 +63,7 @@ class Plot:
                 if coord in self.graph.nodes.keys():
                     # self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
                     malus = self.get_steep_map_value(coord)
-                    if malus > 20:
+                    if malus > 15:
                         malus = min(malus * 100, 100_000)
                     self.graph.add_edge(coordinates, coord, weight=100 + malus * 10)
 
@@ -141,13 +141,26 @@ class Plot:
         self.all_roads.add(road_coord)
         self.occupied_coordinates.add(road_coord)
 
-    def compute_roads(self, start: Coordinates, end: Coordinates):
+    def compute_roads(self, start: Coordinates, end: Coordinates, backup_start=None):
         if self.graph is None:
             self.fill_graph()
+
+        # if the start is not linked, like in most entrance case
+        if start not in self.graph:
+            # try to link it
+            for neighbour in start.neighbours():
+                self.graph.add_edge(neighbour, start, weight=1000)
+
         try:
             path = nx.dijkstra_path(self.graph, start, end)
         except nx.NetworkXException:
             return
+
+        if backup_start:
+            try:
+                path = nx.dijkstra_path(self.graph, backup_start, end)
+            except nx.NetworkXException:
+                return
 
         self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
         for coord in path:
