@@ -114,8 +114,8 @@ class Building:
         if env.DEBUG:
             self.build_sign_in_world(sign_coord, text1=self.name, text2=f'rotation : {self.rotation}', rotation=rotation)
         else:
-            # TODO : Generate name here
-            self.build_sign_in_world(sign_coord, text1=self.name, rotation=rotation)
+            text = self.get_display_name()
+            self.build_sign_in_world(sign_coord, text1=text[:15], text2=text[15:30], text3=text[30:45], text4=text[45:60], rotation=rotation)
 
         for entrance in self.entrances:
             neighbours = [self.plot.get_block_at(*coordinates)
@@ -218,6 +218,15 @@ class Building:
                 new_block_list.append(b)
 
         self.blocks = BlockList(new_block_list)
+
+    def get_display_name(self):
+        adjectives = ['beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy',
+                      'cute',
+                      'dangerous', 'dark', 'enchanting', 'evil', 'fancy', 'fantastic', 'fragile', 'friendly',
+                      'lazy',
+                      'kind',
+                      'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint']
+        return f'The {random.choice(adjectives)} {self.name}'
 
 
 class Mine(Building):
