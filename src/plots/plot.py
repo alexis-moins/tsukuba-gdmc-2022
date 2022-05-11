@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
 from typing import Generator
@@ -29,6 +30,7 @@ class Plot:
         self.size = size
 
         self.occupied_coordinates: set[Coordinates] = set()
+        self.construction_coordinates: set[Coordinates] = set()
 
         self.surface_blocks: dict[Criteria, BlockList] = {}
         self.offset = self.start - env.BUILD_AREA.start, self.end - env.BUILD_AREA.start
@@ -36,27 +38,34 @@ class Plot:
         # TODO change center into coordinates
         self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
 
+        self.steep_factor = 2
         self.steep_map = None
-        self.__trees_blocks = None
-        self.__water_blocks = None
-        self.__grass_blocks = None
-        self.__stone_blocks = None
         self.priority_blocks: BlockList | None = None
 
-        self.graph = nx.Graph()
-        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
-            self.graph.add_node(block.coordinates)
-
-        for coordinates in self.graph.nodes.keys():
-            for coord in coordinates.neighbours():
-                if coord in self.graph.nodes.keys():
-                    self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
+        self.graph = None
 
         self.all_roads: set[Coordinates] = set()
         self.roads_infos: dict[str, defaultdict[Coordinates, int]] = {'INNER': defaultdict(int),
                                                                       'MIDDLE': defaultdict(int),
                                                                       'OUTER': defaultdict(int)}
         self.__recently_added_roads = None
+
+    def fill_graph(self):
+        self.graph = nx.Graph()
+        if self.steep_map is None:
+            self.compute_steep_map()
+
+        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
+            self.graph.add_node(block.coordinates)
+
+        for coordinates in self.graph.nodes.keys():
+            for coord in coordinates.neighbours():
+                if coord in self.graph.nodes.keys():
+                    # self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
+                    malus = self.get_steep_map_value(coord)
+                    if malus > 15:
+                        malus = min(malus * 100, 100_000)
+                    self.graph.add_edge(coordinates, coord, weight=100 + malus * 10)
 
     def equalize_roads(self):
         if len(self.all_roads) < 1:
@@ -84,7 +93,7 @@ class Plot:
             for i in range(1, 5):
                 coordinates = road.with_points(y=int(roads_y[road]) + i)
 
-                if coordinates in self:
+                if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
                     INTF.placeBlock(*coordinates, 'air')
 
@@ -94,7 +103,7 @@ class Plot:
         for key in self.roads_infos.keys():
             for road in self.roads_infos[key]:
 
-                if coordinates not in self:
+                if road not in self or road.as_2D() in self.construction_coordinates:
                     continue
 
                 # Default : place a block
@@ -133,6 +142,12 @@ class Plot:
         self.occupied_coordinates.add(road_coord)
 
     def compute_roads(self, start: Coordinates, end: Coordinates):
+        if self.graph is None:
+            self.fill_graph()
+
+        start = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(start)) else start
+        end = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(end)) else end
+
         try:
             path = nx.dijkstra_path(self.graph, start, end)
         except nx.NetworkXException:
@@ -180,8 +195,10 @@ class Plot:
     def _delta_sum(values: list, base: int) -> int:
         return sum(abs(base - v) for v in values)
 
-    def flat_heightmap_to_plot_block(self, index: int, span: int) -> Block | None:
+    def flat_heightmap_to_plot_block(self, index: int) -> Block | None:
         surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+
+        span = self.steep_factor
 
         side_length = self.size.x - 2 * span
         x = index // side_length
@@ -189,7 +206,8 @@ class Plot:
 
         return surface.find(self.start.shift(x + span, 0, z + span))
 
-    def compute_steep_map(self, span: int = 1):
+    def compute_steep_map(self):
+        span = self.steep_factor
 
         heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_TREES)
 
@@ -210,7 +228,7 @@ class Plot:
         prio = np.argpartition(self.steep_map, amount_of_prio)[:amount_of_prio]
         blocks = []
         for p in prio:
-            block = self.flat_heightmap_to_plot_block(p, span)
+            block = self.flat_heightmap_to_plot_block(p)
             if block and block not in self.occupied_coordinates:
                 blocks.append(block)
         self.priority_blocks = BlockList(blocks)
@@ -254,7 +272,8 @@ class Plot:
             INTF.placeBlock(*(coord.shift(y=1)), chose_color + '_stained_glass')
         INTF.sendBlocks()
 
-    def visualize_steep_map(self, span):
+    def visualize_steep_map(self):
+        span = self.steep_factor
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         for i, value in enumerate(self.steep_map):
             block = self.flat_heightmap_to_plot_block(i, span)
@@ -325,9 +344,15 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, size: Size, padding: int = 5, speed: int = 1, max_score: int = 500, occupy_coord: bool = True,
-                    building_type: BuildingType = BuildingType.NONE) -> Plot | None:
+    def get_subplot(self, size: Size, padding: int = 5, max_score: int = None, occupy_coord: bool = True,
+                    building_specs: str | BuildingType = None, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
+        if max_score is None:
+            # Auto define max score
+            max_score = size.x * size.z
+
+        if self.graph is None:
+            self.fill_graph()
 
         # TODO add .lower_than(max_height=200)
 
@@ -339,14 +364,10 @@ class Plot:
         blocks_to_check = surface.random_elements(random_blocks)
 
         if self.priority_blocks is None:
-            self.compute_steep_map(2)
-            self.__water_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('water')
-            self.__trees_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('log')
-            self.__grass_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('grass')
-            self.__stone_blocks = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).filter('stone')
+            self.compute_steep_map()
 
             if env.DEBUG:
-                self.visualize_steep_map(2)
+                self.visualize_steep_map()
 
         blocks_to_check = self.priority_blocks + blocks_to_check
         if env.DEBUG:
@@ -365,7 +386,8 @@ class Plot:
         min_score = max_score
 
         for block in blocks_to_check:
-            block_score = self.__get_score(block.coordinates, surface, size, max_score, building_type=building_type)
+            block_score = self.__get_score(block.coordinates, surface, size, max_score, building_specs=building_specs,
+                                           city_buildings=city_buildings)
 
             if block_score < min_score:
                 best_coordinates = block.coordinates
@@ -388,12 +410,16 @@ class Plot:
                 padding = 2
 
             for coordinates in sub_plot.surface(padding):
+
                 self.occupied_coordinates.add(coordinates.as_2D())
 
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
                 if block and block.coordinates.as_2D() not in self.all_roads:
                     for edges in self.graph.edges(block.coordinates):
-                        self.graph.add_edge(*edges, weight=100_000)
+                        self.graph.add_edge(*edges, weight=100_000_000)
+
+            for coordinates in sub_plot.surface():
+                self.construction_coordinates.add(coordinates.as_2D())
 
         if env.DEBUG:
             self.visualize_roads(10)
@@ -402,7 +428,7 @@ class Plot:
         return sub_plot
 
     def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
-                    building_type: BuildingType = BuildingType.NONE) -> float:
+                    building_specs: str | BuildingType = None, city_buildings: list = None) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -441,31 +467,12 @@ class Plot:
                     return score
 
         # And now modifications for specials buildings
+        relation = env.RELATIONS.get_building_relation(building_specs)
+        score_modif = 0
+        if relation and city_buildings:
+            score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
 
-        if building_type == BuildingType.FARM:
-            # Farm => Better near grass and water
-
-            water_bonus = len(self.__water_blocks.near(coordinates, 5)) * 0.5
-            # grass_bonus = len(self.__grass_blocks.near(coordinates, 10)) * 0.03
-            # grass take too much time
-            score -= water_bonus
-            # score -= grass_bonus
-
-        elif building_type == BuildingType.WOODCUTTING:
-            # Woodcutting => Better near trees
-
-            trees_bonus = len(self.__trees_blocks.near(coordinates, 10)) * 0.5
-
-            score -= trees_bonus
-
-        elif building_type == building_type.FORGING:
-            # Forging => Better with stone
-
-            stone_bonus = len(self.__stone_blocks.near(coordinates, 10)) * 0.5
-
-            score -= stone_bonus
-
-        return score
+        return score + score_modif
 
     def remove_trees(self, surface: BlockList = None) -> None:
         """Remove all plants at the surface of the current plot"""
@@ -526,3 +533,15 @@ class Plot:
         for x in range(-padding, self.size.x + padding):
             for z in range(-padding, self.size.z + padding):
                 yield self.start.shift(x, 0, z)
+
+    def get_steep_map_value(self, coord: Coordinates) -> int:
+        if self.steep_map is None:
+            self.compute_steep_map()
+
+        steep_map_size = self.size.x - self.steep_factor * 2, self.size.z - self.steep_factor * 2
+        i, j = (coord - self.start).xz
+        i = min(max(i - self.steep_factor, 0), steep_map_size[0] - 1)
+        j = min(max(j - self.steep_factor, 0), steep_map_size[1] - 1)
+        return self.steep_map[j + i * steep_map_size[1]]
+
+
