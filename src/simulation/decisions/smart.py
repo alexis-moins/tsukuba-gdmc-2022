@@ -53,8 +53,9 @@ class SmartDecisionMaker(DecisionMaker):
             return None, None
 
         building = random.choice(priority_actions)
+        print(f'rotation {rotation}')
         plot = self.plot.get_subplot(building.get_size(rotation), building_specs=building.name,
-                                     city_buildings=self.city.buildings, shift=building.get_entrance_shift())
+                                     city_buildings=self.city.buildings, shift=building.get_entrance_shift(rotation))
 
         if plot is not None:
             return building, plot

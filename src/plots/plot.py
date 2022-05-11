@@ -116,7 +116,7 @@ class Plot:
 
                 x, y, z = (road.with_points(y=int(roads_y[road]) + shift))
                 if road not in self or road.as_2D() in self.construction_coordinates:
-                    if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow')):
+                    if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow', 'sand', 'stone')):
                         continue
 
                 INTF.placeBlock(x, y, z,
@@ -402,6 +402,13 @@ class Plot:
             return None
 
         sub_plot = Plot(*(best_coordinates - shift), size=size)
+
+        coord = best_coordinates - shift
+        print(f"shift {shift}")
+        print(best_coordinates in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
+        print(best_coordinates)
+        print(coord in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
+        input(coord)
 
         if occupy_coord:
 
