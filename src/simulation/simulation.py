@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 from textwrap import wrap
 
 from colorama import Fore
@@ -48,21 +49,17 @@ class Simulation:
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
         history = []
 
-        print('Starting Game !!')
-        print('Give a rotation and a location for the Town hall')
-
         town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
         size = town_hall.get_size(rotation)
         plot = self.city.plot.get_subplot(size)
 
         self.city.add_building(town_hall, plot, rotation)
+        self.city.update()
+        self.city.display()
 
         while year < self.years:
-            print(f'\n=> Start of year {Fore.RED}[{year}]{Fore.WHITE}')
-
-            # Update city
-            self.city.update()
+            print(f'\n\n\n=> Start of year {Fore.RED}[{year}]{Fore.WHITE}')
 
             buildings = self.get_constructible_buildings()
 
@@ -89,21 +86,21 @@ class Simulation:
 
             self.city.repair_buildings()
 
-            decoration_buildings = [building for building in env.BUILDINGS.values()
-                                    if building.properties.building_type is BuildingType.DECORATION]
-
-            for decoration in random.sample(decoration_buildings, k=2):
-
-                rotation = self.decision_maker.get_rotation()
-                size = decoration.get_size(rotation)
-                plot = self.city.plot.get_subplot(size)
-
-                if plot:
-                    self.city.add_building(decoration, plot, rotation)
-
             # End of turn
             self.city.display()
             year += 1
+
+        decoration_buildings = [building for building in env.BUILDINGS.values()
+                                if building.properties.building_type is BuildingType.DECORATION]
+
+        print('\nAdding decorations:')
+        for decoration in random.choices(decoration_buildings, k=len(self.city.buildings)*2):
+            rotation = self.decision_maker.get_rotation()
+            size = decoration.get_size(rotation)
+            plot = self.city.plot.get_subplot(size)
+
+            if plot:
+                self.city.add_building(decoration, plot, rotation)
 
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
@@ -126,9 +123,12 @@ class Simulation:
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""
+        counter = Counter([building.name for building in self.city.buildings])
+
         actions = [building for building in env.BUILDINGS.values()
-                   if building.properties.cost <= self.city.productivity
-                   and building.properties.building_type is not BuildingType.DECORATION]
+                   if building.properties.cost <= self.city.production_points
+                   and building.properties.building_type is not BuildingType.DECORATION
+                   and counter[building.name] < building.max_number]
 
         formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
         print(f'Available buildings: [{formatted}]')

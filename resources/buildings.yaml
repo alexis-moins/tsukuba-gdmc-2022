@@ -15,114 +15,128 @@
 
 - name: Town Hall
   path: town_hall.nbt
-  properties: { cost: 999, number of beds: 10, work production: 10, food production: 10 }
-  action: BED
-  type: HABITATION
-
-- name: House
-  path: house.nbt
-  properties: { cost: 20, number of beds: 10 }
+  properties: { cost: 999, number of beds: 5, workers: 5, food production: 5 }
+  maximum: 1
   action: BED
   type: HABITATION
 
 - name: Little House
   path: house_little.nbt
-  properties: { cost: 10, number of beds: 8 }
+  properties: { cost: 5, number of beds: 3 }
+  maximum: 3
   action: BED
   type: HABITATION
 
 - name: Farm
   path: farm.nbt
-  properties: { cost: 10, work production: 1, food production: 5 }
+  properties: { cost: 5, workers: 2, food production: 5 }
+  maximum: 2
   action: FOOD
   type: FARM
+
+- name: Sawmill
+  path: sawmill.nbt
+  properties: { cost: 5, workers: 2 }
+  maximum: 2
+  action: WORK
+  type: WOODCUTTING
+
+- name: Mine
+  path: mine_top.nbt,mine_stairs.nbt
+  properties: { cost: 7, workers: 4 }
+  maximum: 2
+  action: WORK
+  type: MINING
+
+- name: Forge
+  path: forge.nbt
+  properties: { cost: 12, workers: 20 }
+  maximum: 1
+  action: WORK
+  type: FORGING
+
+- name: Big House
+  path: house.nbt
+  properties: { cost: 15, number of beds: 5 }
+  maximum: 4
+  action: BED
+  type: HABITATION
 
 - name: Wheat Pack 1
   path: extensions/wheat_pack_1.nbt
   properties: { cost: 20, food production: 5 }
+  extension: true
   action: FOOD
   type: FARM
 
 - name: Wheat Pack 2
   path: extensions/wheat_pack_2.nbt
   properties: { cost: 20, food production: 5 }
+  extension: true
   action: FOOD
   type: FARM
 
 - name: Silo tier 1
   path: extensions/silo_t1.nbt
-  properties: { cost: 20, food production: 5 }
+  properties: { cost: 7, food production: 5 }
   action: FOOD
   type: FARM
 
 - name: Silo tier 2
   path: extensions/silo_t2.nbt
-  properties: { cost: 20, food production: 5 }
+  properties: { cost: 12, food production: 5 }
   action: FOOD
   type: FARM
 
-- name: Forge
-  path: forge.nbt
-  properties: { cost: 20, work production: 20 }
-  action: WORK
-  type: FORGING
-
 - name: Ore Pack
   path: extensions/ore_pack.nbt
-  properties: { cost: 50, work production: 5 }
+  properties: { cost: 50, workers: 5 }
+  extension: true
   action: WORK
   type: FORGING
-
-- name: Sawmill
-  path: sawmill.nbt
-  properties: { cost: 20, work production: 10 }
-  action: WORK
-  type: WOODCUTTING
 
 - name: Cut Tree
   path: extensions/cut_tree.nbt
-  properties: { cost: 10, work production: 5 }
+  properties: { cost: 10, workers: 5 }
+  extension: true
   action: WORK
   type: WOODCUTTING
 
 - name: Wood Stack
   path: extensions/wood_stack.nbt
-  properties: { cost: 50, work production: 20 }
+  properties: { cost: 50, workers: 20 }
+  extension: true
   action: WORK
   type: WOODCUTTING
 
-- name: Mine
-  path: mine_top.nbt,mine_stairs.nbt
-  properties: { cost: 10, work production: 20 }
-  action: WORK
-  type: MINING
 
-- name: Mine
-  path: mine_top.nbt,mine_stairs.nbt
-  properties: { cost: 10, work production: 20 }
-  action: WORK
-  type: MINING
+# DECORATIONS
+
 
 - name: Big Tree
   path: extensions/big_tree.nbt
   properties: { cost: 0 }
+  extension: true
   action: DECORATION
   type: DECORATION
 
 - name: Medium Tree
   path: extensions/medium_tree.nbt
   properties: { cost: 0 }
+  extension: true
   action: DECORATION
   type: DECORATION
 
 - name: Small Tree
   path: extensions/small_tree.nbt
   properties: { cost: 0 }
+  extension: true
   action: DECORATION
   type: DECORATION
 
 - name: Fountain
   path: extensions/fountain.nbt
   properties: { cost: 0 }
+  extension: true
   action: DECORATION
   type: DECORATION

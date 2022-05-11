@@ -29,20 +29,24 @@ class BuildingProperties:
     building_type: BuildingType
     action_type: ActionType
     number_of_beds: int = 0
-    work_production: float = 0
-    food_production: float = 0
+    workers: int = 0
+    food_production: int = 0
 
 
 class Building:
     """Class representing a list of blocks (structure) on a given plot"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, is_extension: bool):
+    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False, maximum: int = 99):
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
         self.__structure = structure
         self.old_blocks: dict[Block, Block] = {}
-        self.is_extension = is_extension
+        self.is_extension = extension
+        self.max_number = maximum
+
+        self.inhabitants = set()
+        self.workers = set()
 
         self.plot: Plot = None
         self.rotation: int = None
@@ -52,20 +56,37 @@ class Building:
     @staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
+        if building['type'] == 'MINING':
+            return Mine.deserialize(building.copy())
 
         properties = {key.replace(' ', '_'): value
-                      for key, value in building['properties'].items()}
+                      for key, value in building.pop('properties').items()}
 
-        if building['type'] == 'MINING':
-            return Mine.deserialize(building)
-
-        action_type = ActionType[building['action'].upper()]
-        building_type = BuildingType[building['type'].upper()]
+        action_type = ActionType[building.pop('action').upper()]
+        building_type = BuildingType[building.pop('type').upper()]
         properties = BuildingProperties(**properties,
                                         action_type=action_type, building_type=building_type)
 
-        structure = Structure.parse_nbt_file(building['path'])
-        return Building(building['name'], properties, structure, is_extension=('extensions' in building['path']))
+        structure = Structure.parse_nbt_file(building.pop('path'))
+        return Building(properties=properties, structure=structure, **building)
+
+    def has_empty_beds(self) -> bool:
+        """"""
+        return len(self.inhabitants) < self.properties.number_of_beds
+
+    def can_offer_work(self) -> bool:
+        """"""
+        return len(self.workers) < self.properties.workers
+
+    def add_inhabitant(self, villager) -> None:
+        """"""
+        self.inhabitants.add(villager)
+        villager.house = self
+
+    def add_worker(self, villager) -> None:
+        """"""
+        self.workers.add(villager)
+        villager.work_place = self
 
     def get_size(self, rotation: int) -> Size:
         """Return the size of the building considering the given rotation"""
@@ -132,7 +153,8 @@ class Building:
 
         # ensure it stays between 0 and 100
         amount = abs(amount) % 100
-        sample: list[Block] = random.sample(self.blocks.without('air'), amount * len(self.blocks.without('air')) // 100)
+        sample: list[Block] = random.sample(self.blocks.without(('air', 'water')),
+                                            amount * len(self.blocks.without(('air', 'water'))) // 100)
 
         for block in sample:
 
@@ -170,17 +192,13 @@ class Building:
 
         INTERFACE.sendBlocks()
 
-    def repair(self) -> None:
+    def repair(self, amount: int) -> None:
         """"""
-        if self.old_blocks:
-            sample: list[Block] = random.sample(
-                list(self.old_blocks.keys()), env.DETERIORATION * len(self.old_blocks) // 100)
+        for original_block in random.sample(list(self.old_blocks.keys()), amount):
+            INTERFACE.placeBlock(*original_block.coordinates, original_block.full_name)
+            del self.old_blocks[original_block]
 
-            for original_block in sample:
-                INTERFACE.placeBlock(*original_block.coordinates, original_block.full_name)
-                del self.old_blocks[original_block]
-
-            INTERFACE.sendBlocks()
+        INTERFACE.sendBlocks()
 
     def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
                             text4: str = "", rotation: int = 0):
@@ -234,7 +252,7 @@ class Mine(Building):
         super().__init__(name, properties, structures[0], is_extension)
         self.structures = structures
 
-    @staticmethod
+    @ staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
 

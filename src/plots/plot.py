@@ -402,7 +402,15 @@ class Plot:
         sub_plot = Plot(*best_coordinates, size=size)
 
         if occupy_coord:
-            for coordinates in sub_plot.surface(8 if building_specs is BuildingType.FARM else padding):
+
+            if building_type is BuildingType.FARM:
+                padding = 8
+
+            if building_type is BuildingType.DECORATION:
+                padding = 2
+
+            for coordinates in sub_plot.surface(padding):
+
                 self.occupied_coordinates.add(coordinates.as_2D())
 
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
@@ -497,15 +505,14 @@ class Plot:
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
 
-    def build_foundation(self, block: str = None) -> None:
+    def build_foundation(self) -> None:
         """Build the foundations under the house"""
 
         blocks = ('stone_bricks', 'diorite', 'cobblestone')
         weights = (75, 15, 10)
 
         for coord in self.__iterate_over_air(self.start.y):
-            if block is None:
-                block = random.choices(blocks, weights)
+            block = random.choices(blocks, weights)
             INTF.placeBlock(*coord, block)
         INTF.sendBlocks()
 

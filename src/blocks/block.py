@@ -120,7 +120,7 @@ class Block:
                 properties['axis'] = 'z'
             elif properties['axis'] == 'z':
                 properties['axis'] = 'x'
-                
+
         return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
 
     def with_name(self, new_name: str, erase_properties: bool = False):

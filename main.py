@@ -6,14 +6,9 @@ from gdpc import interface as INTERFACE
 
 from src import env
 from src.blocks.block import Block
-from src.blocks.collections import palette
-from src.blocks.structure import Structure
 from src.plots.plot import Plot
-from src.simulation.buildings.building import BuildingProperties, Building, Mine
-from src.simulation.buildings.building_type import BuildingType
 from src.simulation.decisions.smart import SmartDecisionMaker
 from src.simulation.simulation import Simulation
-from src.utils.action_type import ActionType
 from src.utils.criteria import Criteria
 
 

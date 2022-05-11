@@ -1,4 +1,5 @@
 import random
+from argparse import Action
 
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
@@ -21,15 +22,27 @@ class SmartDecisionMaker(DecisionMaker):
 
     def choose_building(self, possible_actions: list[Building], rotation: int) -> tuple[Building, Plot] | tuple[None, None]:
         """"""
-
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
             return possible_actions[0]
 
-        city_stats = [(self.city.number_of_beds, ActionType.BED), (self.city.food_production, ActionType.FOOD),
-                      (self.city.work_production, ActionType.WORK)]
+        if self.city.food_production <= self.city.population:
+            next_action_type = ActionType.FOOD
 
-        next_action_type = min(city_stats, key=lambda item: item[0])[1]
+        elif self.city.available_production == self.city.production_points:
+
+            if self.city.inactive_villagers():
+                next_action_type = ActionType.WORK
+
+            elif self.city.number_of_beds == self.city.population:
+                next_action_type = ActionType.BED
+
+            else:
+                next_action_type = ActionType.NONE
+
+        else:
+            next_action_type = ActionType.BED
+
         priority_actions: list[Building] = []
 
         for building in possible_actions:
