@@ -99,6 +99,12 @@ class Coordinates:
             for z in range(- radius, radius + 1, 1):
                 yield self.shift(x=x, z=z)
 
+    def line(self, length: int, direction: Direction):
+        current = self
+        for i in range(length):
+            current = current.towards(direction)
+            yield current
+
     @property
     def xz(self):
         return self.x, self.z

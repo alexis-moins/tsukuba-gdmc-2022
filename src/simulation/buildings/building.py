@@ -92,6 +92,12 @@ class Building:
         """Return the size of the building considering the given rotation"""
         return self.__structure.get_size(rotation)
 
+    def get_entrance_shift(self) -> Coordinates:
+        entrances = self.__structure.blocks.filter('emerald')
+        if not entrances or len(entrances) < 1:
+            return Coordinates(0, 0, 0)
+        return entrances[0].coordinates
+
     def build(self, plot: Plot, rotation: int, city: Plot):
         """Build the current building onto the building's plot"""
         self.plot = plot

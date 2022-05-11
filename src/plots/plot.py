@@ -18,6 +18,7 @@ from src.simulation.buildings.building_type import BuildingType
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
 from src.utils.criteria import Criteria
+from src.utils.direction import Direction
 
 
 class Plot:
@@ -103,9 +104,6 @@ class Plot:
         for key in self.roads_infos.keys():
             for road in self.roads_infos[key]:
 
-                if road not in self or road.as_2D() in self.construction_coordinates:
-                    continue
-
                 # Default : place a block
                 chose_pattern = floor_pattern
                 shift = 0
@@ -116,7 +114,12 @@ class Plot:
                     chose_pattern = slab_pattern
                     shift = 1
 
-                INTF.placeBlock(*(road.with_points(y=int(roads_y[road]) + shift)),
+                x, y, z = (road.with_points(y=int(roads_y[road]) + shift))
+                if road not in self or road.as_2D() in self.construction_coordinates:
+                    if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow')):
+                        continue
+
+                INTF.placeBlock(x, y, z,
                                 random.choices(list(chose_pattern[key].keys()), k=1, weights=list(chose_pattern[key].values())))
         INTF.sendBlocks()
 
@@ -178,8 +181,6 @@ class Plot:
         for c1, c2 in zip(path[:-2], path[1:]):
             if self.graph.has_edge(c1, c2):
                 self.graph[c1][c2]['weight'] = 10
-
-        INTF.sendBlocks()
 
     @ staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
@@ -345,7 +346,8 @@ class Plot:
         return heightmap
 
     def get_subplot(self, size: Size, padding: int = 5, max_score: int = None, occupy_coord: bool = True,
-                    building_specs: str | BuildingType = None, city_buildings: list = None) -> Plot | None:
+                    building_specs: str | BuildingType = None, city_buildings: list = None,
+                    shift: Coordinates = Coordinates(0, 0, 0)) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
         if max_score is None:
             # Auto define max score
@@ -386,8 +388,8 @@ class Plot:
         min_score = max_score
 
         for block in blocks_to_check:
-            block_score = self.__get_score(block.coordinates, surface, size, max_score, building_specs=building_specs,
-                                           city_buildings=city_buildings)
+            block_score = self.__get_score(block.coordinates, surface, size, max_score, min_score, building_specs=building_specs,
+                                           city_buildings=city_buildings, shift=shift)
 
             if block_score < min_score:
                 best_coordinates = block.coordinates
@@ -399,7 +401,7 @@ class Plot:
         if min_score >= max_score:
             return None
 
-        sub_plot = Plot(*best_coordinates, size=size)
+        sub_plot = Plot(*(best_coordinates - shift), size=size)
 
         if occupy_coord:
 
@@ -428,7 +430,8 @@ class Plot:
         return sub_plot
 
     def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
-                    building_specs: str | BuildingType = None, city_buildings: list = None) -> float:
+                    best_current_score: int, building_specs: str | BuildingType = None, city_buildings: list = None,
+                    shift: Coordinates = Coordinates(0, 0, 0)) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -438,15 +441,13 @@ class Plot:
             """
         # apply malus to score depending on the distance to the 'center'
 
-        # TODO Maybe improve this notation, quite not beautiful, set center as a coordinate ?
-        # Would be great
         center = Coordinates(self.center[0], 0, self.center[1])
         score = coordinates.as_2D().distance(center) * .1
 
         # Score = sum of difference between the first point's altitude and the other
         for x in range(size.x):
             for z in range(size.z):
-                current_coord = coordinates.shift(x, 0, z)
+                current_coord = coordinates.shift(x - shift.x, 0 - shift.y, z - shift.z)
                 current_block = surface.find(current_coord)
 
                 if not current_block or current_block.coordinates in self.occupied_coordinates:
@@ -463,8 +464,29 @@ class Plot:
                     score += abs(to_add) * 3
 
                 # Return earlier if score is already too bad
-                if score >= max_score:
-                    return score
+                if score >= best_current_score:
+                    return max_score
+
+        # add malus due to bad road connectivity
+        if city_buildings:
+
+            try:
+                path = nx.dijkstra_path(self.graph, city_buildings[0].entrances[0].coordinates, coordinates)
+                malus = -10
+            except nx.NetworkXException:
+                malus = max_score / 5
+
+            horizontal_directions = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.SOUTH)
+            for _dir in horizontal_directions:
+                line = list(coordinates.line(3, _dir))
+                for u, v in zip(line[:-2], line[1:]):
+                    if not self.graph.has_edge(u, v):
+                        return max_score
+
+            score += malus
+
+        if score >= best_current_score:
+            return max_score
 
         # And now modifications for specials buildings
         relation = env.RELATIONS.get_building_relation(building_specs)

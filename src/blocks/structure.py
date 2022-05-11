@@ -20,7 +20,7 @@ class Structure:
         self.name = name
         self.size = size
 
-        self.blocks: BlockList = tuple(blocks)
+        self.blocks: BlockList = blocks
         self.variations: dict[str, BlockList] = dict()
 
     @staticmethod
