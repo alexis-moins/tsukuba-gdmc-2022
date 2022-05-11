@@ -6,7 +6,7 @@ from dataclasses import replace
 from typing import Any
 
 from colorama import Fore
-from gdpc import interface as INTERFACE
+from gdpc import interface as INTERFACE, toolbox, lookup
 
 from src import env
 from src.blocks.block import Block
@@ -92,7 +92,8 @@ class Building:
                     if block_name == 'farmland':
                         INTERFACE.placeBlock(*block.coordinates.shift(y=1), 'minecraft:wheat')
 
-        self._place_sign()
+
+        self._place_sign(rotation)
         INTERFACE.sendBlocks()
 
     def _build_structure(self, structure: Structure, plot: Plot, rotation: int):
@@ -104,17 +105,17 @@ class Building:
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
-    def _place_sign(self):
+    def _place_sign(self, rotation: int):
         """Place a sign indicating informations about the building"""
         if not self.entrances:
             return None
-
+        INTERFACE.sendBlocks()
         sign_coord = self.entrances[0].coordinates.shift(y=1)
         if env.DEBUG:
-            self.build_sign_in_world(sign_coord, text1=self.name, text2=f'rotation : {self.rotation}')
+            self.build_sign_in_world(sign_coord, text1=self.name, text2=f'rotation : {self.rotation}', rotation=rotation)
         else:
-            # TODO : Generate name here
-            self.build_sign_in_world(sign_coord, text1=self.name)
+            text = self.get_display_name()
+            self.build_sign_in_world(sign_coord, text1=text[:15], text2=text[15:30], text3=text[30:45], text4=text[45:60], rotation=rotation)
 
         for entrance in self.entrances:
             neighbours = [self.plot.get_block_at(*coordinates)
@@ -182,10 +183,12 @@ class Building:
             INTERFACE.sendBlocks()
 
     def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
-                            text4: str = ""):
+                            text4: str = "", rotation: int = 0):
         x, y, z = coord
 
-        INTERFACE.placeBlock(x, y, z, "oak_sign")
+        direction = toolbox.getOptimalDirection(x, y, z)
+        minecraft_rotation = direction2rotation(direction)
+        INTERFACE.placeBlock(x, y, z, f"oak_sign[rotation={minecraft_rotation}]")
         INTERFACE.sendBlocks()
 
         data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
@@ -215,6 +218,15 @@ class Building:
                 new_block_list.append(b)
 
         self.blocks = BlockList(new_block_list)
+
+    def get_display_name(self):
+        adjectives = ['beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy',
+                      'cute',
+                      'dangerous', 'dark', 'enchanting', 'evil', 'fancy', 'fantastic', 'fragile', 'friendly',
+                      'lazy',
+                      'kind',
+                      'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint']
+        return f'The {random.choice(adjectives)} {self.name}'
 
 
 class Mine(Building):
@@ -260,5 +272,29 @@ class Mine(Building):
         self._build_structure(self.structures[0], plot, rotation)
 
         self.entrances = self.blocks.filter('emerald')
-        self._place_sign()
+        self._place_sign(rotation)
         INTERFACE.sendBlocks()
+
+
+def direction2rotation(directions):
+    """**Convert a direction to a rotation**.
+
+    If a sequence is provided, the average is returned.
+    """
+    reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
+    if len(directions) == 1:
+        rotation = reference[lookup.INVERTDIRECTION[directions[0]]]
+    else:
+
+        if len(directions) == 3:
+            input(directions)
+        rotation = 0
+        # Compute average
+        for direction in directions:
+            rotation += reference[lookup.INVERTDIRECTION[direction]]
+        rotation = round(rotation / len(directions))
+
+        # rotate 180°
+        rotation = rotation % 16
+
+    return rotation
