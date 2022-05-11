@@ -403,10 +403,10 @@ class Plot:
 
         if occupy_coord:
 
-            if building_type is BuildingType.FARM:
+            if building_specs is BuildingType.FARM:
                 padding = 8
 
-            if building_type is BuildingType.DECORATION:
+            if building_specs is BuildingType.DECORATION:
                 padding = 2
 
             for coordinates in sub_plot.surface(padding):
