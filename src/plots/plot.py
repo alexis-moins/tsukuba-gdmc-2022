@@ -103,7 +103,7 @@ class Plot:
         for key in self.roads_infos.keys():
             for road in self.roads_infos[key]:
 
-                if coordinates not in self:
+                if road not in self or road.as_2D() in self.construction_coordinates:
                     continue
 
                 # Default : place a block
@@ -141,26 +141,17 @@ class Plot:
         self.all_roads.add(road_coord)
         self.occupied_coordinates.add(road_coord)
 
-    def compute_roads(self, start: Coordinates, end: Coordinates, backup_start=None):
+    def compute_roads(self, start: Coordinates, end: Coordinates):
         if self.graph is None:
             self.fill_graph()
 
-        # if the start is not linked, like in most entrance case
-        if start not in self.graph:
-            # try to link it
-            for neighbour in start.neighbours():
-                self.graph.add_edge(neighbour, start, weight=1000)
+        start = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(start)) else start
+        end = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(end)) else end
 
         try:
             path = nx.dijkstra_path(self.graph, start, end)
         except nx.NetworkXException:
             return
-
-        if backup_start:
-            try:
-                path = nx.dijkstra_path(self.graph, backup_start, end)
-            except nx.NetworkXException:
-                return
 
         self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
         for coord in path:
