@@ -191,5 +191,7 @@ class City:
 
         print(f'\n   Buildings {Fore.GREEN}[{len(self.buildings)}]{Fore.WHITE}\n')
 
-        for building in self.buildings:
-            print(f'      {building} (beds: {len(building.inhabitants)}/{building.properties.number_of_beds}, worker: {len(building.workers)}/{building.properties.workers}, food production: {building.properties.food_production})')
+        counter = Counter(self.buildings)
+        buildings = "\n      ".join(textwrap.wrap(
+            ", ".join([f"{building.name.lower().replace('_', ' ')}: {Fore.GREEN}{value}/{building.max_number}{Fore.WHITE}" for building, value in counter.items()])))
+        print(f'\n      {buildings}')

@@ -6,7 +6,9 @@ from dataclasses import replace
 from typing import Any
 
 from colorama import Fore
-from gdpc import interface as INTERFACE, toolbox, lookup
+from gdpc import interface as INTERFACE
+from gdpc import lookup
+from gdpc import toolbox
 
 from src import env
 from src.blocks.block import Block
@@ -113,7 +115,6 @@ class Building:
                     if block_name == 'farmland':
                         INTERFACE.placeBlock(*block.coordinates.shift(y=1), 'minecraft:wheat')
 
-
         self._place_sign(rotation)
         INTERFACE.sendBlocks()
 
@@ -133,10 +134,12 @@ class Building:
         INTERFACE.sendBlocks()
         sign_coord = self.entrances[0].coordinates.shift(y=1)
         if env.DEBUG:
-            self.build_sign_in_world(sign_coord, text1=self.name, text2=f'rotation : {self.rotation}', rotation=rotation)
+            self.build_sign_in_world(sign_coord, text1=self.name,
+                                     text2=f'rotation : {self.rotation}', rotation=rotation)
         else:
             text = self.get_display_name()
-            self.build_sign_in_world(sign_coord, text1=text[:15], text2=text[15:30], text3=text[30:45], text4=text[45:60], rotation=rotation)
+            self.build_sign_in_world(sign_coord, text1=text[:15], text2=text[15:30],
+                                     text3=text[30:45], text4=text[45:60], rotation=rotation)
 
         for entrance in self.entrances:
             neighbours = [self.plot.get_block_at(*coordinates)
@@ -248,8 +251,8 @@ class Building:
 
 
 class Mine(Building):
-    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], is_extension: bool):
-        super().__init__(name, properties, structures[0], is_extension)
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], is_extension: bool, maximum):
+        super().__init__(name, properties, structures[0], is_extension, maximum)
         self.structures = structures
 
     @ staticmethod
@@ -264,8 +267,8 @@ class Mine(Building):
         properties = BuildingProperties(**properties,
                                         action_type=action_type, building_type=building_type)
 
-        structures = list(map(Structure.parse_nbt_file, building['path'].split(',')))
-        return Mine(building['name'], properties, structures, is_extension=False)
+        structures = [Structure.parse_nbt_file(file) for file in building['path']]
+        return Mine(building['name'], properties, structures, is_extension=False, maximum=building['maximum'])
 
     def build(self, plot: Plot, rotation: int, city: Plot, depth: int = 0):
         if not depth:
