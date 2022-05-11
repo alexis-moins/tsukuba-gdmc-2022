@@ -41,13 +41,11 @@ class City:
             if env.DEBUG:
                 print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
 
-            # start = random.choice(
-            #     self.buildings[0].entrances).coordinates if self.buildings[0].entrances else self.buildings[0].plot.start
-            # end = random.choice(
-            #     self.buildings[-1].entrances).coordinates if self.buildings[-1].entrances else self.buildings[-1].plot.start
+            end = random.choice(
+                self.buildings[0].entrances).coordinates if self.buildings[0].entrances else self.buildings[0].plot.start
+            start = random.choice(
+                self.buildings[-1].entrances).coordinates if self.buildings[-1].entrances else self.buildings[-1].plot.start
 
-            start = self.buildings[0].plot.start
-            end = self.buildings[-1].plot.start
             self.plot.compute_roads(start, end)
 
             road_pattern = {

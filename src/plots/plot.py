@@ -30,6 +30,7 @@ class Plot:
         self.size = size
 
         self.occupied_coordinates: set[Coordinates] = set()
+        self.construction_coordinates: set[Coordinates] = set()
 
         self.surface_blocks: dict[Criteria, BlockList] = {}
         self.offset = self.start - env.BUILD_AREA.start, self.end - env.BUILD_AREA.start
@@ -62,7 +63,7 @@ class Plot:
                 if coord in self.graph.nodes.keys():
                     # self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
                     malus = self.get_steep_map_value(coord)
-                    if malus > 20:
+                    if malus > 15:
                         malus = min(malus * 100, 100_000)
                     self.graph.add_edge(coordinates, coord, weight=100 + malus * 10)
 
@@ -92,7 +93,7 @@ class Plot:
             for i in range(1, 5):
                 coordinates = road.with_points(y=int(roads_y[road]) + i)
 
-                if coordinates in self:
+                if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
                     INTF.placeBlock(*coordinates, 'air')
 
@@ -102,7 +103,7 @@ class Plot:
         for key in self.roads_infos.keys():
             for road in self.roads_infos[key]:
 
-                if coordinates not in self:
+                if road not in self or road.as_2D() in self.construction_coordinates:
                     continue
 
                 # Default : place a block
@@ -143,6 +144,10 @@ class Plot:
     def compute_roads(self, start: Coordinates, end: Coordinates):
         if self.graph is None:
             self.fill_graph()
+
+        start = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(start)) else start
+        end = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(end)) else end
+
         try:
             path = nx.dijkstra_path(self.graph, start, end)
         except nx.NetworkXException:
@@ -404,6 +409,9 @@ class Plot:
                 if block and block.coordinates.as_2D() not in self.all_roads:
                     for edges in self.graph.edges(block.coordinates):
                         self.graph.add_edge(*edges, weight=100_000_000)
+
+            for coordinates in sub_plot.surface():
+                self.construction_coordinates.add(coordinates.as_2D())
 
         if env.DEBUG:
             self.visualize_roads(10)

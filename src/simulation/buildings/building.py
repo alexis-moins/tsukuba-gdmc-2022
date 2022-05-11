@@ -75,7 +75,6 @@ class Building:
         """Build the current building onto the building's plot"""
         self.plot = plot
         self.rotation = rotation
-
         self._build_structure(self.__structure, self.plot, self.rotation)
 
         if self.properties.building_type is BuildingType.FARM and not self.is_extension:
@@ -98,6 +97,7 @@ class Building:
 
     def _build_structure(self, structure: Structure, plot: Plot, rotation: int):
         self.blocks = structure.get_blocks(plot.start, rotation)
+        self.entrances = self.blocks.filter('emerald')
         # Apply palette
         if self.properties.building_type in env.ALL_PALETTES:
             self._randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
@@ -243,7 +243,6 @@ class Mine(Building):
 
         self.plot = plot
         self.rotation = rotation
-
         rotations = [270, 180, 90, 0]
         rotation_index = rotations.index(rotation) + 2  # set as starting rotation | need a 180 rotation between the
         # 2 modules
