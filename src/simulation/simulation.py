@@ -51,10 +51,9 @@ class Simulation:
 
         town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
-        size = town_hall.get_size(rotation)
         if env.DEBUG:
             print(f'rotation {rotation}')
-        plot = self.city.plot.get_subplot(size, shift=town_hall.get_entrance_shift(rotation))
+        plot = self.city.plot.get_subplot(town_hall, rotation)
 
         self.city.add_building(town_hall, plot, rotation)
         self.city.update()
@@ -98,8 +97,7 @@ class Simulation:
         print('\nAdding decorations:')
         for decoration in random.choices(decoration_buildings, k=len(self.city.buildings)*2):
             rotation = self.decision_maker.get_rotation()
-            size = decoration.get_size(rotation)
-            plot = self.city.plot.get_subplot(size)
+            plot = self.city.plot.get_subplot(decoration, rotation)
 
             if plot:
                 self.city.add_building(decoration, plot, rotation)

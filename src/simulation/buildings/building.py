@@ -260,6 +260,7 @@ class Mine(Building):
     def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], is_extension: bool, maximum):
         super().__init__(name, properties, structures[0], is_extension, maximum)
         self.structures = structures
+        self.depth = None
 
     @ staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
@@ -276,9 +277,9 @@ class Mine(Building):
         structures = [Structure.parse_nbt_file(file) for file in building['path']]
         return Mine(building['name'], properties, structures, is_extension=False, maximum=building['maximum'])
 
-    def build(self, plot: Plot, rotation: int, city: Plot, depth: int = 0):
-        if not depth:
-            depth = random.randint(2, 10)
+    def build(self, plot: Plot, rotation: int, city: Plot):
+        if not self.depth:
+            self.depth = random.randint(2, 10)
 
         self.plot = plot
         self.rotation = rotation
@@ -288,7 +289,7 @@ class Mine(Building):
 
         start = plot.start
 
-        for i in range(depth):
+        for i in range(self.depth):
             rotation_index = (rotation_index + 1) % 4
             plot.start = plot.start.shift(y=-5)
 
