@@ -1,6 +1,7 @@
 import random
 from argparse import Action
 
+from src import env
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
 from src.simulation.city import City
@@ -53,8 +54,11 @@ class SmartDecisionMaker(DecisionMaker):
             return None, None
 
         building = random.choice(priority_actions)
+        if env.DEBUG:
+            print(f'rotation {rotation}')
+
         plot = self.plot.get_subplot(building.get_size(rotation), building_specs=building.name,
-                                     city_buildings=self.city.buildings)
+                                     city_buildings=self.city.buildings, shift=building.get_entrance_shift(rotation))
 
         if plot is not None:
             return building, plot
