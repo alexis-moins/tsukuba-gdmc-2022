@@ -288,6 +288,7 @@ class Mine(Building):
         # 2 modules
 
         start = plot.start
+        plot.start = plot.start.shift(y=1)
 
         for i in range(self.depth):
             rotation_index = (rotation_index + 1) % 4
@@ -295,8 +296,8 @@ class Mine(Building):
 
             self._build_structure(self.structures[1], plot, rotations[rotation_index])
 
-        # build top in last
         plot.start = start  # reset start
+
         self._build_structure(self.structures[0], plot, rotation)
 
         self.entrances = self.blocks.filter('emerald')

@@ -97,7 +97,11 @@ ALL_PALETTES = {
              'hay_block']),
         'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
         'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
-        'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
+        'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS],
+        'cobblestone': palette.RandomPalette({'cobblestone': 75, 'andesite': 25}),
+        'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 75, 'andesite_stairs': 25}),
+        'cobblestone_wall': palette.RandomPalette({'cobblestone_wall': 75, 'andesite_wall': 25}),
+        'cobblestone_slab': palette.RandomPalette({'cobblestone_slab': 75, 'andesite_slab': 25}),
     },
 
     BuildingType.FORGING: {

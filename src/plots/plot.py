@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import statistics
 from collections import defaultdict
 from typing import Generator
 
@@ -79,7 +80,10 @@ class Plot:
 
             neighbors_y = list(map(lambda block: block.coordinates.y, filter(lambda block: block, neighbors_blocks)))
 
+            # Maybe use median if you implement marching cube like technic for placing stairs
+            # median_y = statistics.median_grouped(neighbors_y)
             average_y = sum(neighbors_y) / max(len(neighbors_y), 1)
+
             roads_y[road.as_2D()] = average_y
 
         return roads_y
