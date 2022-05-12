@@ -348,13 +348,12 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, size: Size, padding: int = 5, max_score: int = None, occupy_coord: bool = True,
-                    building_specs: str | BuildingType = None, city_buildings: list = None,
-                    shift: Coordinates = Coordinates(0, 0, 0)) -> Plot | None:
+    def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
-        if max_score is None:
-            # Auto define max score
-            max_score = size.x * size.z
+
+        size = building.get_size(rotation)
+        max_score = size.x * size.z
+        shift = building.get_entrance_shift(rotation)
 
         if self.graph is None:
             self.fill_graph()
@@ -362,7 +361,7 @@ class Plot:
         # TODO add .lower_than(max_height=200)
 
         surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
-        surface = surface.without('water').not_inside(self.occupied_coordinates)
+        surface = surface.without(('water', 'lava')).not_inside(self.occupied_coordinates)
 
         random_blocks = int(len(surface) * (10 / 100))
 
@@ -391,8 +390,9 @@ class Plot:
         min_score = max_score
 
         for block in blocks_to_check:
-            block_score = self.__get_score(block.coordinates, surface, size, max_score, min_score, building_specs=building_specs,
-                                           city_buildings=city_buildings, shift=shift)
+            block_score = self.__get_score(coordinates=block.coordinates, surface=surface, max_score=max_score,
+                                           best_current_score=min_score, building=building, size=size, shift=shift,
+                                           city_buildings=city_buildings)
 
             if block_score < min_score:
                 best_coordinates = block.coordinates
@@ -413,25 +413,23 @@ class Plot:
             print(best_coordinates)
             print(coord in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
 
-        if occupy_coord:
+        if building.properties.building_type is BuildingType.FARM:
+            padding = 8
 
-            if building_specs is BuildingType.FARM:
-                padding = 8
+        if building.properties.building_type is BuildingType.DECORATION:
+            padding = 2
 
-            if building_specs is BuildingType.DECORATION:
-                padding = 2
+        for coordinates in sub_plot.surface(padding):
 
-            for coordinates in sub_plot.surface(padding):
+            self.occupied_coordinates.add(coordinates.as_2D())
 
-                self.occupied_coordinates.add(coordinates.as_2D())
+            block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
+            if block and block.coordinates.as_2D() not in self.all_roads:
+                for edges in self.graph.edges(block.coordinates):
+                    self.graph.add_edge(*edges, weight=100_000_000)
 
-                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
-                if block and block.coordinates.as_2D() not in self.all_roads:
-                    for edges in self.graph.edges(block.coordinates):
-                        self.graph.add_edge(*edges, weight=100_000_000)
-
-            for coordinates in sub_plot.surface():
-                self.construction_coordinates.add(coordinates.as_2D())
+        for coordinates in sub_plot.surface():
+            self.construction_coordinates.add(coordinates.as_2D())
 
         if env.DEBUG:
             self.visualize_roads(10)
@@ -439,9 +437,9 @@ class Plot:
 
         return sub_plot
 
-    def __get_score(self, coordinates: Coordinates, surface: BlockList, size: Size, max_score: int,
-                    best_current_score: int, building_specs: str | BuildingType = None, city_buildings: list = None,
-                    shift: Coordinates = Coordinates(0, 0, 0)) -> float:
+    def __get_score(self, coordinates: Coordinates, surface: BlockList, max_score: int,
+                    best_current_score: int, building, size: Size, shift: Coordinates,
+                    city_buildings: list = None) -> float:
         """Return a score evaluating the fitness of a building in an area.
             The lower the score, the better it fits
 
@@ -453,6 +451,20 @@ class Plot:
 
         center = Coordinates(self.center[0], 0, self.center[1])
         score = coordinates.as_2D().distance(center) * .1
+
+        # For mines : Try to place them up a cave
+        if building.properties.building_type == BuildingType.MINING:
+            # we shift 10 blocs into the ground and search for air, because that would be a cave.
+            # y - 30 to not go too deep
+            for down in coordinates.shift(y=-10).line(coordinates.y - 30, Direction.DOWN):
+                if self.get_block_at(*down).is_one_of('air'):
+                    depth = coordinates.y - down.y
+                    bonus = -1000
+                    score += bonus
+                    building.depth = (depth // 5) + 1
+                    break
+            # apply malus, the idea is that the bonus will compensate for it, so mine without bonus should be less frequent
+            score += best_current_score / 2
 
         # Score = sum of difference between the first point's altitude and the other
         for x in range(size.x):
@@ -499,7 +511,7 @@ class Plot:
             return max_score
 
         # And now modifications for specials buildings
-        relation = env.RELATIONS.get_building_relation(building_specs)
+        relation = env.RELATIONS.get_building_relation(building.name)
         score_modif = 0
         if relation and city_buildings:
             score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
