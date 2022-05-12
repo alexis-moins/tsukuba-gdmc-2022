@@ -52,7 +52,8 @@ class Simulation:
         town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
         size = town_hall.get_size(rotation)
-        print(f'rotation {rotation}')
+        if env.DEBUG:
+            print(f'rotation {rotation}')
         plot = self.city.plot.get_subplot(size, shift=town_hall.get_entrance_shift(rotation))
 
         self.city.add_building(town_hall, plot, rotation)

@@ -91,7 +91,7 @@ class Plot:
 
         # clean above roads
         for road in self.all_roads:
-            for i in range(1, 5):
+            for i in range(1, 8):
                 coordinates = road.with_points(y=int(roads_y[road]) + i)
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
@@ -103,7 +103,8 @@ class Plot:
         # place blocks
         for key in self.roads_infos.keys():
             for road in self.roads_infos[key]:
-
+                if road not in self:
+                    continue
                 # Default : place a block
                 chose_pattern = floor_pattern
                 shift = 0
@@ -113,9 +114,11 @@ class Plot:
                     # place a slab
                     chose_pattern = slab_pattern
                     shift = 1
+                    if road.as_2D() in self.construction_coordinates:
+                        continue
 
                 x, y, z = (road.with_points(y=int(roads_y[road]) + shift))
-                if road not in self or road.as_2D() in self.construction_coordinates:
+                if road.as_2D() in self.construction_coordinates:
                     if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow', 'sand', 'stone')):
                         continue
 
@@ -404,11 +407,11 @@ class Plot:
         sub_plot = Plot(*(best_coordinates - shift), size=size)
 
         coord = best_coordinates - shift
-        print(f"shift {shift}")
-        print(best_coordinates in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
-        print(best_coordinates)
-        print(coord in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
-        input(coord)
+        if env.DEBUG:
+            print(f"shift {shift}")
+            print(best_coordinates in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
+            print(best_coordinates)
+            print(coord in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
 
         if occupy_coord:
 
