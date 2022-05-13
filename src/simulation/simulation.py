@@ -109,7 +109,7 @@ class Simulation:
         print(f'City history : {history_string}')
 
         # make a book
-        book_data = toolbox.writeBook(history_string, title='City history', author='No one')
+        book_data = toolbox.writeBook(history_string, title='City history', author='The Mayor')
         lectern_list = self.city.buildings[0].blocks.filter('lectern')
         if len(lectern_list):
             x, y, z = lectern_list[0].coordinates
