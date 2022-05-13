@@ -460,7 +460,9 @@ class Plot:
         if building.properties.building_type == BuildingType.MINING:
             # we shift 10 blocs into the ground and search for air, because that would be a cave.
             # y - 30 to not go too deep
-            for down in coordinates.shift(y=-10).line(coordinates.y - 30, Direction.DOWN):
+            # x and z shift to get to the center
+            for down in coordinates.shift(x=round(size.x / 2), y=-10, z=round(size.z / 2)).line(coordinates.y - 30,
+                                                                                                Direction.DOWN):
                 if self.get_block_at(*down).is_one_of('air'):
                     depth = coordinates.y - down.y
                     bonus = -1000
