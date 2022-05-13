@@ -23,6 +23,7 @@ from src.utils.action_type import ActionType
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
 from src.utils.criteria import Criteria
+from src.utils.direction import Direction
 
 
 @dataclass(kw_only=True)
@@ -39,7 +40,7 @@ class BuildingProperties:
 class Building:
     """Class representing a list of blocks (structure) on a given plot"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False, maximum: int = 99):
+    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False, maximum: int = 1):
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
@@ -107,20 +108,30 @@ class Building:
         self.rotation = rotation
         self._build_structure(self.__structure, self.plot, self.rotation)
 
+        surface = city.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+
         if self.properties.building_type is BuildingType.FARM and not self.is_extension:
             for coordinates in self.plot.surface(padding=6):
                 if coordinates not in self.plot and coordinates.as_2D() not in city.all_roads:
-                    surface = city.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
 
                     if (block := surface.find(coordinates.as_2D())) is None:
                         continue
 
-                    block_name = random.choices(['farmland', 'water'], [97, 3])[0]
+                    if block.name not in ('minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
+                        continue
+
+                    block_name = random.choices(['farmland', 'water'], [90, 10])[0]
+
+                    if block_name == 'water':
+                        for c in block.neighbouring_coordinates((Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
+                            if city.get_block_at(*c).name in lookup.AIR + lookup.PLANTS + ('minecraft:snow',):
+                                block_name = 'farmland'
+                                break
 
                     INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
 
                     if block_name == 'farmland':
-                        INTERFACE.placeBlock(*block.coordinates.shift(y=1), 'minecraft:wheat')
+                        INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(lookup.CROPS))
 
         self._place_sign()
         INTERFACE.sendBlocks()
@@ -242,7 +253,7 @@ class Mine(Building):
         self.structures = structures
         self.depth = None
 
-    @ staticmethod
+    @staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
 
