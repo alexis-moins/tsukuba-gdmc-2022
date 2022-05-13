@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import textwrap
 from dataclasses import dataclass
 from dataclasses import replace
 from typing import Any
@@ -121,7 +122,7 @@ class Building:
                     if block_name == 'farmland':
                         INTERFACE.placeBlock(*block.coordinates.shift(y=1), 'minecraft:wheat')
 
-        self._place_sign(rotation)
+        self._place_sign()
         INTERFACE.sendBlocks()
 
     def _build_structure(self, structure: Structure, plot: Plot, rotation: int):
@@ -133,29 +134,23 @@ class Building:
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
-    def _place_sign(self, rotation: int):
+    def _place_sign(self):
         """Place a sign indicating informations about the building"""
-        if not self.entrances:
-            return None
+        if not self.blocks:
+            return
+
+        signs = self.blocks.filter('sign')
+        if not signs:
+            return
+        x, y, z = signs[0].coordinates
+        texts = textwrap.wrap(self.get_display_name(), width=15) + ["", "", ""]
+
+        data = "{" + f'Text1:\'{{"text":"{texts[0]}"}}\','
+        data += f'Text2:\'{{"text":"{texts[1]}"}}\','
+        data += f'Text3:\'{{"text":"{texts[2]}"}}\','
+        data += f'Text4:\'{{"text":"{texts[3]}"}}\'' + "}"
         INTERFACE.sendBlocks()
-        sign_coord = self.entrances[0].coordinates.shift(y=1)
-        if env.DEBUG:
-            self.build_sign_in_world(sign_coord, text1=self.name,
-                                     text2=f'rotation : {self.rotation}', rotation=rotation)
-        else:
-            text = self.get_display_name()
-            self.build_sign_in_world(sign_coord, text1=text[:15], text2=text[15:30],
-                                     text3=text[30:45], text4=text[45:60], rotation=rotation)
-
-        for entrance in self.entrances:
-            neighbours = [self.plot.get_block_at(*coordinates)
-                          for coordinates in entrance.neighbouring_coordinates()]
-
-            block_name = BlockList(neighbours).without(
-                ('air', 'grass', 'sand', 'water')).most_common
-
-            if block_name is not None:
-                INTERFACE.placeBlock(*entrance.coordinates, block_name)
+        INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
 
     def grow_old(self, amount: int) -> None:
         """Make a building grow old"""
@@ -208,21 +203,6 @@ class Building:
             del self.old_blocks[original_block]
 
         INTERFACE.sendBlocks()
-
-    def build_sign_in_world(self, coord: Coordinates, text1: str = "", text2: str = "", text3: str = "",
-                            text4: str = "", rotation: int = 0):
-        x, y, z = coord
-
-        direction = toolbox.getOptimalDirection(x, y, z)
-        minecraft_rotation = direction2rotation(direction)
-        INTERFACE.placeBlock(x, y, z, f"oak_sign[rotation={minecraft_rotation}]")
-        INTERFACE.sendBlocks()
-
-        data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
-        data += f'Text2:\'{{"text":"{text2}"}}\','
-        data += f'Text3:\'{{"text":"{text3}"}}\','
-        data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
-        INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
 
     def __str__(self) -> str:
         """Return the string representation of the current building"""
@@ -301,7 +281,7 @@ class Mine(Building):
         self._build_structure(self.structures[0], plot, rotation)
 
         self.entrances = self.blocks.filter('emerald')
-        self._place_sign(rotation)
+        self._place_sign()
         INTERFACE.sendBlocks()
 
 
