@@ -56,9 +56,11 @@ class Coordinates:
                            y=int(position[1].valuestr()),
                            z=int(position[2].valuestr()))
 
-    def neighbours(self) -> list[Coordinates]:
+    def neighbours(self, directions: tuple[Direction] = None) -> list[Coordinates]:
         """Return the list of neighbouring coordinates of the current coordinates"""
-        return [self.towards(direction) for direction in Direction]
+        if directions is None:
+            directions = Direction
+        return [self.towards(direction) for direction in directions]
 
     def with_points(self, x: int = None, y: int = None, z: int = None) -> Coordinates:
         """"""

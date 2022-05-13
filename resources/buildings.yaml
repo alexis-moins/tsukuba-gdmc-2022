@@ -57,7 +57,7 @@
 
 - name: Big House
   path: house.nbt
-  properties: { cost: 15, number of beds: 5 }
+  properties: { cost: 12, number of beds: 5 }
   maximum: 4
   action: BED
   type: HABITATION

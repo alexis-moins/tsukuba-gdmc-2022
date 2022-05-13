@@ -8,6 +8,7 @@ from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
+from src.simulation.buildings.building_type import BuildingType
 from src.utils.criteria import Criteria
 
 
@@ -51,10 +52,16 @@ class City:
 
     def add_building(self, building: Building, plot: Plot, rotation: int) -> None:
         """Add a new building to the current city"""
+        padding = 5
+        if building.properties.building_type is BuildingType.FARM or building.properties.building_type is BuildingType.WOODCUTTING:
+            padding = 8
+
+        if building.properties.building_type is BuildingType.DECORATION:
+            padding = 2
 
         area_with_padding = BlockList(
             list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
-                     filter(lambda coord: coord in self.plot, plot.surface(3)))))
+                     filter(lambda coord: coord in self.plot, plot.surface(padding)))))
 
         plot.remove_trees(area_with_padding)
 

@@ -82,9 +82,9 @@ class Block:
                     return Block(name, self.coordinates, properties=self.properties if replacement[1] else {})
         return self
 
-    def neighbouring_coordinates(self) -> List[Coordinates]:
+    def neighbouring_coordinates(self, directions: tuple[Direction] = None) -> List[Coordinates]:
         """Return the list of all this block's neighbouring coordinates"""
-        return self.coordinates.neighbours()
+        return self.coordinates.neighbours(directions)
 
     def shift_position_to(self, coordinates: Coordinates) -> Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""
