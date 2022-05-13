@@ -173,6 +173,9 @@ class Building:
 
         for block in sample:
 
+            if block.is_one_of(('lectern', 'rail', 'sign')):
+                continue
+
             materials = {
                 'cobblestone': ('mossy_cobblestone', True),
                 'mossy_stone': ('cracked_stone', True),
