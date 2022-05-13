@@ -1,5 +1,5 @@
 - building: Forge
-  buildings: {ore_pack: -20, forge: 100, HABITATION: 80, Mine: -50}
+  buildings: {ore_pack: -20, forge: 100, HABITATION: 80, Mine: -75}
   blocks: {stone: -1}
 
 - building: Ore Pack

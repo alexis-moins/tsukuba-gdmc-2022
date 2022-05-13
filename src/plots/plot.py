@@ -470,7 +470,8 @@ class Plot:
         relation = env.RELATIONS.get_building_relation(building_specs)
         score_modif = 0
         if relation and city_buildings:
-            score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
+            score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(
+                lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
 
         return score + score_modif
 
@@ -543,5 +544,3 @@ class Plot:
         i = min(max(i - self.steep_factor, 0), steep_map_size[0] - 1)
         j = min(max(j - self.steep_factor, 0), steep_map_size[1] - 1)
         return self.steep_map[j + i * steep_map_size[1]]
-
-

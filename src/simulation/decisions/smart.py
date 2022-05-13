@@ -24,7 +24,10 @@ class SmartDecisionMaker(DecisionMaker):
         """"""
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
-            return possible_actions[0]
+            building = possible_actions[0]
+            plot = self.plot.get_subplot(building.get_size(rotation), building_specs=building.name,
+                                         city_buildings=self.city.buildings)
+            return building, plot
 
         if self.city.food_production <= self.city.population:
             next_action_type = ActionType.FOOD
