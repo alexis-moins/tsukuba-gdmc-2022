@@ -255,6 +255,8 @@ class Mine(Building):
         super().__init__(name, properties, structures[0], is_extension, maximum)
         self.structures = structures
         self.depth = None
+        # self.crane = random.randint(0, 1)
+        self.crane = True  # For test purpose, always true
 
     @staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
@@ -275,6 +277,7 @@ class Mine(Building):
         if not self.depth:
             self.depth = random.randint(2, 10)
 
+        # rotation = 90
         self.plot = plot
         self.rotation = rotation
         rotations = [270, 180, 90, 0]
@@ -294,6 +297,12 @@ class Mine(Building):
 
         self._build_structure(self.structures[0], plot, rotation)
 
+        if self.crane:
+            plot.start = start.shift(x=-1, y=2, z=3).rotate(rotation, rotation_point=start)
+            input(plot.start)
+            self._build_structure(self.structures[2], plot, rotation)
+
+        plot.start = start  # reset start
         self.entrances = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()

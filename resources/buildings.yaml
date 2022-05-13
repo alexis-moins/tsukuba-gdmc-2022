@@ -42,7 +42,7 @@
   type: WOODCUTTING
 
 - name: Mine
-  path: [mine_top.nbt, mine_stairs.nbt]
+  path: [mine_top.nbt, mine_stairs.nbt, extensions/crane_body.nbt]
   properties: { cost: 7, workers: 4 }
   maximum: 2
   action: WORK
