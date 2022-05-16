@@ -341,7 +341,7 @@ class ChildWithSlots(ChildBuilding):
         self.slot_block = slot_pattern
 
     def build(self, plot: Plot, rotation: int, city: Plot):
-        self.free_slots = self.structure.get_blocks(plot.start, rotation).filter(self.slot_block)
+        self.free_slots = list(self.structure.get_blocks(plot.start, rotation).filter(self.slot_block))
         super().build(plot, rotation, city)
 
     def get_free_slot(self):
@@ -358,8 +358,10 @@ class Graveyard(ChildWithSlots):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
-            INTERFACE.placeBlock(*slot.coordinates.shift(y=1), 'sign{Text1=' + name + '}')
+            INTERFACE.placeBlock(*slot.coordinates.shift(y=1), 'oak_sign{Text1:\'{"text":"' + name + '"}\'}')
 
+    def grow_old(self, amount: int) -> None:
+        pass
 
 class WeddingTotem(ChildWithSlots):
     def __init__(self, parent: Building):
@@ -370,4 +372,5 @@ class WeddingTotem(ChildWithSlots):
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, random.choice(lookup.FLOWERS))
 
-
+    def grow_old(self, amount: int) -> None:
+        pass

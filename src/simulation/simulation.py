@@ -26,16 +26,22 @@ class Event:
     deadliness: int = field(default=0)
     kills: tuple[int, int] = field(default_factory=lambda: (0, 0))
 
-    def resolve(self, city: City) -> None:
+    def resolve(self, city: City, year: int) -> None:
         """"""
         if self.is_dangerous:
             if random.randint(1, 100) <= self.deadliness:
                 kills = max(0, min(random.randint(*self.kills), len(city.inhabitants)))
                 print(
                     f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
+
+                for v in random.sample(city.inhabitants, kills):
+                    city.villager_die(v, year, self.name.lower())
         else:
             print(
                 f'=> This year we celebrate {Fore.CYAN}{self.name.lower()}{Fore.WHITE}')
+
+        if self.name == 'Wedding':
+            city.wedding()
 
 
 events = (Event('Wedding'), Event('Wandering trader'), Event('Town Celebration'),
@@ -96,7 +102,7 @@ class Simulation:
 
             if random.randint(0, 1):
                 event = random.choice(events)
-                event.resolve(self.city)
+                event.resolve(self.city, year)
                 history.append((year, event))
             else:
                 print('=> No event this year')

@@ -16,7 +16,6 @@ from src.utils.coordinates import Size
 
 class BlockList(Sequence):
     """Class representing a list of blocks, implements the abstract Sequence"""
-    __slots__ = ['__blocks', '__coordinates']
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""

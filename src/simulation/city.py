@@ -29,6 +29,14 @@ class Villager:
         self.house: Building = None
         self.work_place: Building = None
 
+    def die(self, year: int, cause: str):
+        if self.work_place:
+            self.work_place.workers.remove(self)
+            self.work_place.history.append(f'{self.name} died at {year} of {cause}')
+        if self.house:
+            self.house.inhabitants.remove(self)
+            self.house.history.append(f'{self.name} died at {year} of {cause}')
+
 
 class City:
     def __init__(self, plot: Plot):
@@ -220,6 +228,9 @@ class City:
         if self.wedding_totem:
             self.wedding_totem.add_wedding()
 
-    def villager_die(self, villager: Villager):
+    def villager_die(self, villager: Villager, year: int, cause: str):
         if self.graveyard:
             self.graveyard.add_tomb(villager.name)
+
+        villager.die(year, cause)
+        self.inhabitants.remove(villager)
