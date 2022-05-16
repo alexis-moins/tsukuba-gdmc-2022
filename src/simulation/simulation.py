@@ -122,8 +122,18 @@ class Simulation:
 
         # History of buildings
         for building in self.city.buildings[1:]:
-            book_data = toolbox.writeBook('\n\n'.join(building.history), title='', author='')
+            colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
+            color = random.choice(colors)
+
+            general_data = f'{color}{building.name}§0\n{"=" * 18}\n'
+            general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
+            general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
+            general_data += f'Food: {color}+{building.properties.food_production}§0'
+            book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
+                                          title=f'Year {year}\'s report', author='Settlement Construction Community (SCC)')
             lectern_list = building.blocks.filter('lectern')
+
+            interface.sendBlocks()
 
             if len(lectern_list):
                 lectern: Block = lectern_list[0]
@@ -131,6 +141,7 @@ class Simulation:
                 toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         interface.setBuffering(True)
+        interface.sendBlocks()
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""

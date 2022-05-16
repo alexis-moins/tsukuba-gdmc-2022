@@ -12,12 +12,19 @@ from src.simulation.buildings.building_type import BuildingType
 from src.utils.criteria import Criteria
 
 
+with open('resources/first-names.txt', 'r') as file:
+    _first_names = file.read().splitlines()
+
+with open('resources/last-names.txt', 'r') as file:
+    _last_names = file.read().splitlines()
+
+
 class Villager:
     """"""
 
     def __init__(self) -> None:
         """"""
-        self.name = 'Youri'
+        self.name = f'{random.choice(_first_names)} {random.choice(_last_names)}'
         self.productivity = 1
         self.house: Building = None
         self.work_place: Building = None
@@ -150,7 +157,6 @@ class City:
 
             house = available_houses.pop()
             house.add_inhabitant(villager, year)
-            print(f'{villager.name.capitalize()} moved in {house}')
 
             if house.has_empty_beds():
                 available_houses.append(house)
@@ -164,7 +170,6 @@ class City:
 
             work_place = available_work_places.pop()
             work_place.add_worker(villager, year)
-            print(f'{villager.name.capitalize()} started working at {work_place}')
 
             if work_place.can_offer_work():
                 available_work_places.append(work_place)
