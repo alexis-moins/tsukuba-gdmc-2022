@@ -1,6 +1,6 @@
 import random
 import textwrap
-from typing import Counter
+from collections import Counter
 
 from colorama import Fore
 
