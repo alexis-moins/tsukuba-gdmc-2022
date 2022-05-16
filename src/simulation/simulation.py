@@ -1,5 +1,8 @@
 import random
 from collections import Counter
+from dataclasses import dataclass
+from dataclasses import field
+from os import kill
 from textwrap import wrap
 
 from colorama import Fore
@@ -15,13 +18,30 @@ from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
 
 
+@dataclass(frozen=True)
 class Event:
-    def __init__(self, name):
-        self.name = name
+    """"""
+    name: str
+    is_dangerous: bool = field(default=False)
+    deadliness: int = field(default=0)
+    kills: tuple[int, int] = field(default_factory=lambda: (0, 0))
+
+    def resolve(self, city: City) -> None:
+        """"""
+        if self.is_dangerous:
+            if random.randint(1, 100) <= self.deadliness:
+                kills = max(0, min(random.randint(*self.kills), len(city.inhabitants)))
+                print(
+                    f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
+        else:
+            print(
+                f'=> This year we celebrate {Fore.CYAN}{self.name.lower()}{Fore.WHITE}')
 
 
-events = (Event('Wedding'), Event('Fire'), Event('Wolves attack'), Event('Wandering trader'),
-          Event('Barbarian attack'), Event('Town Celebration'))
+events = (Event('Wedding'), Event('Wandering trader'), Event('Town Celebration'),
+          Event('Fire', is_dangerous=True, deadliness=30, kills=(1, 2)),
+          Event('Barbarian attack', is_dangerous=True, deadliness=50, kills=(2, 4)),
+          Event('Wolves attack', is_dangerous=True, deadliness=30, kills=(4, 4)))
 
 
 class Simulation:
@@ -76,7 +96,7 @@ class Simulation:
 
             if random.randint(0, 1):
                 event = random.choice(events)
-                print(event.name)
+                event.resolve(self.city)
                 history.append((year, event))
             else:
                 print('=> No event this year')
