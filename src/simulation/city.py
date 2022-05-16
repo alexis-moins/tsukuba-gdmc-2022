@@ -111,7 +111,7 @@ class City:
     def food_production(self):
         return sum(building.properties.food_production for building in self.buildings)
 
-    def update(self) -> None:
+    def update(self, year: int) -> None:
         """Update the city's indicators"""
         self.food_available += self.food_production
 
@@ -149,7 +149,7 @@ class City:
                 break
 
             house = available_houses.pop()
-            house.add_inhabitant(villager)
+            house.add_inhabitant(villager, year)
             print(f'{villager.name.capitalize()} moved in {house}')
 
             if house.has_empty_beds():
@@ -163,7 +163,7 @@ class City:
                 break
 
             work_place = available_work_places.pop()
-            work_place.add_worker(villager)
+            work_place.add_worker(villager, year)
             print(f'{villager.name.capitalize()} started working at {work_place}')
 
             if work_place.can_offer_work():

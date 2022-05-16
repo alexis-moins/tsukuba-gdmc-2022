@@ -9,7 +9,6 @@ from typing import Any
 from colorama import Fore
 from gdpc import interface as INTERFACE
 from gdpc import lookup
-from gdpc import toolbox
 
 from src import env
 from src.blocks.block import Block
@@ -48,6 +47,7 @@ class Building:
         self.old_blocks: dict[Block, Block] = {}
         self.is_extension = extension
         self.max_number = maximum
+        self.history = []
 
         self.inhabitants = set()
         self.workers = set()
@@ -82,15 +82,18 @@ class Building:
         """"""
         return len(self.workers) < self.properties.workers
 
-    def add_inhabitant(self, villager) -> None:
+    def add_inhabitant(self, villager, year: int) -> None:
         """"""
         self.inhabitants.add(villager)
         villager.house = self
 
-    def add_worker(self, villager) -> None:
+        self.history.append(f'Year {year}:\n {villager.name} is now living in the {self.name.lower()}')
+
+    def add_worker(self, villager, year: int) -> None:
         """"""
         self.workers.add(villager)
         villager.work_place = self
+        self.history.append(f'Year {year}:\n {villager.name} has started working at the {self.name.lower()}')
 
     def get_size(self, rotation: int) -> Size:
         """Return the size of the building considering the given rotation"""
@@ -247,7 +250,7 @@ class Building:
                       'lazy',
                       'kind',
                       'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint']
-        return f'The {random.choice(adjectives)} {self.name}'
+        return f'The {random.choice(adjectives)} {self.name.lower()}'
 
 
 class Mine(Building):

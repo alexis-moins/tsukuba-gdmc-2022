@@ -7,6 +7,7 @@ from gdpc import interface
 from gdpc import toolbox
 
 from src import env
+from src.blocks.block import Block
 from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
@@ -56,7 +57,7 @@ class Simulation:
         plot = self.city.plot.get_subplot(town_hall, rotation)
 
         self.city.add_building(town_hall, plot, rotation)
-        self.city.update()
+        self.city.update(0)
         self.city.display()
 
         while year < self.years:
@@ -81,7 +82,7 @@ class Simulation:
                 print('=> No event this year')
 
             # Update city
-            self.city.update()
+            self.city.update(year)
 
             self.city.make_buildings_grow_old()
 
@@ -105,21 +106,31 @@ class Simulation:
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
-        history_string = "\n".join(f'year {year} : {event.name}' for year, event in history)
+        history_string = "\n\n".join(f'Year {year}: {event.name.lower()}' for year, event in history)
         print(f'City history : {history_string}')
+
+        interface.sendBlocks()
+
+        interface.setBuffering(False)
 
         # make a book
         book_data = toolbox.writeBook(history_string, title='City history', author='The Mayor')
         lectern_list = self.city.buildings[0].blocks.filter('lectern')
         if len(lectern_list):
-            x, y, z = lectern_list[0].coordinates
-            command = (f'data merge block {x} {y} {z} '
-                       f'{{Book: {{id: "minecraft:written_book", '
-                       f'Count: 1b, tag: {book_data}'
-                       '}, Page: 0}')
+            lectern: Block = lectern_list[0]
+            toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
-            interface.runCommand(command)
-            print(f'placed history book at {x}, {y}, {z}')
+        # History of buildings
+        for building in self.city.buildings[1:]:
+            book_data = toolbox.writeBook('\n\n'.join(building.history), title='', author='')
+            lectern_list = building.blocks.filter('lectern')
+
+            if len(lectern_list):
+                lectern: Block = lectern_list[0]
+                interface.placeBlock(*lectern.coordinates, 'air')
+                toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
+
+        interface.setBuffering(True)
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""
