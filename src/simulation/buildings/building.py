@@ -255,8 +255,6 @@ class Mine(Building):
         super().__init__(name, properties, structures[0], is_extension, maximum)
         self.structures = structures
         self.depth = None
-        # self.crane = random.randint(0, 1)
-        self.crane = True  # For test purpose, always true
 
     @staticmethod
     def deserialize(building: dict[str, Any]) -> Building:
@@ -277,7 +275,6 @@ class Mine(Building):
         if not self.depth:
             self.depth = random.randint(2, 10)
 
-        # rotation = 90
         self.plot = plot
         self.rotation = rotation
         rotations = [270, 180, 90, 0]
@@ -297,10 +294,28 @@ class Mine(Building):
 
         self._build_structure(self.structures[0], plot, rotation)
 
-        if self.crane:
-            plot.start = start.shift(x=-1, y=2, z=3).rotate(rotation, rotation_point=start)
-            input(plot.start)
+        # 1/2 chances of building a crane
+        if random.randint(-1, 1):
+            # Yes it is cheating, but if you can, do it with a proper rotation system.
+            if rotation == 0:
+                plot.start = start.shift(x=-1, y=2, z=4)
+            elif rotation == 90:
+                plot.start = start.shift(x=-1, y=2, z=-1)
+            elif rotation == 180:
+                plot.start = start.shift(x=4, y=2, z=-1)
+            elif rotation == 270:
+                plot.start = start.shift(x=4, y=2, z=4)
+
             self._build_structure(self.structures[2], plot, rotation)
+
+            plot.start = start.shift(x=4, y=4, z=4)
+            max_depth = self.depth * 5 - 6
+            rope_length = random.randint(1, max_depth)
+            for i in range(rope_length):
+                self._build_structure(self.structures[3], plot, rotation)
+                plot.start = plot.start.shift(y=-1)
+            plot.start = plot.start.shift(y=-5)
+            self._build_structure(self.structures[4], plot, rotation)
 
         plot.start = start  # reset start
         self.entrances = self.blocks.filter('emerald')

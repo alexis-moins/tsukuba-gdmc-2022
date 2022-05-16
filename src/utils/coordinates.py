@@ -64,9 +64,9 @@ class Coordinates:
 
     def with_points(self, x: int = None, y: int = None, z: int = None) -> Coordinates:
         """"""
-        return Coordinates(x if x else self.x,
-                           y if y else self.y,
-                           z if z else self.z)
+        return Coordinates(x if x is not None else self.x,
+                           y if y is not None else self.y,
+                           z if z is not None else self.z)
 
     def towards(self, direction: Direction) -> Coordinates:
         """Return the next coordinates in the given direction (from the current coordinates)"""
