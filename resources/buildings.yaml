@@ -109,6 +109,21 @@
   action: WORK
   type: WOODCUTTING
 
+- name: Graveyard
+  path: graveyard.nbt
+  properties: { cost: 10, workers: 1 }
+  maximum: 1
+  extension: false
+  action: UTILITY
+  type: GRAVEYARD
+
+- name: Wedding Totem
+  path: wedding_totem.nbt
+  properties: { cost: 10, workers: 1 }
+  extension: false
+  maximum: 1
+  action: UTILITY
+  type: WEDDING
 
 # DECORATIONS
 

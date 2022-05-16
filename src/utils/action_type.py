@@ -7,3 +7,4 @@ class ActionType(Enum):
     FOOD = 1
     WORK = 2
     DECORATION = 3
+    UTILITY = 4

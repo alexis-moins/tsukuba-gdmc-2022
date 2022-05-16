@@ -43,7 +43,7 @@ class Building:
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
-        self.__structure = structure
+        self.structure = structure
         self.old_blocks: dict[Block, Block] = {}
         self.is_extension = extension
         self.max_number = maximum
@@ -58,21 +58,32 @@ class Building:
         self.entrances: BlockList = None
 
     @staticmethod
-    def deserialize(building: dict[str, Any]) -> Building:
+    def deserialize(building_info: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
-        if building['type'] == 'MINING':
-            return Mine.deserialize(building.copy())
-
+        original = building_info.copy()
         properties = {key.replace(' ', '_'): value
-                      for key, value in building.pop('properties').items()}
+                      for key, value in building_info.pop('properties').items()}
 
-        action_type = ActionType[building.pop('action').upper()]
-        building_type = BuildingType[building.pop('type').upper()]
+        action_type = ActionType[building_info.pop('action').upper()]
+        building_type = BuildingType[building_info.pop('type').upper()]
         properties = BuildingProperties(**properties,
                                         action_type=action_type, building_type=building_type)
 
-        structure = Structure.parse_nbt_file(building.pop('path'))
-        return Building(properties=properties, structure=structure, **building)
+        path = building_info.pop('path')
+        if isinstance(path, list):
+            path = path[0]
+        structure = Structure.parse_nbt_file(path)
+
+        build = Building(properties=properties, structure=structure, **building_info)
+
+        if build.name == 'Mine':
+            return Mine.deserialize_mine(original, build)
+        elif build.name == 'Graveyard':
+            return Graveyard(parent=build)
+        elif build.name == 'Wedding Totem':
+            return WeddingTotem(parent=build)
+
+        return build
 
     def has_empty_beds(self) -> bool:
         """"""
@@ -97,10 +108,10 @@ class Building:
 
     def get_size(self, rotation: int) -> Size:
         """Return the size of the building considering the given rotation"""
-        return self.__structure.get_size(rotation)
+        return self.structure.get_size(rotation)
 
     def get_entrance_shift(self, rotation: int) -> Coordinates:
-        entrances = self.__structure.get_blocks(Coordinates(0, 0, 0), rotation).filter('emerald')
+        entrances = self.structure.get_blocks(Coordinates(0, 0, 0), rotation).filter('emerald')
         if not entrances or len(entrances) < 1:
             return Coordinates(0, 0, 0)
         return entrances[0].coordinates
@@ -109,7 +120,7 @@ class Building:
         """Build the current building onto the building's plot"""
         self.plot = plot
         self.rotation = rotation
-        self._build_structure(self.__structure, self.plot, self.rotation)
+        self._build_structure(self.structure, self.plot, self.rotation)
 
         surface = city.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
 
@@ -253,26 +264,22 @@ class Building:
         return f'The {random.choice(adjectives)} {self.name.lower()}'
 
 
-class Mine(Building):
-    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], is_extension: bool, maximum):
-        super().__init__(name, properties, structures[0], is_extension, maximum)
+class ChildBuilding(Building):
+    def __init__(self, parent: Building):
+        super().__init__(parent.name, parent.properties, parent.structure, parent.is_extension, parent.max_number)
+
+
+class Mine(ChildBuilding):
+    def __init__(self, parent, structures):
+        super().__init__(parent)
         self.structures = structures
         self.depth = None
 
     @staticmethod
-    def deserialize(building: dict[str, Any]) -> Building:
+    def deserialize_mine(building: dict[str, Any], parent: Building) -> Building:
         """Return a new building deserialized from the given dictionary"""
-
-        properties = {key.replace(' ', '_'): value
-                      for key, value in building['properties'].items()}
-
-        action_type = ActionType[building['action'].upper()]
-        building_type = BuildingType[building['type'].upper()]
-        properties = BuildingProperties(**properties,
-                                        action_type=action_type, building_type=building_type)
-
         structures = [Structure.parse_nbt_file(file) for file in building['path']]
-        return Mine(building['name'], properties, structures, is_extension=False, maximum=building['maximum'])
+        return Mine(parent, structures)
 
     def build(self, plot: Plot, rotation: int, city: Plot):
         if not self.depth:
@@ -326,25 +333,41 @@ class Mine(Building):
         INTERFACE.sendBlocks()
 
 
-def direction2rotation(directions):
-    """**Convert a direction to a rotation**.
+class ChildWithSlots(ChildBuilding):
+    def __init__(self, parent: Building, slot_pattern: str):
+        super().__init__(parent)
+        self.free_slots: list[Block] = []
+        self.occupied_slots: list[Block] = []
+        self.slot_block = slot_pattern
 
-    If a sequence is provided, the average is returned.
-    """
-    reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
-    if len(directions) == 1:
-        rotation = reference[lookup.INVERTDIRECTION[directions[0]]]
-    else:
+    def build(self, plot: Plot, rotation: int, city: Plot):
+        self.free_slots = self.structure.get_blocks(plot.start, rotation).filter(self.slot_block)
+        super().build(plot, rotation, city)
 
-        if len(directions) == 3:
-            input(directions)
-        rotation = 0
-        # Compute average
-        for direction in directions:
-            rotation += reference[lookup.INVERTDIRECTION[direction]]
-        rotation = round(rotation / len(directions))
+    def get_free_slot(self):
+        slot = self.free_slots.pop()
+        self.occupied_slots.append(slot)
+        return slot
 
-        # rotate 180°
-        rotation = rotation % 16
 
-    return rotation
+class Graveyard(ChildWithSlots):
+    def __init__(self, parent: Building):
+        super().__init__(parent, 'diamond_block')
+
+    def add_tomb(self, name: str):
+        slot = super().get_free_slot()
+        if slot:
+            INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
+            INTERFACE.placeBlock(*slot.coordinates.shift(y=1), 'sign{Text1=' + name + '}')
+
+
+class WeddingTotem(ChildWithSlots):
+    def __init__(self, parent: Building):
+        super().__init__(parent, 'cornflower')
+
+    def add_wedding(self):
+        slot = super().get_free_slot()
+        if slot:
+            INTERFACE.placeBlock(*slot.coordinates, random.choice(lookup.FLOWERS))
+
+

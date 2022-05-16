@@ -49,7 +49,8 @@ class SmartDecisionMaker(DecisionMaker):
         priority_actions: list[Building] = []
 
         for building in possible_actions:
-            if building is not None and building.properties.action_type == next_action_type:
+            if building is not None and (building.properties.action_type == next_action_type
+                                         or building.properties.action_type == ActionType.UTILITY):
                 priority_actions.append(building)
 
         if not priority_actions:

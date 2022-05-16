@@ -40,9 +40,10 @@ class Structure:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
 
-    def get_blocks(self, start: Coordinates, rotation: int) -> BlockList:
+    def get_blocks(self, start: Coordinates, rotation: int, apply_block_variation: bool = True) -> BlockList:
         """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
-        blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
+        if apply_block_variation:
+            blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
 
         shift_due_to_rotation = Coordinates(0, 0, 0)
         if rotation == 90:

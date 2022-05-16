@@ -22,3 +22,7 @@ class BuildingType(Enum):
     MINING = 5
 
     DECORATION = 6
+
+    GRAVEYARD = 7
+
+    WEDDING = 8

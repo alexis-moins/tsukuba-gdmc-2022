@@ -141,4 +141,19 @@ ALL_PALETTES = {
         'gold_block': [flower for flower in lookup.FLOWERS],
         'iron_block': [flower for flower in lookup.FLOWERS],
     },
+
+    BuildingType.GRAVEYARD: {
+        'lapis_block': palette.RandomPalette([flower for flower in lookup.FLOWERS]),
+        'gold_block': palette.RandomPalette({'cobblestone_wall': 20, 'andesite_wall': 20,
+                                             'cobblestone_slab[type=bottom]': 10, 'andesite_slab[type=bottom]': 10,
+                                             'lantern': 9, 'soul_lantern': 1, 'iron_bars': 10, 'air': 20}),
+        'diamond_block': ['air'],
+        'iron_block': palette.RandomPalette({'dirt': 25, 'grass_path': 75}),
+        'dirt': palette.RandomPalette({'dirt': 80, 'coarse_dirt': 19, 'podzol': 1}),
+    },
+    BuildingType.WEDDING: {
+        'cornflower': ['air'],
+        'white_wall_banner': palette.RandomPalette([color + '_wall_banner' for color in lookup.COLORS])
+    }
+
 }

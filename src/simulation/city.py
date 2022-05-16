@@ -7,7 +7,7 @@ from colorama import Fore
 from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
-from src.simulation.buildings.building import Building
+from src.simulation.buildings.building import Building, Graveyard, WeddingTotem
 from src.simulation.buildings.building_type import BuildingType
 from src.utils.criteria import Criteria
 
@@ -34,6 +34,8 @@ class City:
     def __init__(self, plot: Plot):
         self.plot = plot
         self.buildings: list[Building] = []
+        self.graveyard: Graveyard | None = None
+        self.wedding_totem: WeddingTotem | None = None
         self.professions = {}
 
         self.inhabitants = [Villager() for _ in range(5)]
@@ -59,6 +61,12 @@ class City:
 
     def add_building(self, building: Building, plot: Plot, rotation: int) -> None:
         """Add a new building to the current city"""
+
+        if isinstance(building, Graveyard):
+            self.graveyard = building
+        elif isinstance(building, WeddingTotem):
+            self.wedding_totem = building
+
         padding = 5
         if building.properties.building_type is BuildingType.FARM or building.properties.building_type is BuildingType.WOODCUTTING:
             padding = 8
@@ -207,3 +215,11 @@ class City:
         buildings = "\n      ".join(textwrap.wrap(
             ", ".join([f"{building.name.lower().replace('_', ' ')}: {Fore.GREEN}{value}/{building.max_number}{Fore.WHITE}" for building, value in counter.items()])))
         print(f'\n      {buildings}')
+
+    def wedding(self):
+        if self.wedding_totem:
+            self.wedding_totem.add_wedding()
+
+    def villager_die(self, villager: Villager):
+        if self.graveyard:
+            self.graveyard.add_tomb(villager.name)
