@@ -345,6 +345,8 @@ class ChildWithSlots(ChildBuilding):
         super().build(plot, rotation, city)
 
     def get_free_slot(self):
+        if not self.free_slots:
+            return None
         slot = self.free_slots.pop()
         self.occupied_slots.append(slot)
         return slot
@@ -362,6 +364,7 @@ class Graveyard(ChildWithSlots):
 
     def grow_old(self, amount: int) -> None:
         pass
+
 
 class WeddingTotem(ChildWithSlots):
     def __init__(self, parent: Building):

@@ -49,6 +49,7 @@ def start_simulation(years: int) -> None:
     """Launch the simulation"""
     start, end = env.BUILD_AREA
     build_area = Plot.from_coordinates(start, end)
+    build_area.remove_lava()
     env.WORLD = env.get_world_slice()
 
     if env.TP:
