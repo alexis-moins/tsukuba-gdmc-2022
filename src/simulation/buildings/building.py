@@ -167,15 +167,8 @@ class Building:
         signs = self.blocks.filter('sign')
         if not signs:
             return
-        x, y, z = signs[0].coordinates
-        texts = textwrap.wrap(self.get_display_name(), width=15) + ["", "", ""]
 
-        data = "{" + f'Text1:\'{{"text":"{texts[0]}"}}\','
-        data += f'Text2:\'{{"text":"{texts[1]}"}}\','
-        data += f'Text3:\'{{"text":"{texts[2]}"}}\','
-        data += f'Text4:\'{{"text":"{texts[3]}"}}\'' + "}"
-        INTERFACE.sendBlocks()
-        INTERFACE.runCommand(f"data merge block {x} {y} {z} {data}")
+        signs[0].coordinates.place_sign(self.get_display_name())
 
     def grow_old(self, amount: int) -> None:
         """Make a building grow old"""
@@ -305,7 +298,7 @@ class Mine(ChildBuilding):
         self._build_structure(self.structures[0], plot, rotation)
 
         # 1/2 chances of building a crane
-        if random.randint(-1, 1):
+        if random.randint(0, 1):
             # Yes it is cheating, but if you can, do it with a proper rotation system.
             if rotation == 0:
                 plot.start = start.shift(x=-1, y=2, z=4)
