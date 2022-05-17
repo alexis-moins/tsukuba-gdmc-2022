@@ -188,6 +188,31 @@ class Plot:
         for c1, c2 in zip(path[:-2], path[1:]):
             if self.graph.has_edge(c1, c2):
                 self.graph[c1][c2]['weight'] = 10
+    #
+    # def add_roads_signs(self, amount: int, buildings: list):
+    #     max_sign_height = 4
+    #     min_sign_height = 1
+    #     for block in random.sample(self.all_roads, amount):
+    #         for i
+    #         buildings.coordinates
+    #         buildings.
+    #
+
+    def remove_lava(self):
+        checked = set()
+        lava_blocks = list(self.get_blocks(criteria=Criteria.MOTION_BLOCKING_NO_TREES).filter('lava'))
+        while lava_blocks:
+            block = lava_blocks.pop()
+            checked.add(block)
+            INTF.placeBlock(*block.coordinates, 'obsidian')  # water to cancel the lava
+
+            # Check for neighbors
+            for coord_neighbor in block.neighbouring_coordinates():
+                neighbor = self.get_block_at(*coord_neighbor)
+                if neighbor and 'lava' in neighbor.name and neighbor not in checked and coord_neighbor in self:
+                    lava_blocks.append(neighbor)
+
+        INTF.sendBlocks()
 
     @ staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
@@ -196,7 +221,7 @@ class Plot:
 
     def update(self) -> None:
         """Update the env.WORLD slice and most importantly the heightmaps"""
-        env.update_world_slice()
+        env.get_world_slice()
         self.surface_blocks.clear()
 
     @ staticmethod
