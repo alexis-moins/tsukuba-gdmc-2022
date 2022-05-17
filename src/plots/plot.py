@@ -200,7 +200,8 @@ class Plot:
             for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
                 distance = 0
 
-                block.shift(y=i).place_sign(f"<------------  {distance}            {build.get_display_name()}")
+                block.shift(y=i).place_sign(f"<------------  {distance}            {build.get_display_name()}",
+                                            replace_block=True)
                 print(f"Placed sign at {block.shift(y=i)}")
 
     def remove_lava(self):
