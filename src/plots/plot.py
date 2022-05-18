@@ -16,6 +16,7 @@ from src import env
 from src.blocks.block import Block
 from src.blocks.collections.block_list import BlockList
 from src.simulation.buildings.building_type import BuildingType
+from src.utils import math_utils
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
 from src.utils.criteria import Criteria
@@ -202,32 +203,10 @@ class Plot:
             for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
                 distance = block.distance(build.plot.start)
 
-                angle = math.atan2(block.z - build.plot.start.z, block.x - build.plot.start.x)
+                angle = block.angle(build.plot.start)
 
-                block.shift(y=i).place_sign(f"<-----------  {distance} m           {build.get_display_name()}",
-                                            replace_block=True, rotation=self.__radian_to_orientation(angle))
-
-    @staticmethod
-    def __radian_to_orientation(radian: float) -> int:
-        radian += math.pi  # shift =>
-        radian = Plot.pi_modulo(radian)
-        values_range = 2 * math.pi
-        pos_val = (radian + math.pi)
-        percent = pos_val / values_range
-
-        mult = percent * 16
-        rounded = round(mult)
-        index = min(15, max(0, rounded))
-        # print(f'pos val {pos_val} | percent {percent} | mult {mult} | rounded {rounded}')
-        return index
-
-    @staticmethod
-    def pi_modulo(radian: float) -> float:
-        while radian > math.pi:
-            radian -= 2 * math.pi
-        while radian < -math.pi:
-            radian += 2 * math.pi
-        return radian
+                block.shift(y=i).place_sign(f"<------------  {distance} m           {build.get_display_name()}",
+                                            replace_block=True, rotation=math_utils.radian_to_orientation(angle, shift=math.pi))
 
     def remove_lava(self):
         checked = set()

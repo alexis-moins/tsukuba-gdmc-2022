@@ -70,7 +70,7 @@ class Simulation:
         year = 1
 
         # If you have multiple cities, just give a subplot here
-        self.city = City(self.plot)
+        self.city = City(self.plot, year)
         self.decision_maker.city = self.city
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')

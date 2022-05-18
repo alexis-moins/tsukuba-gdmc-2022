@@ -22,12 +22,13 @@ with open('resources/last-names.txt', 'r') as file:
 class Villager:
     """"""
 
-    def __init__(self) -> None:
+    def __init__(self, birth_year: int) -> None:
         """"""
         self.name = f'{random.choice(_first_names)} {random.choice(_last_names)}'
         self.productivity = 1
         self.house: Building = None
         self.work_place: Building = None
+        self.birth_year = birth_year
 
     def die(self, year: int, cause: str):
         if self.work_place:
@@ -39,14 +40,15 @@ class Villager:
 
 
 class City:
-    def __init__(self, plot: Plot):
+    def __init__(self, plot: Plot, start_year: int):
         self.plot = plot
         self.buildings: list[Building] = []
         self.graveyard: Graveyard | None = None
         self.wedding_totem: WeddingTotem | None = None
         self.professions = {}
+        self.start_year = start_year
 
-        self.inhabitants = [Villager() for _ in range(5)]
+        self.inhabitants = [Villager(start_year) for _ in range(5)]
         self.food_available = 5
 
     @property
@@ -151,7 +153,7 @@ class City:
                 k = max(0, min(food_for_children, max_children_amount))
 
                 print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) born this year')
-                self.inhabitants.extend([Villager() for _ in range(k)])
+                self.inhabitants.extend([Villager(year) for _ in range(k)])
 
         # Decrease population else
         else:
@@ -159,7 +161,7 @@ class City:
             self.food_available -= self.population
             # Remove extra population
             print(f'======= Check wether the population is decreased or notm it should ======')
-            self.inhabitants.extend([Villager() for _ in range(self.food_available)])
+            self.inhabitants.extend([Villager(year) for _ in range(self.food_available)])
             # reset food
             self.food_available = 0
 
@@ -230,7 +232,7 @@ class City:
 
     def villager_die(self, villager: Villager, year: int, cause: str):
         if self.graveyard:
-            self.graveyard.add_tomb(villager.name)
+            self.graveyard.add_tomb(f'{villager.name} died of {cause} {villager.birth_year}-{year}')
 
         villager.die(year, cause)
         self.inhabitants.remove(villager)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import textwrap
 from dataclasses import astuple
 from dataclasses import dataclass
@@ -120,6 +121,9 @@ class Coordinates:
             interface.placeBlock(self.x, self.y, self.z, f'oak_sign[rotation={rotation}]')
             interface.sendBlocks()
         interface.runCommand(f"data merge block {self.x} {self.y} {self.z} {data}")
+
+    def angle(self, other: Coordinates):
+        return math.atan2(self.z - other.z, self.x - other.x)
 
     @property
     def xz(self):

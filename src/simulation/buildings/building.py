@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 import textwrap
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ from src.blocks.collections.palette import Palette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
+from src.utils import math_utils
 from src.utils.action_type import ActionType
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
@@ -39,7 +41,8 @@ class BuildingProperties:
 class Building:
     """Class representing a list of blocks (structure) on a given plot"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False, maximum: int = 1):
+    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False,
+                 maximum: int = 1):
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
@@ -131,13 +134,15 @@ class Building:
                     if (block := surface.find(coordinates.as_2D())) is None:
                         continue
 
-                    if block.name not in ('minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
+                    if block.name not in (
+                    'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
                         continue
 
                     block_name = random.choices(['farmland', 'water'], [90, 10])[0]
 
                     if block_name == 'water':
-                        for c in block.neighbouring_coordinates((Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
+                        for c in block.neighbouring_coordinates(
+                                (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
                             if city.get_block_at(*c).name in lookup.AIR + lookup.PLANTS + ('minecraft:snow',):
                                 block_name = 'farmland'
                                 break
@@ -349,11 +354,13 @@ class Graveyard(ChildWithSlots):
     def __init__(self, parent: Building):
         super().__init__(parent, 'diamond_block')
 
-    def add_tomb(self, name: str):
+    def add_tomb(self, text: str):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
-            INTERFACE.placeBlock(*slot.coordinates.shift(y=1), 'oak_sign{Text1:\'{"text":"' + name + '"}\'}')
+            if self.entrances and self.entrances[0]:
+                sign_angle = slot.coordinates.angle(self.entrances[0].coordinates)
+                slot.coordinates.shift(y=1).place_sign(text, replace_block=True, rotation=math_utils.radian_to_orientation(sign_angle, -math.pi / 2))
 
     def grow_old(self, amount: int) -> None:
         pass
