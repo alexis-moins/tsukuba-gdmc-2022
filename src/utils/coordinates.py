@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import textwrap
 from dataclasses import astuple
 from dataclasses import dataclass
 from typing import Any
 from typing import Iterator
 
 import numpy as np
+from gdpc import interface
 from nbt.nbt import TAG_List
 
 from src.utils.direction import Direction
@@ -106,6 +108,18 @@ class Coordinates:
         for i in range(length):
             current = current.towards(direction)
             yield current
+
+    def place_sign(self, text, replace_block: bool = False):
+        texts = textwrap.wrap(text, width=15) + ["", "", ""]
+
+        data = "{" + f'Text1:\'{{"text":"{texts[0]}"}}\','
+        data += f'Text2:\'{{"text":"{texts[1]}"}}\','
+        data += f'Text3:\'{{"text":"{texts[2]}"}}\','
+        data += f'Text4:\'{{"text":"{texts[3]}"}}\'' + "}"
+        if replace_block:
+            interface.placeBlock(self.x, self.y, self.z, 'oak_sign')
+            interface.sendBlocks()
+        interface.runCommand(f"data merge block {self.x} {self.y} {self.z} {data}")
 
     @property
     def xz(self):

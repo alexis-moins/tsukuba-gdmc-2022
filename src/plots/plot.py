@@ -51,6 +51,7 @@ class Plot:
                                                                       'MIDDLE': defaultdict(int),
                                                                       'OUTER': defaultdict(int)}
         self.__recently_added_roads = None
+        self.roads_y = None
 
     def fill_graph(self):
         self.graph = nx.Graph()
@@ -72,7 +73,7 @@ class Plot:
     def equalize_roads(self):
         if len(self.all_roads) < 1:
             return
-        roads_y = dict()
+        self.roads_y = dict()
 
         for road in self.all_roads:
             neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
@@ -84,19 +85,18 @@ class Plot:
             # median_y = statistics.median_grouped(neighbors_y)
             average_y = sum(neighbors_y) / max(len(neighbors_y), 1)
 
-            roads_y[road.as_2D()] = average_y
+            self.roads_y[road.as_2D()] = average_y
 
-        return roads_y
 
     def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
-        roads_y = self.equalize_roads()
+        self.equalize_roads()
 
         roads = []
 
         # clean above roads
         for road in self.all_roads:
             for i in range(1, 8):
-                coordinates = road.with_points(y=int(roads_y[road]) + i)
+                coordinates = road.with_points(y=int(self.roads_y[road]) + i)
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
@@ -114,14 +114,14 @@ class Plot:
                 shift = 0
 
                 # If the average block y is near half :
-                if slab_pattern and 0.5 < roads_y[road] - int(roads_y[road]):
+                if slab_pattern and 0.5 < self.roads_y[road] - int(self.roads_y[road]):
                     # place a slab
                     chose_pattern = slab_pattern
                     shift = 1
                     if road.as_2D() in self.construction_coordinates:
                         continue
 
-                x, y, z = (road.with_points(y=int(roads_y[road]) + shift))
+                x, y, z = (road.with_points(y=int(self.roads_y[road]) + shift))
                 if road.as_2D() in self.construction_coordinates:
                     if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow', 'sand', 'stone')):
                         continue
@@ -188,15 +188,21 @@ class Plot:
         for c1, c2 in zip(path[:-2], path[1:]):
             if self.graph.has_edge(c1, c2):
                 self.graph[c1][c2]['weight'] = 10
-    #
-    # def add_roads_signs(self, amount: int, buildings: list):
-    #     max_sign_height = 4
-    #     min_sign_height = 1
-    #     for block in random.sample(self.all_roads, amount):
-    #         for i
-    #         buildings.coordinates
-    #         buildings.
-    #
+
+    def add_roads_signs(self, amount: int, buildings: list):
+        if not self.roads_y:
+            self.equalize_roads()
+
+        max_sign_height = 4
+        min_sign_height = 1
+        for block in random.sample(self.all_roads, amount):
+            block = block.with_points(y=round(self.roads_y[block]) + 1)
+            for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
+                distance = 0
+
+                block.shift(y=i).place_sign(f"<------------  {distance}            {build.get_display_name()}",
+                                            replace_block=True)
+                print(f"Placed sign at {block.shift(y=i)}")
 
     def remove_lava(self):
         checked = set()

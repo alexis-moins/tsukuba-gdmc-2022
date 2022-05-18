@@ -166,6 +166,8 @@ class Simulation:
                 interface.placeBlock(*lectern.coordinates, 'air')
                 toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
+        self.city.plot.add_roads_signs(10, self.city.buildings)
+
         interface.setBuffering(True)
         interface.sendBlocks()
 

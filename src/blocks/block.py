@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import textwrap
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Dict
 from typing import List
 from typing import Tuple
 
+from gdpc import interface
 from gdpc.lookup import BLOCKS
 from nbt.nbt import TAG_Compound
 from nbt.nbt import TAG_List
