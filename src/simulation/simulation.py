@@ -118,6 +118,8 @@ class Simulation:
             self.city.display()
             year += 1
 
+        self.city.plot.add_roads_signs(10, self.city.buildings)
+
         decoration_buildings = [building for building in env.BUILDINGS.values()
                                 if building.properties.building_type is BuildingType.DECORATION]
 
@@ -165,8 +167,6 @@ class Simulation:
                 lectern: Block = lectern_list[0]
                 interface.placeBlock(*lectern.coordinates, 'air')
                 toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
-
-        self.city.plot.add_roads_signs(10, self.city.buildings)
 
         interface.setBuffering(True)
         interface.sendBlocks()

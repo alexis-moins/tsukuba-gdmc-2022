@@ -193,16 +193,41 @@ class Plot:
         if not self.roads_y:
             self.equalize_roads()
 
-        max_sign_height = 4
-        min_sign_height = 1
+        max_sign_height = min(5, len(buildings))
+        min_sign_height = 2
+        if len(buildings) <= min_sign_height:
+            return
         for block in random.sample(self.all_roads, amount):
             block = block.with_points(y=round(self.roads_y[block]) + 1)
             for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
-                distance = 0
+                distance = block.distance(build.plot.start)
 
-                block.shift(y=i).place_sign(f"<------------  {distance}            {build.get_display_name()}",
-                                            replace_block=True)
-                print(f"Placed sign at {block.shift(y=i)}")
+                angle = math.atan2(block.z - build.plot.start.z, block.x - build.plot.start.x)
+
+                block.shift(y=i).place_sign(f"<-----------  {distance} m           {build.get_display_name()}",
+                                            replace_block=True, rotation=self.__radian_to_orientation(angle))
+
+    @staticmethod
+    def __radian_to_orientation(radian: float) -> int:
+        radian += math.pi  # shift =>
+        radian = Plot.pi_modulo(radian)
+        values_range = 2 * math.pi
+        pos_val = (radian + math.pi)
+        percent = pos_val / values_range
+
+        mult = percent * 16
+        rounded = round(mult)
+        index = min(15, max(0, rounded))
+        # print(f'pos val {pos_val} | percent {percent} | mult {mult} | rounded {rounded}')
+        return index
+
+    @staticmethod
+    def pi_modulo(radian: float) -> float:
+        while radian > math.pi:
+            radian -= 2 * math.pi
+        while radian < -math.pi:
+            radian += 2 * math.pi
+        return radian
 
     def remove_lava(self):
         checked = set()

@@ -109,7 +109,7 @@ class Coordinates:
             current = current.towards(direction)
             yield current
 
-    def place_sign(self, text, replace_block: bool = False):
+    def place_sign(self, text, replace_block: bool = False, rotation: int = 0):
         texts = textwrap.wrap(text, width=15) + ["", "", ""]
 
         data = "{" + f'Text1:\'{{"text":"{texts[0]}"}}\','
@@ -117,7 +117,7 @@ class Coordinates:
         data += f'Text3:\'{{"text":"{texts[2]}"}}\','
         data += f'Text4:\'{{"text":"{texts[3]}"}}\'' + "}"
         if replace_block:
-            interface.placeBlock(self.x, self.y, self.z, 'oak_sign')
+            interface.placeBlock(self.x, self.y, self.z, f'oak_sign[rotation={rotation}]')
             interface.sendBlocks()
         interface.runCommand(f"data merge block {self.x} {self.y} {self.z} {data}")
 
