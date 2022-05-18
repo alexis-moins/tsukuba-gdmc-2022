@@ -194,15 +194,29 @@ class Plot:
             self.equalize_roads()
 
         max_sign_height = 4
-        min_sign_height = 1
+        min_sign_height = 0
         for block in random.sample(self.all_roads, amount):
             block = block.with_points(y=round(self.roads_y[block]) + 1)
             for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
-                distance = 0
+                distance = block.distance(build.plot.start)
 
-                block.shift(y=i).place_sign(f"<------------  {distance}            {build.get_display_name()}",
-                                            replace_block=True)
-                print(f"Placed sign at {block.shift(y=i)}")
+                angle = math.atan2(block.y - build.plot.start.y, block.x - build.plot.start.x)
+
+                block.shift(y=i).place_sign(f"<------------  {distance} m           {build.get_display_name()}",
+                                            replace_block=True, rotation=self.radian_to_orientation(angle))
+
+    @staticmethod
+    def radian_to_orientation(radian: float) -> int:
+        values_range = 2 * math.pi
+        pos_val = (radian + math.pi)
+        percent = pos_val / values_range
+
+        mult = percent * 16
+        rounded = round(mult)
+        index = min(15, max(0, rounded))
+        # print(f'pos val {pos_val} | percent {percent} | mult {mult} | rounded {rounded}')
+        return index
+
 
     def remove_lava(self):
         checked = set()
