@@ -1,8 +1,8 @@
 import random
 from collections import Counter
+from copy import deepcopy
 from dataclasses import dataclass
 from dataclasses import field
-from os import kill
 from textwrap import wrap
 
 from colorama import Fore
@@ -100,7 +100,7 @@ class Simulation:
 
             # Get event
 
-            if random.randint(0, 1):
+            if random.randint(0, 5):
                 event = random.choice(events)
                 event.resolve(self.city, year)
                 history.append((year, event))
@@ -175,7 +175,7 @@ class Simulation:
         """Return the available buildings for the year"""
         counter = Counter([building.name for building in self.city.buildings])
 
-        actions = [building for building in env.BUILDINGS.values()
+        actions = [deepcopy(building) for building in env.BUILDINGS.values()
                    if building.properties.cost <= self.city.production_points
                    and building.properties.building_type is not BuildingType.DECORATION
                    and counter[building.name] < building.max_number]

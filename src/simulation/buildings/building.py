@@ -367,6 +367,3 @@ class WeddingTotem(ChildWithSlots):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, random.choice(lookup.FLOWERS))
-
-    def grow_old(self, amount: int) -> None:
-        pass
