@@ -1,0 +1,19 @@
+barbarian attack:
+  - 'This year, the entire village witnessed the most horrible acts of barabry.
+  {victims} innocent members of our community perished under the hands of a hord of barbarians that came from the {direction}.
+  After they leaved, the elders of the village have decided to build a watch tower and hire guards to protect us.'
+
+  - 'We had heard rumours about a hord of barbarians from neighbouring villages, about a troup called the "Walkers of the {direction}".
+  And today we finally witnessed the strength and ferocity they have been braging about when they engaged a battle against our small village...
+  {victims} of ours most courageous men died in that confrontation...'
+
+wolf attack:
+  - 'This are the wolves, brrr woof'
+
+fire:
+  - 'fire'
+
+wedding:
+  - 'How wonderfull ! This year {husband} and {wife} finally got married!
+  They planned everything out and made sure that it would be perfect.
+  The whole village rejoiced with them and decorated every garden with flowers of every colour.'
