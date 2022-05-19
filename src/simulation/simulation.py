@@ -18,36 +18,67 @@ from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
 
 
+_descriptions: dict[str, list] = env.get_content('descriptions.yaml')
+
+
+def get_description(event: str) -> str:
+    """"""
+    choice: dict = random.choice(_descriptions[event.lower()])
+    _descriptions[event.lower()].remove(choice)
+
+    if len(_descriptions[event.lower()]) == 0:
+        del _descriptions[event.lower()]
+
+    return choice
+
+
 @dataclass(frozen=True)
 class Event:
     """"""
     name: str
     is_dangerous: bool = field(default=False)
-    deadliness: int = field(default=0)
     kills: tuple[int, int] = field(default_factory=lambda: (0, 0))
 
-    def resolve(self, city: City, year: int) -> None:
+    def resolve(self, city: City, year: int) -> str:
         """"""
         if self.is_dangerous:
-            if random.randint(1, 100) <= self.deadliness:
-                kills = max(0, min(random.randint(*self.kills), len(city.inhabitants)))
-                print(
-                    f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
 
-                for v in random.sample(city.inhabitants, kills):
-                    city.villager_die(v, year, self.name.lower())
+            mod = 0
+            for building in city.buildings:
+                if building.name == 'Watch Tower':
+                    mod = -2
+                    break
+
+            kills = max(0, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
+            print(
+                f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
+
+            for v in random.sample(city.inhabitants, kills):
+                city.villager_die(v, year, self.name.lower())
+
+            description = get_description(self.name)
+            description = description.format(victims=kills, direction=random.choice([
+                'north', 'south', 'east', 'west']))
+
+            if self.name.lower() not in _descriptions:
+                events.remove(self)
+
+            return f'Year {year}\n{description}'
+
         else:
             print(
                 f'=> This year we celebrate {Fore.CYAN}{self.name.lower()}{Fore.WHITE}')
 
-        if self.name == 'Wedding':
-            city.wedding()
+            if self.name == 'Wedding':
+                city.wedding()
+
+            return f'Year {year}\nen event'
 
 
-events = (Event('Wedding'), Event('Wandering trader'), Event('Town Celebration'),
-          Event('Fire', is_dangerous=True, deadliness=30, kills=(1, 2)),
-          Event('Barbarian attack', is_dangerous=True, deadliness=50, kills=(2, 4)),
-          Event('Wolves attack', is_dangerous=True, deadliness=30, kills=(4, 4)))
+events = [Event('Wedding'), Event('Wandering trader'), Event('Town Celebration'),
+          Event('Fire', is_dangerous=True, kills=(1, 2)),
+          Event('Barbarian attack', is_dangerous=True, kills=(2, 4)),
+          Event('Wolf attack', is_dangerous=True, kills=(4, 4))]
 
 
 class Simulation:
@@ -65,6 +96,7 @@ class Simulation:
         self.city: City = None
         self.events = []
         self.actions = []
+        self.history: list[str] = []
 
     def start(self):
         year = 1
@@ -74,7 +106,6 @@ class Simulation:
         self.decision_maker.city = self.city
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
-        history = []
 
         town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
@@ -100,19 +131,18 @@ class Simulation:
 
             # Get event
 
-            if random.randint(0, 5):
+            if random.randint(1, 4) == 4:
                 event = random.choice(events)
-                event.resolve(self.city, year)
-                history.append((year, event))
+                self.history.append(event.resolve(self.city, year))
             else:
                 print('=> No event this year')
 
             # Update city
             self.city.update(year)
 
-            self.city.make_buildings_grow_old()
+            # self.city.make_buildings_grow_old()
 
-            self.city.repair_buildings()
+            # self.city.repair_buildings()
 
             # End of turn
             self.city.display()
@@ -134,15 +164,11 @@ class Simulation:
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
-        history_string = "\n\n".join(f'Year {year}: {event.name.lower()}' for year, event in history)
-        print(f'City history : {history_string}')
-
         interface.sendBlocks()
-
         interface.setBuffering(False)
 
         # make a book
-        book_data = toolbox.writeBook(history_string, title='City history', author='The Mayor')
+        book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
         lectern_list = self.city.buildings[0].blocks.filter('lectern')
         if len(lectern_list):
             lectern: Block = lectern_list[0]
