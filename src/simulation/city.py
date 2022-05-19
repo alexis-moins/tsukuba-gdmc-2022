@@ -3,11 +3,12 @@ import textwrap
 from collections import Counter
 
 from colorama import Fore
+from gdpc import interface
 
 from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
-from src.simulation.buildings.building import Building, Graveyard, WeddingTotem
+from src.simulation.buildings.building import Building, WeddingTotem, Graveyard
 from src.simulation.buildings.building_type import BuildingType
 from src.utils.criteria import Criteria
 
@@ -232,7 +233,12 @@ class City:
 
     def villager_die(self, villager: Villager, year: int, cause: str):
         if self.graveyard:
-            self.graveyard.add_tomb(f'{villager.name} died of {cause} {villager.birth_year}-{year}')
+            self.graveyard.add_tomb(villager, year, cause)
 
         villager.die(year, cause)
         self.inhabitants.remove(villager)
+
+    def spawn_villagers(self):
+        x, y, z = self.buildings[0].entrances[0].coordinates
+        for villager in self.inhabitants:
+            interface.runCommand(f'summon villager {x} {y + 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
