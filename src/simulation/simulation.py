@@ -111,7 +111,11 @@ class Simulation:
         rotation = self.decision_maker.get_rotation()
         if env.DEBUG:
             print(f'rotation {rotation}')
-        plot = self.city.plot.get_subplot(town_hall, rotation)
+        plot = self.city.plot.get_subplot(town_hall, rotation, max_score=100_000)
+
+        if plot is None:
+            town_hall = env.BUILDINGS['Small Town Hall']
+            plot = self.city.plot.get_subplot(town_hall, rotation)
 
         self.city.add_building(town_hall, plot, rotation)
         self.city.update(0)

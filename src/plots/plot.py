@@ -54,6 +54,8 @@ class Plot:
         self.__recently_added_roads = None
         self.roads_y = None
 
+        self.water_mode = 'water' in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).most_common
+
     def fill_graph(self):
         self.graph = nx.Graph()
         if self.steep_map is None:
@@ -87,7 +89,6 @@ class Plot:
             average_y = sum(neighbors_y) / max(len(neighbors_y), 1)
 
             self.roads_y[road.as_2D()] = average_y
-
 
     def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
         self.equalize_roads()
@@ -258,7 +259,7 @@ class Plot:
         for i in range(span, self.size.x - span):
             for j in range(span, self.size.z - span):
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(self.start.shift(i, 0, j))
-                if block.is_one_of(('water',)):
+                if block.is_one_of(('water',)) and not self.water_mode:
                     steep[i - span, j - span] = 100_000_000
                 else:
                     steep[i - span, j - span] = self._delta_sum(
@@ -279,13 +280,13 @@ class Plot:
     def visualize_roads(self, y_offset: int = 0):
         colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
         materials = ('concrete', 'wool', 'stained_glass')
-        ys = self.equalize_roads()
+        self.equalize_roads()
         for i, key in enumerate(self.roads_infos):
             for road in self.roads_infos[key]:
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(
                     road)  # to be sure that we are in the plot
                 if block:
-                    INTF.placeBlock(*(road.with_points(y=ys[road] + y_offset)),
+                    INTF.placeBlock(*(road.with_points(y=self.roads_y[road] + y_offset)),
                                     colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
 
         INTF.sendBlocks()
@@ -387,11 +388,12 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None) -> Plot | None:
+    def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None, max_score: int = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
         size = building.get_size(rotation)
-        max_score = size.x * size.z
+        if max_score is None:
+            max_score = size.x * size.z
         shift = building.get_entrance_shift(rotation)
 
         if self.graph is None:
@@ -400,7 +402,11 @@ class Plot:
         # TODO add .lower_than(max_height=200)
 
         surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
-        surface = surface.without(('water', 'lava')).not_inside(self.occupied_coordinates)
+
+        excluded = ('water', 'lava')
+        if self.water_mode:
+            excluded = ('lava',)
+        surface = surface.without(excluded).not_inside(self.occupied_coordinates)
 
         random_blocks = int(len(surface) * (10 / 100))
 
@@ -593,13 +599,34 @@ class Plot:
 
     def build_foundation(self) -> None:
         """Build the foundations under the house"""
+        if not self.water_mode:
+            blocks = ('stone_bricks', 'diorite', 'cobblestone')
+            weights = (75, 15, 10)
 
-        blocks = ('stone_bricks', 'diorite', 'cobblestone')
-        weights = (75, 15, 10)
+            for coord in self.__iterate_over_air(self.start.y):
+                block = random.choices(blocks, weights)
+                INTF.placeBlock(*coord, block)
+        else:
 
-        for coord in self.__iterate_over_air(self.start.y):
-            block = random.choices(blocks, weights)
-            INTF.placeBlock(*coord, block)
+            # INSIDE
+            for coord in self.surface():
+                INTF.placeBlock(*coord, "oak_planks")
+
+            # OUTER FRAME
+            for coord in self.start.shift(x=-3, z=-1).line(self.size.x + 4, Direction.EAST):
+                INTF.placeBlock(*coord, "oak_log[axis=x]")
+                INTF.placeBlock(*coord.shift(z=self.size.z + 1), "oak_log[axis=x]")
+            for coord in self.start.shift(x=-1, z=-3).line(self.size.z + 4, Direction.SOUTH):
+                INTF.placeBlock(*coord, "oak_log[axis=z]")
+                INTF.placeBlock(*coord.shift(x=self.size.x + 1), "oak_log[axis=z]")
+
+            # PILLARS
+            for coord in self.start.shift(x=-1, y=2, z=-1).line(50, Direction.DOWN):
+                INTF.placeBlock(*coord, "oak_log[axis=y]")
+                INTF.placeBlock(*coord.shift(x=self.size.x + 1), "oak_log[axis=y]")
+                INTF.placeBlock(*coord.shift(x=self.size.x + 1, z=self.size.z + 1), "oak_log[axis=y]")
+                INTF.placeBlock(*coord.shift(z=self.size.z + 1), "oak_log[axis=y]")
+
         INTF.sendBlocks()
 
     def __iterate_over_air(self, max_y: int) -> Coordinates:
