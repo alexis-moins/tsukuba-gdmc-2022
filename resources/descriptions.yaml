@@ -8,12 +8,25 @@ barbarian attack:
   {victims} of ours most courageous men died in that confrontation...'
 
 wolf attack:
-  - 'This are the wolves, brrr woof'
+  - 'Last week I saw a pack of wolves around the village, I might told the other to do something about it.
+  I knew I should have insisted more! They attacked us an hour ago and we lost {victims} in their attack!'
+
+  - 'Some wolves attacked us. They were roaming in the forest when a group of villager ran into them. 
+  We should train people to prevent such a tragedy in the futur. We should remember those {victims} victims.'
 
 fire:
-  - 'fire'
+  - 'Today a fire started, some were able to evacuate quickly enough but a whole house turned ashes. 
+  I believe we lost track of {victims} persons'
 
 wedding:
-  - 'How wonderfull ! This year {husband} and {wife} finally got married!
+  - 'How wonderful ! This year {husband} and {wife} finally got married!
   They planned everything out and made sure that it would be perfect.
   The whole village rejoiced with them and decorated every garden with flowers of every colour.'
+
+Wandering trader:
+  - 'We met a wandering trader today. We were excited to see a new face and we welcome him with opens arm.
+  He told us about wonderful story he had seen on his travels and offered to sell us some of his goods.'
+
+Town Celebration:
+  - 'Hooray ! We are doing a town celebration today ! It has been {years} since the creation of the city.
+  We hope that we will make this an even better place for our children.'
