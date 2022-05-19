@@ -354,13 +354,19 @@ class Graveyard(ChildWithSlots):
     def __init__(self, parent: Building):
         super().__init__(parent, 'diamond_block')
 
-    def add_tomb(self, text: str):
+    def add_tomb(self, villager, year: int, cause: str):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
             if self.entrances and self.entrances[0]:
                 sign_angle = slot.coordinates.angle(self.entrances[0].coordinates)
-                slot.coordinates.shift(y=1).place_sign(text, replace_block=True, rotation=math_utils.radian_to_orientation(sign_angle, -math.pi / 2))
+                slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
+                                                       replace_block=True, rotation=math_utils.radian_to_orientation(sign_angle, -math.pi / 2))
+                x, y, z = slot.coordinates
+                INTERFACE.placeBlock(x, y - 1, z, 'air')
+                INTERFACE.placeBlock(x, y - 2, z, 'air')
+                INTERFACE.sendBlocks()
+                INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
     def grow_old(self, amount: int) -> None:
         pass

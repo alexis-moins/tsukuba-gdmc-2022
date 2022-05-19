@@ -118,6 +118,7 @@ class Simulation:
             self.city.display()
             year += 1
 
+        self.city.spawn_villagers()
         self.city.plot.add_roads_signs(10, self.city.buildings)
 
         decoration_buildings = [building for building in env.BUILDINGS.values()
