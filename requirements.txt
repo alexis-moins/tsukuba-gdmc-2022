@@ -7,9 +7,9 @@ attrs==21.4.0 ; python_version >= "3.7" \
 autopep8==1.6.0 \
     --hash=sha256:ed77137193bbac52d029a52c59bec1b0629b5a186c495f1eb21b126ac466083f \
     --hash=sha256:44f0932855039d2c15c4510d6df665e4730f2b8582704fa48f9c55bd3e17d979
-certifi==2022.5.18 ; python_version >= "3.6" and python_version < "4" \
-    --hash=sha256:8d15a5a7fde18536a249c49e07e8e462b8fc13de21b3c80e8a68315dfa227c99 \
-    --hash=sha256:6ae10321df3e464305a46e997da41ea56c1d311fb9ff1dd4e04d6f14653ec63a
+certifi==2022.5.18.1 ; python_version >= "3.6" and python_version < "4" \
+    --hash=sha256:f1d53542ee8cbedbe2118b5686372fb33c297fcd6379b050cca0ef13a597382a \
+    --hash=sha256:9c5705e395cd70084351dd8ad5c41e65655e08ce46f2ec9cf6c2c08390f71eb7
 cfgv==3.3.1 ; python_version >= "3.7" \
     --hash=sha256:c6a0883f3917a037485059700b9e75da2464e6c27051014ad85ba6aaa5884426 \
     --hash=sha256:f5a830efb9ce7a445376bb66ec94c638a9787422f96264c98edc6bdeed8ab736
@@ -37,9 +37,9 @@ fonttools==4.33.3 ; python_version >= "3.7" and python_version < "4" \
 gdpc==5.0.2 \
     --hash=sha256:262d005250dc7eaecc3f5201cc826e667fc0eeafdc736ea7756635f7901b9e40 \
     --hash=sha256:c189ae43d9cdc8021bf604fff635dc8daebd06d824e695816c9a77884d1b19c6
-identify==2.5.0 ; python_version >= "3.7" \
-    --hash=sha256:3acfe15a96e4272b4ec5662ee3e231ceba976ef63fd9980ed2ce9cc415df393f \
-    --hash=sha256:c83af514ea50bf2be2c4a3f2fb349442b59dc87284558ae9ff54191bff3541d2
+identify==2.5.1 ; python_version >= "3.7" \
+    --hash=sha256:0dca2ea3e4381c435ef9c33ba100a78a9b40c0bab11189c7cf121f75815efeaa \
+    --hash=sha256:3d11b16f3fe19f52039fb7e39c9c884b21cb1b586988114fbe42671f03de3e82
 idna==3.3 ; python_version >= "3.6" and python_version < "4" \
     --hash=sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff \
     --hash=sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d

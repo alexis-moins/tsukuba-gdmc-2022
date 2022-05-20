@@ -1,4 +1,5 @@
 import random
+from cgitb import lookup
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
@@ -7,6 +8,7 @@ from textwrap import wrap
 
 from colorama import Fore
 from gdpc import interface
+from gdpc import lookup
 from gdpc import toolbox
 
 from src import env
@@ -21,7 +23,7 @@ from src.simulation.decisions.decision_maker import DecisionMaker
 _descriptions: dict[str, list] = env.get_content('descriptions.yaml')
 
 
-def get_description(event: str) -> str:
+def get_data(event: str) -> dict:
     """"""
     choice: dict = random.choice(_descriptions[event.lower()])
     _descriptions[event.lower()].remove(choice)
@@ -41,7 +43,7 @@ class Event:
 
     def resolve(self, city: City, year: int) -> str:
         """"""
-        if self.is_dangerous:
+        if self.is_dangerous and year >= 10:
 
             mod = 0
             for building in city.buildings:
@@ -49,16 +51,16 @@ class Event:
                     mod = -2
                     break
 
-            kills = max(0, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
+            kills = max(2, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
             print(
                 f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
 
             for v in random.sample(city.inhabitants, kills):
                 city.villager_die(v, year, self.name.lower())
 
-            description = get_description(self.name)
-            description = description.format(victims=kills, direction=random.choice([
-                'north', 'south', 'east', 'west']))
+            data = get_data(self.name)
+            description = data.pop('description').format(
+                victims=kills, **{key: random.choice(value) for key, value in data.items()})
 
             if self.name.lower() not in _descriptions:
                 events.remove(self)
@@ -166,6 +168,11 @@ class Simulation:
             if plot:
                 self.city.add_building(decoration, plot, rotation)
 
+        coords = set(self.plot.surface()) - self.plot.occupied_coordinates
+        for coord, flower in zip(coords, random.choices(lookup.SHORTFLOWERS, k=len(coords))):
+            if self.plot.get_block_at(*coord).name == 'minecraft:grass_block':
+                interface.placeBlock(*coord, flower)
+
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
@@ -214,5 +221,4 @@ class Simulation:
         formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
         print(f'Available buildings: [{formatted}]')
 
-        # TODO Change ActionType enum to be NOTHING, CONSTUCTION, REPARATION, etc
         return actions
