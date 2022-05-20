@@ -421,7 +421,7 @@ class Graveyard(ChildWithSlots):
                 INTERFACE.placeBlock(x, y - 1, z, 'air')
                 INTERFACE.placeBlock(x, y - 2, z, 'air')
                 INTERFACE.sendBlocks()
-                INTERFACE.runCommand(f'summon zombie {x} {y - 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
+                INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
     def grow_old(self, amount: int) -> None:
         pass
