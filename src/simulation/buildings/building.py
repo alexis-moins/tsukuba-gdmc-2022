@@ -345,8 +345,8 @@ class Tower(ChildBuilding):
 
         self._build_structure(self.structures[0], plot, rotation)
 
-        plot.start = plot.start.shift(y=3)
-        for i in range(random.randint(5, min(50, 255 - self.plot.start.y))):
+        plot.start = plot.start.shift(y=4)
+        for i in range(random.randint(5, min(25, 255 - self.plot.start.y))):
             self._build_structure(self.structures[1], plot, rotation)
             plot.start = plot.start.shift(y=1)
 

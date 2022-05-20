@@ -254,13 +254,13 @@ class Plot:
         span = self.steep_factor
 
         heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_TREES)
-
+        water_value = 100_000_000 if not self.water_mode else 10
         steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
         for i in range(span, self.size.x - span):
             for j in range(span, self.size.z - span):
                 block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(self.start.shift(i, 0, j))
-                if block.is_one_of(('water',)) and not self.water_mode:
-                    steep[i - span, j - span] = 100_000_000
+                if block.is_one_of(('water',)):
+                    steep[i - span, j - span] = water_value
                 else:
                     steep[i - span, j - span] = self._delta_sum(
                         heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
@@ -492,6 +492,10 @@ class Plot:
             malus depending on the distance from the center of the area +
             Sum of all differences in the y coordinate
             """
+
+        if coordinates in self.occupied_coordinates:
+            return 100_000_000
+
         # apply malus to score depending on the distance to the 'center'
 
         center = Coordinates(self.center[0], 0, self.center[1])
@@ -525,6 +529,10 @@ class Plot:
 
                 if not current_block or current_block.coordinates in self.occupied_coordinates:
                     return 100_000_000
+
+                if current_block.is_one_of('water'):
+                    # little malus to push it to generate on land
+                    score += .5
 
                 # putting foundation isn't a problem compared to digging in the terrain, so we apply a
                 # worsening factor to digging
