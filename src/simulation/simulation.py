@@ -1,4 +1,5 @@
 import random
+from cgitb import lookup
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass
@@ -7,6 +8,7 @@ from textwrap import wrap
 
 from colorama import Fore
 from gdpc import interface
+from gdpc import lookup
 from gdpc import toolbox
 
 from src import env
@@ -41,7 +43,7 @@ class Event:
 
     def resolve(self, city: City, year: int) -> str:
         """"""
-        if self.is_dangerous:
+        if self.is_dangerous and year >= 10:
 
             mod = 0
             for building in city.buildings:
@@ -165,6 +167,11 @@ class Simulation:
 
             if plot:
                 self.city.add_building(decoration, plot, rotation)
+
+        coords = set(self.plot.surface()) - self.plot.occupied_coordinates
+        for coord, flower in zip(coords, random.choices(lookup.SHORTFLOWERS, k=len(coords))):
+            if self.plot.get_block_at(*coord).name == 'minecraft:grass_block':
+                interface.placeBlock(*coord, flower)
 
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
