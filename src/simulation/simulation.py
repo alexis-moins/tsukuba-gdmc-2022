@@ -21,7 +21,7 @@ from src.simulation.decisions.decision_maker import DecisionMaker
 _descriptions: dict[str, list] = env.get_content('descriptions.yaml')
 
 
-def get_description(event: str) -> str:
+def get_data(event: str) -> dict:
     """"""
     choice: dict = random.choice(_descriptions[event.lower()])
     _descriptions[event.lower()].remove(choice)
@@ -49,16 +49,16 @@ class Event:
                     mod = -2
                     break
 
-            kills = max(0, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
+            kills = max(2, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
             print(
                 f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
 
             for v in random.sample(city.inhabitants, kills):
                 city.villager_die(v, year, self.name.lower())
 
-            description = get_description(self.name)
-            description = description.format(victims=kills, direction=random.choice([
-                'north', 'south', 'east', 'west']))
+            data = get_data(self.name)
+            description = data.pop('description').format(
+                victims=kills, **{key: random.choice(value) for key, value in data.items()})
 
             if self.name.lower() not in _descriptions:
                 events.remove(self)
@@ -214,5 +214,4 @@ class Simulation:
         formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
         print(f'Available buildings: [{formatted}]')
 
-        # TODO Change ActionType enum to be NOTHING, CONSTUCTION, REPARATION, etc
         return actions

@@ -8,7 +8,9 @@ from gdpc import interface
 from src import env
 from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
-from src.simulation.buildings.building import Building, WeddingTotem, Graveyard
+from src.simulation.buildings.building import Building
+from src.simulation.buildings.building import Graveyard
+from src.simulation.buildings.building import WeddingTotem
 from src.simulation.buildings.building_type import BuildingType
 from src.utils.criteria import Criteria
 
@@ -222,9 +224,9 @@ class City:
 
         print(f'\n   Buildings {Fore.GREEN}[{len(self.buildings)}]{Fore.WHITE}\n')
 
-        counter = Counter(self.buildings)
+        counter = Counter([building.name for building in self.buildings])
         buildings = "\n      ".join(textwrap.wrap(
-            ", ".join([f"{building.name.lower().replace('_', ' ')}: {Fore.GREEN}{value}/{building.max_number}{Fore.WHITE}" for building, value in counter.items()])))
+            ", ".join([f"{building.name}: {Fore.GREEN}{counter[building.name]}/{building.max_number}{Fore.WHITE}" for building in self.buildings])))
         print(f'\n      {buildings}')
 
     def wedding(self):
