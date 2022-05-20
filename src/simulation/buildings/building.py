@@ -15,7 +15,7 @@ from src import env
 from src.blocks.block import Block
 from src.blocks.collections import palette
 from src.blocks.collections.block_list import BlockList
-from src.blocks.collections.palette import Palette
+from src.blocks.collections.palette import Palette, RandomPalette, OneBlockPalette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
@@ -59,6 +59,7 @@ class Building:
         self.rotation: int = None
         self.blocks: BlockList = None
         self.entrances: BlockList = None
+        self.display_name = None
 
     @staticmethod
     def deserialize(building_info: dict[str, Any]) -> Building:
@@ -137,7 +138,7 @@ class Building:
                         continue
 
                     if block.name not in (
-                    'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
+                            'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
                         continue
 
                     block_name = random.choices(['farmland', 'water'], [90, 10])[0]
@@ -157,12 +158,15 @@ class Building:
         self._place_sign()
         INTERFACE.sendBlocks()
 
-    def _build_structure(self, structure: Structure, plot: Plot, rotation: int):
+    def _build_structure(self, structure: Structure, plot: Plot, rotation: int,
+                         force_palette: dict[str, Palette] = None):
         self.blocks = structure.get_blocks(plot.start, rotation)
         self.entrances = self.blocks.filter('emerald')
         # Apply palette
-        if self.properties.building_type in env.ALL_PALETTES:
+        if self.properties.building_type in env.ALL_PALETTES and force_palette is None:
             self._randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
+        elif force_palette is not None:
+            self._randomize_building(force_palette)
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
@@ -255,13 +259,15 @@ class Building:
         self.blocks = BlockList(new_block_list)
 
     def get_display_name(self):
-        adjectives = ['beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy',
-                      'cute',
-                      'dangerous', 'dark', 'enchanting', 'evil', 'fancy', 'fantastic', 'fragile', 'friendly',
-                      'lazy',
-                      'kind',
-                      'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint']
-        return f'The {random.choice(adjectives)} {self.name.lower()}'
+        if not self.display_name:
+            adjectives = ['beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy',
+                          'cute',
+                          'dangerous', 'dark', 'enchanting', 'evil', 'fancy', 'fantastic', 'fragile', 'friendly',
+                          'lazy',
+                          'kind',
+                          'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint']
+            self.display_name = f'The {random.choice(adjectives)} {self.name.lower()}'
+        return self.display_name
 
 
 class ChildBuilding(Building):
@@ -342,15 +348,16 @@ class Tower(ChildBuilding):
         self.plot = plot
         self.rotation = rotation
         start = plot.start
-
-        self._build_structure(self.structures[0], plot, rotation)
+        dict_palette = {'white_terracotta': OneBlockPalette([color + '_stained_glass' for color in lookup.COLORS])}
+        self._build_structure(self.structures[0], plot, rotation, force_palette=dict_palette)
 
         plot.start = plot.start.shift(y=4)
-        for i in range(random.randint(5, min(25, 255 - self.plot.start.y))):
-            self._build_structure(self.structures[1], plot, rotation)
+
+        for i in range(random.randint(10, min(30, 255 - self.plot.start.y))):
+            self._build_structure(self.structures[1], plot, rotation, force_palette=dict_palette)
             plot.start = plot.start.shift(y=1)
 
-        self._build_structure(self.structures[2], plot, rotation)
+        self._build_structure(self.structures[2], plot, rotation, force_palette=dict_palette)
         plot.start = start  # reset start
         self.entrances = self.blocks.filter('emerald')
         self._place_sign()
@@ -393,7 +400,9 @@ class Graveyard(ChildWithSlots):
             if self.entrances and self.entrances[0]:
                 sign_angle = slot.coordinates.angle(self.entrances[0].coordinates)
                 slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
-                                                       replace_block=True, rotation=math_utils.radian_to_orientation(sign_angle, -math.pi / 2))
+                                                       replace_block=True,
+                                                       rotation=math_utils.radian_to_orientation(sign_angle,
+                                                                                                 -math.pi / 2))
                 x, y, z = slot.coordinates
                 INTERFACE.placeBlock(x, y - 1, z, 'air')
                 INTERFACE.placeBlock(x, y - 2, z, 'air')

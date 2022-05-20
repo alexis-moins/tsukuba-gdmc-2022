@@ -626,18 +626,31 @@ class Plot:
 
             # OUTER FRAME
             for coord in self.start.shift(x=-3, z=-1).line(self.size.x + 4, Direction.EAST):
-                INTF.placeBlock(*coord, "oak_log[axis=x]")
-                INTF.placeBlock(*coord.shift(z=self.size.z + 1), "oak_log[axis=x]")
+                if coord in self:
+                    INTF.placeBlock(*coord, "oak_log[axis=x]")
+                c = coord.shift(z=self.size.z + 1)
+                if c in self:
+                    INTF.placeBlock(*c, "oak_log[axis=x]")
             for coord in self.start.shift(x=-1, z=-3).line(self.size.z + 4, Direction.SOUTH):
-                INTF.placeBlock(*coord, "oak_log[axis=z]")
-                INTF.placeBlock(*coord.shift(x=self.size.x + 1), "oak_log[axis=z]")
+                if coord in self:
+                    INTF.placeBlock(*coord, "oak_log[axis=z]")
+                c = coord.shift(x=self.size.x + 1)
+                if c in self:
+                    INTF.placeBlock(*c, "oak_log[axis=z]")
 
             # PILLARS
             for coord in self.start.shift(x=-1, y=2, z=-1).line(50, Direction.DOWN):
-                INTF.placeBlock(*coord, "oak_log[axis=y]")
-                INTF.placeBlock(*coord.shift(x=self.size.x + 1), "oak_log[axis=y]")
-                INTF.placeBlock(*coord.shift(x=self.size.x + 1, z=self.size.z + 1), "oak_log[axis=y]")
-                INTF.placeBlock(*coord.shift(z=self.size.z + 1), "oak_log[axis=y]")
+                if coord in self:
+                    INTF.placeBlock(*coord, "oak_log[axis=y]")
+                c = coord.shift(x=self.size.x + 1)
+                if c in self:
+                    INTF.placeBlock(*c, "oak_log[axis=y]")
+                c = coord.shift(x=self.size.x + 1, z=self.size.z + 1)
+                if c in self:
+                    INTF.placeBlock(*c, "oak_log[axis=y]")
+                c = coord.shift(z=self.size.z + 1)
+                if c in self:
+                    INTF.placeBlock(*c, "oak_log[axis=y]")
 
         INTF.sendBlocks()
 
