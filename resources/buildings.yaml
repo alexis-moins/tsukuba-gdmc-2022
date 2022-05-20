@@ -169,9 +169,9 @@
   action: DECORATION
   type: DECORATION
 
-- name: Fountain
-  path: extensions/fountain.nbt
-  properties: { cost: 0 }
-  extension: true
-  action: DECORATION
-  type: DECORATION
+# - name: Fountain
+#   path: extensions/fountain.nbt
+#   properties: { cost: 0 }
+#   extension: true
+#   action: DECORATION
+#   type: DECORATION

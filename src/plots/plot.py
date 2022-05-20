@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import random
-import statistics
 from collections import defaultdict
 from typing import Generator
 
@@ -97,7 +96,7 @@ class Plot:
 
         # clean above roads
         for road in self.all_roads:
-            for i in range(1, 8):
+            for i in range(1, 20):
                 coordinates = road.with_points(y=int(self.roads_y[road]) + i)
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
@@ -128,8 +127,18 @@ class Plot:
                     if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow', 'sand', 'stone')):
                         continue
 
-                INTF.placeBlock(x, y, z,
-                                random.choices(list(chose_pattern[key].keys()), k=1, weights=list(chose_pattern[key].values())))
+                the_blocks = random.choices(list(chose_pattern[key].keys()),
+                                            k=1, weights=list(chose_pattern[key].values()))
+
+                if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
+                                     'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]'):
+                    INTF.placeBlock(x, y-1, z, the_blocks)
+                    INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
+                else:
+                    if 'note_block' in the_blocks[0]:
+                        INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
+                    INTF.placeBlock(x, y, z, the_blocks)
+
         INTF.sendBlocks()
 
     def __add_road_block(self, coordinates: Coordinates, placement: str):

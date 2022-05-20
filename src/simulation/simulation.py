@@ -1,3 +1,4 @@
+import math
 import random
 from cgitb import lookup
 from collections import Counter
@@ -18,6 +19,7 @@ from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
+from src.utils.criteria import Criteria
 
 _descriptions: dict[str, list] = env.get_content('descriptions.yaml')
 
@@ -58,10 +60,11 @@ class Event:
             mod = 0
             for building in city.buildings:
                 if building.name == 'Watch Tower':
+                    print('The tower is protecting us')
                     mod = -2
                     break
 
-            kills = max(2, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
+            kills = max(1, min(random.randint(*self.kills), max(len(city.inhabitants) - 2 + mod, 2)))
             print(
                 f'=> The {Fore.RED}{self.name.lower()}{Fore.WHITE} killed {Fore.RED}[{kills}]{Fore.WHITE} villagers this year')
 
@@ -182,6 +185,9 @@ class Simulation:
         self.city.spawn_villagers()
         self.city.plot.add_roads_signs(10, self.city.buildings)
 
+        for building in random.sample(self.city.buildings, k=math.ceil(0.2 * len(self.city.buildings))):
+            building.grow_old(random.randint(50, 75))
+
         decoration_buildings = [building for building in env.BUILDINGS.values()
                                 if building.properties.building_type is BuildingType.DECORATION]
 
@@ -190,26 +196,26 @@ class Simulation:
             rotation = self.decision_maker.get_rotation()
             plot = self.city.plot.get_subplot(decoration, rotation)
 
-            if plot:
-                self.city.add_building(decoration, plot, rotation)
+            if plot is not None:
+                if plot.water_mode:
+                    continue
+                else:
+                    self.city.add_building(decoration, plot, rotation)
 
         coords = set(self.plot.surface()) - self.plot.occupied_coordinates
-        for coord, flower in zip(coords, random.choices(lookup.SHORTFLOWERS, k=len(coords))):
-            if self.plot.get_block_at(*coord).name == 'minecraft:grass_block':
-                interface.placeBlock(*coord, flower)
+        surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
+
+        chosen_coords = random.sample(surface, k=math.ceil(0.30 * len(surface)))
+
+        for block, flower in zip(chosen_coords, random.choices(lookup.SHORTFLOWERS, k=len(chosen_coords))):
+            if (real_block := surface.find(block.coordinates)).is_one_of('grass_block'):
+                interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
 
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
         interface.sendBlocks()
         interface.setBuffering(False)
-
-        # make a book
-        book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
-        lectern_list = self.city.buildings[0].blocks.filter('lectern')
-        if len(lectern_list):
-            lectern: Block = lectern_list[0]
-            toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         # History of buildings
         for building in self.city.buildings[1:]:
@@ -231,6 +237,13 @@ class Simulation:
                 lectern: Block = lectern_list[0]
                 interface.placeBlock(*lectern.coordinates, 'air')
                 toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
+
+        # make a book
+        book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
+        lectern_list = self.city.buildings[0].blocks.filter('lectern')
+        if len(lectern_list):
+            lectern: Block = lectern_list[0]
+            toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         interface.setBuffering(True)
         interface.sendBlocks()

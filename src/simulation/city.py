@@ -4,6 +4,7 @@ from collections import Counter
 
 from colorama import Fore
 from gdpc import interface
+from gdpc import lookup
 
 from src import env
 from src.blocks.collections.block_list import BlockList
@@ -44,15 +45,19 @@ class Villager:
 
 class City:
     def __init__(self, plot: Plot, start_year: int):
+        """"""
         self.plot = plot
         self.buildings: list[Building] = []
         self.graveyard: Graveyard | None = None
         self.wedding_totem: WeddingTotem | None = None
-        self.professions = {}
         self.start_year = start_year
 
         self.inhabitants = [Villager(start_year) for _ in range(5)]
         self.food_available = 5
+
+        self.possible_light_blocks = ('minecraft:shroomlight', 'minecraft:sea_lantern',
+                                      'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]')
+        self.road_light = random.choice(self.possible_light_blocks)
 
     @property
     def population(self) -> int:
@@ -112,7 +117,7 @@ class City:
             self.plot.compute_roads(start, end)
 
             road_pattern = {
-                'INNER': {'glowstone': 100},
+                'INNER': {self.road_light: 100},
                 'MIDDLE': {'oak_planks'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
                 'OUTER': {'note_block': 100}
             }
@@ -120,7 +125,7 @@ class City:
             slab_pattern = {
                 'INNER': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
                 'MIDDLE': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
-                'OUTER': {'birch_slab': 100}
+                'OUTER': {leave + '[persistent=true]': 20 for leave in lookup.LEAVES}
             }
 
             self.plot.build_roads(road_pattern, slab_pattern)

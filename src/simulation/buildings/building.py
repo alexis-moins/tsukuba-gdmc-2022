@@ -138,6 +138,7 @@ class Building:
         surface = city.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
 
         if self.properties.building_type is BuildingType.FARM and not self.is_extension:
+            farm_field: set[Coordinates] = set()
             for coordinates in self.plot.surface(padding=6):
                 if coordinates not in self.plot and coordinates.as_2D() not in city.all_roads:
 
@@ -148,19 +149,25 @@ class Building:
                             'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
                         continue
 
-                    block_name = random.choices(['farmland', 'water'], [90, 10])[0]
-
-                    if block_name == 'water':
-                        for c in block.neighbouring_coordinates(
-                                (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
-                            if city.get_block_at(*c).name in lookup.AIR + lookup.PLANTS + ('minecraft:snow',):
-                                block_name = 'farmland'
-                                break
-
+                    farm_field.add(block.coordinates)
+                    block_name = random.choices(['farmland', 'lapis_block'], [90, 10])[0]
                     INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
 
                     if block_name == 'farmland':
                         INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(lookup.CROPS))
+
+            INTERFACE.sendBlocks()
+            self.plot.update()
+            for coordinates in farm_field:
+                block = self.plot.get_block_at(*coordinates)
+                print(block.name)
+                if block.is_one_of('lapis'):
+                    for c in block.neighbouring_coordinates(
+                            (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
+                        if city.get_block_at(*c).name in lookup.AIR + lookup.PLANTS + ('minecraft:snow',):
+                            INTERFACE.placeBlock(*block.coordinates, 'redstone_lamp[lit=true]')
+                        else:
+                            INTERFACE.placeBlock(*block.coordinates, 'water')
 
         self._place_sign()
         INTERFACE.sendBlocks()
