@@ -513,6 +513,10 @@ class Plot:
             # apply malus, the idea is that the bonus will compensate for it, so mine without bonus should be less frequent
             score += best_current_score / 2
 
+        # For tower : place them as high as possible
+        elif building.name == 'Tower':
+            score -= coordinates.y * 2
+
         # Score = sum of difference between the first point's altitude and the other
         for x in range(size.x):
             for z in range(size.z):

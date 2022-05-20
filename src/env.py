@@ -102,6 +102,7 @@ ALL_PALETTES = {
         'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 75, 'andesite_stairs': 25}),
         'cobblestone_wall': palette.RandomPalette({'cobblestone_wall': 75, 'andesite_wall': 25}),
         'cobblestone_slab': palette.RandomPalette({'cobblestone_slab': 75, 'andesite_slab': 25}),
+
     },
 
     BuildingType.FORGING: {

@@ -85,6 +85,8 @@ class Building:
             return Graveyard(parent=build)
         elif build.name == 'Wedding Totem':
             return WeddingTotem(parent=build)
+        elif build.name == 'Tower':
+            return Tower.deserialize_tower(original, build)
 
         return build
 
@@ -329,6 +331,36 @@ class Mine(ChildBuilding):
         self.entrances = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
+
+
+class Tower(ChildBuilding):
+    def __init__(self, parent, structures):
+        super().__init__(parent)
+        self.structures = structures
+
+    def build(self, plot: Plot, rotation: int, city: Plot):
+        self.plot = plot
+        self.rotation = rotation
+        start = plot.start
+
+        self._build_structure(self.structures[0], plot, rotation)
+
+        plot.start = plot.start.shift(y=3)
+        for i in range(random.randint(5, min(50, 255 - self.plot.start.y))):
+            self._build_structure(self.structures[1], plot, rotation)
+            plot.start = plot.start.shift(y=1)
+
+        self._build_structure(self.structures[2], plot, rotation)
+        plot.start = start  # reset start
+        self.entrances = self.blocks.filter('emerald')
+        self._place_sign()
+        INTERFACE.sendBlocks()
+
+    @staticmethod
+    def deserialize_tower(building: dict[str, Any], parent: Building) -> Building:
+        """Return a new building deserialized from the given dictionary"""
+        structures = [Structure.parse_nbt_file(file) for file in building['path']]
+        return Tower(parent, structures)
 
 
 class ChildWithSlots(ChildBuilding):

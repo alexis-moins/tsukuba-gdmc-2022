@@ -132,6 +132,19 @@
   action: UTILITY
   type: WEDDING
 
+- name: Tower
+  path: [tower_base.nbt, tower_slice.nbt, tower_top.nbt]
+  properties: { cost: 15, workers: 1 }
+  maximum: 1
+  action: UTILITY
+  type: HABITATION
+
+- name: Watch Tower
+  path: watch_tower.nbt
+  properties: { cost: 10, workers: 1 }
+  maximum: 3
+  action: UTILITY
+  type: NONE
 # DECORATIONS
 
 
