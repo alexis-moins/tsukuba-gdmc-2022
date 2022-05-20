@@ -1,7 +1,7 @@
 import random
 from cgitb import lookup
 from collections import Counter
-from copy import deepcopy
+from copy import deepcopy, copy
 from dataclasses import dataclass
 from dataclasses import field
 from textwrap import wrap
@@ -18,7 +18,6 @@ from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
-
 
 _descriptions: dict[str, list] = env.get_content('descriptions.yaml')
 
@@ -45,6 +44,17 @@ class Event:
         """"""
         if self.is_dangerous and year >= 10:
 
+            # special effect depending on event
+            if self.name == 'Wolf attack':
+                dog_names = ["MAX", "KOBE", "OSCAR", "COOPER", "OAKLEY", "MAC", "CHARLIE", "REX ", "RUDY", "TEDDY ",
+                             "BAILEY", "CHIP", "BEAR ", "CASH ", "WALTER", "MILO ", "JASPER", "BLAZE", "BENTLEY", "BO",
+                             "OZZY", "Bella", "Luna", "Lucy", "Daisy", "Zoe", "Lily", "Lola", "Bailey", "Stella",
+                             "Molly", "Coco", "Maggie", "Penny"]
+                x, y, z = random.choice(city.buildings).get_entrance().coordinates
+                y += 1
+                for i in range(random.randint(5, 20)):
+                    interface.runCommand(f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(dog_names).capitalize()}\\""}}')
+
             mod = 0
             for building in city.buildings:
                 if building.name == 'Watch Tower':
@@ -61,6 +71,20 @@ class Event:
             data = get_data(self.name)
             description = data.pop('description').format(
                 victims=kills, **{key: random.choice(value) for key, value in data.items()})
+
+            if self.name == 'Pillager attack':
+                if 'tower' in description:
+                    building = deepcopy(env.BUILDINGS['Watch Tower'])
+                    rotation = random.choice([0, 90, 180, 270])
+                    plot = city.plot.get_subplot(building, rotation, city_buildings=city.buildings)
+                    if plot:
+                        city.add_building(building, plot, rotation)
+                        x, y, z = building.get_entrance().coordinates
+                        y += 10
+                        for i in range(random.randint(3, 10)):
+                            interface.runCommand(f'summon minecraft:iron_golem {x} {y} {z}')
+                    else:
+                        description += "Unfortunately, we did not find a place to build it."
 
             if self.name.lower() not in _descriptions:
                 events.remove(self)
@@ -79,14 +103,15 @@ class Event:
 
 events = [Event('Wedding'), Event('Wandering trader'), Event('Town Celebration'),
           Event('Fire', is_dangerous=True, kills=(1, 2)),
-          Event('Barbarian attack', is_dangerous=True, kills=(2, 4)),
+          Event('Pillager attack', is_dangerous=True, kills=(2, 4)),
           Event('Wolf attack', is_dangerous=True, kills=(4, 4))]
 
 
 class Simulation:
     """"""
 
-    def __init__(self, plot: Plot, decision_maker: DecisionMaker, years: int, friendliness: float = 1, field_productivity: float = 1, humidity: float = 1):
+    def __init__(self, plot: Plot, decision_maker: DecisionMaker, years: int, friendliness: float = 1,
+                 field_productivity: float = 1, humidity: float = 1):
         """"""
         self.decision_maker = decision_maker
         self.humidity = humidity
@@ -161,7 +186,7 @@ class Simulation:
                                 if building.properties.building_type is BuildingType.DECORATION]
 
         print('\nAdding decorations:')
-        for decoration in random.choices(decoration_buildings, k=len(self.city.buildings)*2):
+        for decoration in random.choices(decoration_buildings, k=len(self.city.buildings) * 2):
             rotation = self.decision_maker.get_rotation()
             plot = self.city.plot.get_subplot(decoration, rotation)
 
@@ -196,7 +221,8 @@ class Simulation:
             general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
             general_data += f'Food: {color}+{building.properties.food_production}§0'
             book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
-                                          title=f'Year {year}\'s report', author='Settlement Construction Community (SCC)')
+                                          title=f'Year {year}\'s report',
+                                          author='Settlement Construction Community (SCC)')
             lectern_list = building.blocks.filter('lectern')
 
             interface.sendBlocks()

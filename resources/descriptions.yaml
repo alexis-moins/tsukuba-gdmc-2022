@@ -1,4 +1,4 @@
-barbarian attack:
+pillager attack:
   - description: '{moment}, the entire village witnessed the most {adjective} acts of barbary.
       {victims} innocent members of our community perished under the hands of a {group} of barbarians that came from the {direction}.
       After they leaved, the elders of the village have decided to build a watch tower and hire guards to protect us.'

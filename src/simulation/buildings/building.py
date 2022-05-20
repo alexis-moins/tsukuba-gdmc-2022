@@ -122,6 +122,13 @@ class Building:
             return Coordinates(0, 0, 0)
         return entrances[0].coordinates
 
+    def get_entrance(self):
+        if self.entrances:
+            if self.entrances[0]:
+                return self.entrances[0]
+        return self.plot.start
+
+
     def build(self, plot: Plot, rotation: int, city: Plot):
         """Build the current building onto the building's plot"""
         self.plot = plot
@@ -348,7 +355,7 @@ class Tower(ChildBuilding):
         self.plot = plot
         self.rotation = rotation
         start = plot.start
-        dict_palette = {'white_terracotta': OneBlockPalette([color + '_stained_glass' for color in lookup.COLORS])}
+        dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in lookup.COLORS])}
         self._build_structure(self.structures[0], plot, rotation, force_palette=dict_palette)
 
         plot.start = plot.start.shift(y=4)
@@ -407,7 +414,7 @@ class Graveyard(ChildWithSlots):
                 INTERFACE.placeBlock(x, y - 1, z, 'air')
                 INTERFACE.placeBlock(x, y - 2, z, 'air')
                 INTERFACE.sendBlocks()
-                INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
+                INTERFACE.runCommand(f'summon zombie {x} {y - 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
     def grow_old(self, amount: int) -> None:
         pass

@@ -142,7 +142,7 @@
 - name: Watch Tower
   path: watch_tower.nbt
   properties: { cost: 10, workers: 1 }
-  maximum: 3
+  maximum: 0
   action: UTILITY
   type: NONE
 # DECORATIONS
