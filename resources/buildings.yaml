@@ -1,5 +1,5 @@
 # List of the different buildings you can generate in the simulation.
-# Documentation of the attrubutes used below :
+# Documentation of the attributes used below :
 #
 # - name: name of the structure (arbitrary)
 # - path: path to the NBT file (relative to the ./resources/structures directory)
@@ -19,7 +19,7 @@
   maximum: 1
   action: BED
   type: HABITATION
-  palettes: [stone, glass, terracotta]
+  palettes: [ cobblestone_var, default_colors ]
 
 - name: Small Town Hall
   path: small_town_hall.nbt
@@ -28,12 +28,14 @@
   action: BED
   type: HABITATION
 
+
 - name: Little House
   path: house_little.nbt
   properties: { cost: 5, number of beds: 3 }
   maximum: 3
   action: BED
   type: HABITATION
+  palettes: [ housing ]
 
 - name: Farm
   path: farm.nbt
@@ -41,6 +43,7 @@
   maximum: 2
   action: FOOD
   type: FARM
+  palettes: [ housing ]
 
 - name: Sawmill
   path: sawmill.nbt
@@ -48,6 +51,7 @@
   maximum: 2
   action: WORK
   type: WOODCUTTING
+  palettes: [ default_colors ]
 
 - name: Mine
   path: [mine_top.nbt, mine_stairs.nbt, extensions/crane_body.nbt, extensions/crane_rope.nbt, extensions/crane_effector.nbt]
@@ -55,6 +59,7 @@
   maximum: 2
   action: WORK
   type: MINING
+  palettes: [ mine ]
 
 - name: Forge
   path: forge.nbt
@@ -62,6 +67,7 @@
   maximum: 1
   action: WORK
   type: FORGING
+  palettes: [ forge ]
 
 - name: Brickyard
   path: brickyard.nbt
@@ -69,6 +75,7 @@
   maximum: 1
   action: WORK
   type: NONE
+  palettes: [ brickyard ]
 
 - name: Bakery
   path: bakery.nbt
@@ -76,6 +83,7 @@
   maximum: 1
   action: FOOD
   type: BAKERY
+  palettes: [ bakery ]
 
 - name: Big House
   path: house.nbt
@@ -83,6 +91,7 @@
   maximum: 4
   action: BED
   type: HABITATION
+  palettes: [ housing ]
 
 - name: Wheat Pack 1
   path: extensions/wheat_pack_1.nbt
@@ -103,12 +112,14 @@
   properties: { cost: 7, food production: 5 }
   action: FOOD
   type: FARM
+  palettes: [ default_colors ]
 
 - name: Silo tier 2
   path: extensions/silo_t2.nbt
   properties: { cost: 12, food production: 5 }
   action: FOOD
   type: FARM
+  palettes: [ default_colors ]
 
 - name: Ore Pack
   path: extensions/ore_pack.nbt
@@ -131,6 +142,7 @@
   extension: false
   action: UTILITY
   type: GRAVEYARD
+  palettes: [ graveyard ]
 
 - name: Wedding Totem
   path: wedding_totem.nbt
@@ -139,6 +151,7 @@
   maximum: 1
   action: UTILITY
   type: WEDDING
+  palettes: [ wedding ]
 
 - name: Tower
   path: [tower_base.nbt, tower_slice.nbt, tower_top.nbt]
@@ -146,6 +159,7 @@
   maximum: 1
   action: UTILITY
   type: HABITATION
+  palettes: [ housing ]
 
 - name: Watch Tower
   path: watch_tower.nbt

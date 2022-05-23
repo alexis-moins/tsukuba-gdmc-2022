@@ -73,12 +73,28 @@ stone_bricks_foundation: &stone_bricks_foundation
   stone_bricks:
     type: random
     replaced_by: { stone_bricks: 75, diorite: 15, cobblestone: 10}
+  stone_brick_stairs:
+    type: random
+    replaced_by: { stone_brick_stairs: 75, diorite_stairs: 15, cobblestone_stairs: 10 }
+  stone_brick_slab:
+    type: random
+    replaced_by: { stone_brick_slab: 75, diorite_slab: 15, cobblestone_slab: 10 }
+
+bricks_var:  &bricks_var
+  bricks:
+    type: random
+    replaced_by: { bricks: 75, granite: 20, polished_granite: 5}
+  brick_stairs:
+    type: random
+    replaced_by: { brick_stairs: 75, granite_stairs: 20, polished_granite_stairs: 5 }
+  brick_slab:
+    type: random
+    replaced_by: { brick_slab: 75, granite_slab: 20, polished_granite_slab: 5 }
 
 terracotta: &terracotta
   white_terracotta:
     type: one_color
     replaced_by: _terracotta
-
 
 glass: &glass
   white_stained_glass:
@@ -119,6 +135,11 @@ potted_flowers: &potted_flowers
     type: potted_flowers
     replaced_by:
 
+default_colors: &default_colors
+  <<: *terracotta
+  <<: *glass
+  <<: *bed
+
 graveyard:
   lapis_block:
     type: flowers
@@ -138,11 +159,6 @@ graveyard:
     replaced_by: { dirt: 80, coarse_dirt: 19, podzol: 1 }
 
 
-default_colors: &default_colors
-  <<: *terracotta
-  <<: *glass
-  <<: *bed
-
 housing:
   <<: *default_colors
   <<: *cobblestone_var
@@ -152,12 +168,14 @@ housing:
   <<: *fun
   <<: *potted_flowers
 
+
 mine:
   <<: *cobblestone_var
   <<: *stone_bricks_foundation
   lantern:
     type: random
     replaced_by: { air: 75, 'lantern[hanging=true]': 25 }
+
 
 forge:
   anvil:
@@ -173,6 +191,7 @@ decoration:
     type: one_flower
     replaced_by:
 
+
 wedding:
   cornflower:
     type: random
@@ -181,6 +200,7 @@ wedding:
     type: one_color
     replaced_by: _wall_banner
 
+
 bakery:
   furnace:
     type: random
@@ -188,4 +208,10 @@ bakery:
   cake:
     type: random
     replaced_by: { cake: 70, air: 20, 'cake[bites=1]': 10 }
+  <<: *bricks_var
+
+
+brickyard:
+  <<: *bricks_var
+  <<: *stone_bricks_foundation
 
