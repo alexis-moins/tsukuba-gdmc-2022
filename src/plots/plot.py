@@ -135,8 +135,12 @@ class Plot:
                     INTF.placeBlock(x, y-1, z, the_blocks)
                     INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
                 else:
+                    if Coordinates(x, 0, z) in self.construction_coordinates:
+                        continue
+
                     if 'note_block' in the_blocks[0]:
                         INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
+
                     INTF.placeBlock(x, y, z, the_blocks)
 
         INTF.sendBlocks()
@@ -589,7 +593,8 @@ class Plot:
 
     def remove_trees(self, surface: BlockList = None) -> None:
         """Remove all plants at the surface of the current plot"""
-        pattern = ('log', 'bush', 'mushroom')
+        pattern = ('log', 'bush', 'mushroom', 'bamboo')
+
         if surface is None:
             surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
 
@@ -614,7 +619,7 @@ class Plot:
         """Yield the coordinates """
         current_coord: Coordinates = coordinates
 
-        while self.get_block_at(*current_coord).is_one_of(('air', 'leaves', 'log', 'vine')):
+        while self.get_block_at(*current_coord).is_one_of(('air', 'leaves', 'log', 'vine', 'bamboo')):
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
 

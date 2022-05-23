@@ -2,7 +2,8 @@ import math
 import random
 from cgitb import lookup
 from collections import Counter
-from copy import deepcopy, copy
+from copy import copy
+from copy import deepcopy
 from dataclasses import dataclass
 from dataclasses import field
 from textwrap import wrap
@@ -55,7 +56,8 @@ class Event:
                 x, y, z = random.choice(city.buildings).get_entrance()
                 y += 1
                 for i in range(random.randint(5, 20)):
-                    interface.runCommand(f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(dog_names).capitalize()}\\""}}')
+                    interface.runCommand(
+                        f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(dog_names).capitalize()}\\""}}')
 
             mod = 0
             for building in city.buildings:
@@ -76,18 +78,30 @@ class Event:
                 victims=kills, **{key: random.choice(value) for key, value in data.items()})
 
             if self.name == 'Pillager attack':
+
                 if 'tower' in description:
-                    building = deepcopy(env.BUILDINGS['Watch Tower'])
-                    rotation = random.choice([0, 90, 180, 270])
-                    plot = city.plot.get_subplot(building, rotation, city_buildings=city.buildings)
-                    if plot:
-                        city.add_building(building, plot, rotation)
-                        x, y, z = building.get_entrance()
-                        y += 10
-                        for i in range(random.randint(3, 10)):
-                            interface.runCommand(f'summon minecraft:iron_golem {x} {y} {z}')
-                    else:
+
+                    towers_built = 0
+                    for _ in range(random.randint(2, 5)):
+                        building = deepcopy(env.BUILDINGS['Watch Tower'])
+                        rotation = random.choice([0, 90, 180, 270])
+                        plot = city.plot.get_subplot(building, rotation, city_buildings=city.buildings)
+                        if plot:
+                            city.add_building(building, plot, rotation)
+                            x, y, z = building.get_entrance()
+                            y += 10
+                            for i in range(random.randint(3, 10)):
+                                interface.runCommand(f'summon minecraft:iron_golem {x} {y} {z}')
+
+                        towers_built += 1
+
+                    if towers_built == 0:
                         description += "Unfortunately, we did not find a place to build it."
+
+            if self.name == 'Fire':
+                building = random.choice(city.buildings)
+                building.set_on_fire(random.randint(65, 80))
+                # TODO add to building history
 
             if self.name.lower() not in _descriptions:
                 events.remove(self)
@@ -184,8 +198,8 @@ class Simulation:
 
         self.city.end_simulation()
 
-        for building in random.sample(self.city.buildings, k=math.ceil(0.2 * len(self.city.buildings))):
-            building.grow_old(random.randint(50, 75))
+        for building in random.sample(self.city.buildings, k=math.ceil(0.3 * len(self.city.buildings))):
+            building.grow_old(random.randint(65, 80))
 
         decoration_buildings = [building for building in env.BUILDINGS.values()
                                 if building.properties.building_type is BuildingType.DECORATION]
@@ -201,13 +215,13 @@ class Simulation:
                 else:
                     self.city.add_building(decoration, plot, rotation)
 
-        coords = set(self.plot.surface()) - self.plot.occupied_coordinates
+        coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.plot.occupied_coordinates
         surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
 
-        chosen_coords = random.sample(surface, k=math.ceil(0.30 * len(surface)))
+        chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
 
-        for block, flower in zip(chosen_coords, random.choices(lookup.SHORTFLOWERS, k=len(chosen_coords))):
-            if (real_block := surface.find(block.coordinates)).is_one_of('grass_block'):
+        for coord, flower in zip(chosen_coords, random.choices(lookup.SHORTFLOWERS + ('minecraft:lantern',), k=len(chosen_coords))):
+            if (real_block := surface.find(coord)).is_one_of('grass_block'):
                 interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
 
         print(

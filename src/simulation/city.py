@@ -1,5 +1,6 @@
 import random
 import textwrap
+import time
 from collections import Counter
 
 from colorama import Fore
@@ -97,6 +98,7 @@ class City:
                      filter(lambda coord: coord in self.plot, plot.surface(padding)))))
 
         plot.remove_trees(area_with_padding)
+        time.sleep(2)
 
         plot.build_foundation(self.plot)
 
@@ -248,9 +250,9 @@ class City:
         }
 
         slab_pattern = {
-            'INNER': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][
+            'INNER': {'oak_slab[waterlogged=false]'.replace('oak', env.BUILDING_MATERIALS['oak'][
                 0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
-            'MIDDLE': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][
+            'MIDDLE': {'oak_slab[waterlogged=false]'.replace('oak', env.BUILDING_MATERIALS['oak'][
                 0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
             'OUTER': {leave + '[persistent=true]': 20 for leave in lookup.LEAVES}
         }
