@@ -61,12 +61,8 @@ class Building:
         self.entrances: BlockList = None
         self.display_name = None
 
-        # build palettes TODO FIX THIS
-        if palettes:
-            self.palettes = palettes
-        else:
-            print("NO PALETTE")
-            self.palettes = None
+        self.palettes = palettes
+
 
     @staticmethod
     def deserialize(building_info: dict[str, Any]) -> Building:
@@ -133,7 +129,7 @@ class Building:
     def get_entrance(self):
         if self.entrances:
             if self.entrances[0]:
-                return self.entrances[0]
+                return self.entrances[0].coordinates
         return self.plot.start
 
     def build(self, plot: Plot, rotation: int, city: Plot):
@@ -191,6 +187,7 @@ class Building:
 
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
+
 
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
@@ -270,7 +267,6 @@ class Building:
         for key in palettes:
             if isinstance(palettes[key], list):
                 palettes[key] = palette.OneBlockPalette(palettes[key])
-
         for b in self.blocks:
             current_name = b.name.replace('minecraft:', '')
             if current_name in palettes:
@@ -294,7 +290,8 @@ class Building:
 
 class ChildBuilding(Building):
     def __init__(self, parent: Building):
-        super().__init__(parent.name, parent.properties, parent.structure, parent.is_extension, parent.max_number)
+        super().__init__(parent.name, parent.properties, parent.structure, palettes=parent.palettes,
+                         extension=parent.is_extension, maximum=parent.max_number)
 
 
 class Mine(ChildBuilding):

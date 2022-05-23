@@ -52,7 +52,7 @@ class Event:
                              "BAILEY", "CHIP", "BEAR ", "CASH ", "WALTER", "MILO ", "JASPER", "BLAZE", "BENTLEY", "BO",
                              "OZZY", "Bella", "Luna", "Lucy", "Daisy", "Zoe", "Lily", "Lola", "Bailey", "Stella",
                              "Molly", "Coco", "Maggie", "Penny"]
-                x, y, z = random.choice(city.buildings).get_entrance().coordinates
+                x, y, z = random.choice(city.buildings).get_entrance()
                 y += 1
                 for i in range(random.randint(5, 20)):
                     interface.runCommand(f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(dog_names).capitalize()}\\""}}')
@@ -82,7 +82,7 @@ class Event:
                     plot = city.plot.get_subplot(building, rotation, city_buildings=city.buildings)
                     if plot:
                         city.add_building(building, plot, rotation)
-                        x, y, z = building.get_entrance().coordinates
+                        x, y, z = building.get_entrance()
                         y += 10
                         for i in range(random.randint(3, 10)):
                             interface.runCommand(f'summon minecraft:iron_golem {x} {y} {z}')

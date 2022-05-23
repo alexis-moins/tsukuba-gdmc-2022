@@ -86,7 +86,7 @@
   palettes: [ bakery ]
 
 - name: Big House
-  path: house.nbt
+  path: big_house.nbt
   properties: { cost: 12, number of beds: 5 }
   maximum: 4
   action: BED
@@ -176,6 +176,7 @@
   extension: true
   action: DECORATION
   type: DECORATION
+  palettes: [ decoration ]
 
 - name: Medium Tree
   path: extensions/medium_tree.nbt
@@ -183,6 +184,7 @@
   extension: true
   action: DECORATION
   type: DECORATION
+  palettes: [ decoration ]
 
 - name: Small Tree
   path: extensions/small_tree.nbt
@@ -190,6 +192,7 @@
   extension: true
   action: DECORATION
   type: DECORATION
+  palettes: [ decoration ]
 
 # - name: Fountain
 #   path: extensions/fountain.nbt

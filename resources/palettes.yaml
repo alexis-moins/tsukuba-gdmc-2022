@@ -80,7 +80,7 @@ stone_bricks_foundation: &stone_bricks_foundation
     type: random
     replaced_by: { stone_brick_slab: 75, diorite_slab: 15, cobblestone_slab: 10 }
 
-bricks_var:  &bricks_var
+bricks_var: &bricks_var
   bricks:
     type: random
     replaced_by: { bricks: 75, granite: 20, polished_granite: 5}
@@ -116,14 +116,19 @@ old_and_mess: &old_and_mess
     replaced_by: [ piston, dispenser, note_block, cobweb, end_portal_frame, skeleton_skull, air, barrel, hay_block]
 
 fun: &fun
-  jukebox:
+  iron_block:
     type: random
     replaced_by: [ cyan_shulker_box, cartography_table, chest, air, jukebox, note_block ]
 
 carpet: &carpet
-  gold_ore:
+  white_carpet:
     type: one_color
     replaced_by: _carpet
+
+banner: &banner
+  white_wall_banner:
+      type: one_color
+      replaced_by: _wall_banner
 
 bed: &bed
   white_bed:
@@ -139,6 +144,8 @@ default_colors: &default_colors
   <<: *terracotta
   <<: *glass
   <<: *bed
+  <<: *carpet
+  <<: *banner
 
 graveyard:
   lapis_block:
@@ -163,7 +170,6 @@ housing:
   <<: *default_colors
   <<: *cobblestone_var
   <<: *utility
-  <<: *carpet
   <<: *old_and_mess
   <<: *fun
   <<: *potted_flowers
@@ -172,13 +178,13 @@ housing:
 mine:
   <<: *cobblestone_var
   <<: *stone_bricks_foundation
-  lantern:
+  iron_block:
     type: random
     replaced_by: { air: 75, 'lantern[hanging=true]': 25 }
 
 
 forge:
-  anvil:
+  iron_block:
     type: sequence
     replaced_by: [ air, 'grindstone[face=floor]', smithing_table, anvil, chest ]
 
@@ -196,16 +202,12 @@ wedding:
   cornflower:
     type: random
     replaced_by: [ air ]
-  white_wall_banner:
-    type: one_color
-    replaced_by: _wall_banner
-
 
 bakery:
   furnace:
     type: random
     replaced_by: [ furnace, smoker, blast_furnace ]
-  cake:
+  iron_block:
     type: random
     replaced_by: { cake: 70, air: 20, 'cake[bites=1]': 10 }
   <<: *bricks_var
