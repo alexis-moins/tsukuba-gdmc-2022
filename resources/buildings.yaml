@@ -57,10 +57,24 @@
 
 - name: Forge
   path: forge.nbt
-  properties: { cost: 12, workers: 20 }
+  properties: { cost: 12, workers: 2 }
   maximum: 1
   action: WORK
   type: FORGING
+
+- name: Brickyard
+  path: brickyard.nbt
+  properties: { cost: 12, workers: 1 }
+  maximum: 1
+  action: WORK
+  type: NONE
+
+- name: Bakery
+  path: bakery.nbt
+  properties: { cost: 12, workers: 1 }
+  maximum: 1
+  action: FOOD
+  type: BAKERY
 
 - name: Big House
   path: house.nbt
@@ -97,21 +111,14 @@
 
 - name: Ore Pack
   path: extensions/ore_pack.nbt
-  properties: { cost: 50, workers: 5 }
+  properties: { cost: 25, workers: 1 }
   extension: true
   action: WORK
   type: FORGING
 
-- name: Cut Tree
-  path: extensions/cut_tree.nbt
-  properties: { cost: 10, workers: 5 }
-  extension: true
-  action: WORK
-  type: WOODCUTTING
-
 - name: Wood Stack
   path: extensions/wood_stack.nbt
-  properties: { cost: 50, workers: 20 }
+  properties: { cost: 25, workers: 1 }
   extension: true
   action: WORK
   type: WOODCUTTING
@@ -134,7 +141,7 @@
 
 - name: Tower
   path: [tower_base.nbt, tower_slice.nbt, tower_top.nbt]
-  properties: { cost: 15, workers: 1 }
+  properties: { cost: 20, workers: 1 }
   maximum: 1
   action: UTILITY
   type: HABITATION

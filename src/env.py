@@ -155,6 +155,10 @@ ALL_PALETTES = {
     BuildingType.WEDDING: {
         'cornflower': ['air'],
         'white_wall_banner': palette.RandomPalette([color + '_wall_banner' for color in lookup.COLORS])
+    },
+    BuildingType.BAKERY: {
+        'lapis_block': palette.RandomPalette(['furnace', 'smoker', 'blast_furnace']),
+        'gold_block': palette.RandomPalette({'cake': 70, 'air': 20, 'cake[bites=1]':10})
     }
 
 }
