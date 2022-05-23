@@ -116,20 +116,6 @@ class City:
 
             self.plot.compute_roads(start, end)
 
-            road_pattern = {
-                'INNER': {self.road_light: 100},
-                'MIDDLE': {'oak_planks'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
-                'OUTER': {'note_block': 100}
-            }
-
-            slab_pattern = {
-                'INNER': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
-                'MIDDLE': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
-                'OUTER': {leave + '[persistent=true]': 20 for leave in lookup.LEAVES}
-            }
-
-            self.plot.build_roads(road_pattern, slab_pattern)
-
     @property
     def production_points(self) -> int:
         """"""
@@ -245,7 +231,33 @@ class City:
         villager.die(year, cause)
         self.inhabitants.remove(villager)
 
-    def spawn_villagers(self):
+    def spawn_villagers_and_guards(self):
         x, y, z = self.buildings[0].entrances[0].coordinates
         for villager in self.inhabitants:
             interface.runCommand(f'summon villager {x} {y + 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
+        for i in range(random.randint(5, 15)):
+            interface.runCommand(f'summon iron_golem {x} {y + 1} {z} {{CustomName:"\\"Town Guard\\""}}')
+
+    def end_simulation(self):
+        # Build roads
+        road_pattern = {
+            'INNER': {self.road_light: 100},
+            'MIDDLE': {'oak_planks'.replace('oak', env.BUILDING_MATERIALS['oak'][
+                0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
+            'OUTER': {'note_block': 100}
+        }
+
+        slab_pattern = {
+            'INNER': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][
+                0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
+            'MIDDLE': {'oak_slab'.replace('oak', env.BUILDING_MATERIALS['oak'][
+                0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
+            'OUTER': {leave + '[persistent=true]': 20 for leave in lookup.LEAVES}
+        }
+        self.plot.build_roads(road_pattern, slab_pattern)
+
+        # Spawn villagers
+        self.spawn_villagers_and_guards()
+
+        # Add roads signs
+        self.plot.add_roads_signs(10, self.buildings)

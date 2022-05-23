@@ -182,8 +182,7 @@ class Simulation:
             self.city.display()
             year += 1
 
-        self.city.spawn_villagers()
-        self.city.plot.add_roads_signs(10, self.city.buildings)
+        self.city.end_simulation()
 
         for building in random.sample(self.city.buildings, k=math.ceil(0.2 * len(self.city.buildings))):
             building.grow_old(random.randint(50, 75))
