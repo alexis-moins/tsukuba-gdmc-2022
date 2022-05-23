@@ -98,7 +98,7 @@ class City:
 
         plot.remove_trees(area_with_padding)
 
-        plot.build_foundation()
+        plot.build_foundation(self.plot)
 
         print(f'{building} added to the settlement')
 

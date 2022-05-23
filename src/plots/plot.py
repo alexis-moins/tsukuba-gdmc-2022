@@ -528,7 +528,7 @@ class Plot:
 
         # For tower : place them as high as possible
         elif building.name == 'Tower':
-            score -= coordinates.y * 2
+            score -= (100 - coordinates.y) * 2
 
         # Score = sum of difference between the first point's altitude and the other
         for x in range(size.x):
@@ -618,7 +618,7 @@ class Plot:
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
 
-    def build_foundation(self) -> None:
+    def build_foundation(self, build_area: Plot) -> None:
         """Build the foundations under the house"""
         if not self.water_mode:
             blocks = ('stone_bricks', 'diorite', 'cobblestone')
@@ -635,30 +635,30 @@ class Plot:
 
             # OUTER FRAME
             for coord in self.start.shift(x=-3, z=-1).line(self.size.x + 4, Direction.EAST):
-                if coord in self:
+                if coord in build_area:
                     INTF.placeBlock(*coord, "oak_log[axis=x]")
                 c = coord.shift(z=self.size.z + 1)
-                if c in self:
+                if c in build_area:
                     INTF.placeBlock(*c, "oak_log[axis=x]")
             for coord in self.start.shift(x=-1, z=-3).line(self.size.z + 4, Direction.SOUTH):
-                if coord in self:
+                if coord in build_area:
                     INTF.placeBlock(*coord, "oak_log[axis=z]")
                 c = coord.shift(x=self.size.x + 1)
-                if c in self:
+                if c in build_area:
                     INTF.placeBlock(*c, "oak_log[axis=z]")
 
             # PILLARS
             for coord in self.start.shift(x=-1, y=2, z=-1).line(50, Direction.DOWN):
-                if coord in self:
+                if coord in build_area:
                     INTF.placeBlock(*coord, "oak_log[axis=y]")
                 c = coord.shift(x=self.size.x + 1)
-                if c in self:
+                if c in build_area:
                     INTF.placeBlock(*c, "oak_log[axis=y]")
                 c = coord.shift(x=self.size.x + 1, z=self.size.z + 1)
-                if c in self:
+                if c in build_area:
                     INTF.placeBlock(*c, "oak_log[axis=y]")
                 c = coord.shift(z=self.size.z + 1)
-                if c in self:
+                if c in build_area:
                     INTF.placeBlock(*c, "oak_log[axis=y]")
 
         INTF.sendBlocks()
