@@ -1,5 +1,5 @@
 # List of the different buildings you can generate in the simulation.
-# Documentation of the attrubutes used below :
+# Documentation of the attributes used below :
 #
 # - name: name of the structure (arbitrary)
 # - path: path to the NBT file (relative to the ./resources/structures directory)
@@ -19,13 +19,15 @@
   maximum: 1
   action: BED
   type: HABITATION
+  palettes: [ cobblestone_var, default_colors ]
 
 - name: Small Town Hall
   path: small_town_hall.nbt
   properties: { cost: 999, number of beds: 5, workers: 5, food production: 5 }
   maximum: 1
   action: BED
-  type: NONE
+  type: HABITATION
+
 
 - name: Little House
   path: house_little.nbt
@@ -33,6 +35,7 @@
   maximum: 3
   action: BED
   type: HABITATION
+  palettes: [ housing ]
 
 - name: Farm
   path: farm.nbt
@@ -40,6 +43,7 @@
   maximum: 2
   action: FOOD
   type: FARM
+  palettes: [ housing ]
 
 - name: Sawmill
   path: sawmill.nbt
@@ -47,6 +51,7 @@
   maximum: 2
   action: WORK
   type: WOODCUTTING
+  palettes: [ default_colors ]
 
 - name: Mine
   path: [mine_top.nbt, mine_stairs.nbt, extensions/crane_body.nbt, extensions/crane_rope.nbt, extensions/crane_effector.nbt]
@@ -54,20 +59,39 @@
   maximum: 2
   action: WORK
   type: MINING
+  palettes: [ mine ]
 
 - name: Forge
   path: forge.nbt
-  properties: { cost: 12, workers: 20 }
+  properties: { cost: 12, workers: 2 }
   maximum: 1
   action: WORK
   type: FORGING
+  palettes: [ forge ]
+
+- name: Brickyard
+  path: brickyard.nbt
+  properties: { cost: 12, workers: 1 }
+  maximum: 1
+  action: WORK
+  type: NONE
+  palettes: [ brickyard ]
+
+- name: Bakery
+  path: bakery.nbt
+  properties: { cost: 12, workers: 1 }
+  maximum: 1
+  action: FOOD
+  type: BAKERY
+  palettes: [ bakery ]
 
 - name: Big House
-  path: house.nbt
+  path: big_house.nbt
   properties: { cost: 12, number of beds: 5 }
   maximum: 4
   action: BED
   type: HABITATION
+  palettes: [ housing ]
 
 - name: Wheat Pack 1
   path: extensions/wheat_pack_1.nbt
@@ -88,30 +112,25 @@
   properties: { cost: 7, food production: 5 }
   action: FOOD
   type: FARM
+  palettes: [ default_colors ]
 
 - name: Silo tier 2
   path: extensions/silo_t2.nbt
   properties: { cost: 12, food production: 5 }
   action: FOOD
   type: FARM
+  palettes: [ default_colors ]
 
 - name: Ore Pack
   path: extensions/ore_pack.nbt
-  properties: { cost: 50, workers: 5 }
+  properties: { cost: 25, workers: 1 }
   extension: true
   action: WORK
   type: FORGING
 
-- name: Cut Tree
-  path: extensions/cut_tree.nbt
-  properties: { cost: 10, workers: 5 }
-  extension: true
-  action: WORK
-  type: WOODCUTTING
-
 - name: Wood Stack
   path: extensions/wood_stack.nbt
-  properties: { cost: 50, workers: 20 }
+  properties: { cost: 25, workers: 1 }
   extension: true
   action: WORK
   type: WOODCUTTING
@@ -123,6 +142,7 @@
   extension: false
   action: UTILITY
   type: GRAVEYARD
+  palettes: [ graveyard ]
 
 - name: Wedding Totem
   path: wedding_totem.nbt
@@ -131,13 +151,15 @@
   maximum: 1
   action: UTILITY
   type: WEDDING
+  palettes: [ wedding ]
 
 - name: Tower
   path: [tower_base.nbt, tower_slice.nbt, tower_top.nbt]
-  properties: { cost: 15, workers: 1 }
+  properties: { cost: 20, workers: 1 }
   maximum: 1
   action: UTILITY
   type: HABITATION
+  palettes: [ housing ]
 
 - name: Watch Tower
   path: watch_tower.nbt
@@ -154,6 +176,7 @@
   extension: true
   action: DECORATION
   type: DECORATION
+  palettes: [ decoration ]
 
 - name: Medium Tree
   path: extensions/medium_tree.nbt
@@ -161,6 +184,7 @@
   extension: true
   action: DECORATION
   type: DECORATION
+  palettes: [ decoration ]
 
 - name: Small Tree
   path: extensions/small_tree.nbt
@@ -168,6 +192,7 @@
   extension: true
   action: DECORATION
   type: DECORATION
+  palettes: [ decoration ]
 
 # - name: Fountain
 #   path: extensions/fountain.nbt

@@ -1,0 +1,219 @@
+# List of the different palettes
+# Documentation of the attributes used below :
+#
+#
+#
+#       HOW TO USE :
+#
+# <palette_name>: name of the palette (arbitrary)
+#   <minecraft_block_to_replace> (must be a minecraft block)
+#     type: <type of the palette> (defined in palette.py, default type are : random, sequence or one_color)
+#     replaced_by: <list of dict or string, depending on the type given>
+#
+#
+#
+#
+#       IF IT IS NOT CLEAR :
+#
+# TYPES
+#
+# More explanations on the types
+#
+# - random (RandomPalette) : Will give bloc in a random sequence from the given list or dictionary, if a list is given,
+# all blocs will have equal chances, if a dictionary with values is given, values will be used as weights
+#
+# - sequence (RandomSequencePalette) : Will give bloc following a sequence from the shuffled given list
+#
+# - one_color (OneBlockPalette) : Will make a list of all color + replaced_by attribute like so : <color><replaced_by>
+# and only save one item of the list to give each time
+# example : replaced_by: _banana => will choose one item from [ white_banana, pink_banana, orange_banana, etc ...]
+#
+#
+# ALIASES
+#
+# You can use alias to define a type that regroups multiples palettes :
+# - &<name> to create an alias
+# - <<: *<name> to use it
+#
+# example :
+# some_dirt: *dirt
+#   dirt:
+#     type: random
+#     replaced_by: [ dirt, podzol, coarse_dirt ]
+#
+# some_stone: *stone
+#   stone:
+#     type: random
+#     replaced_by: [ stone, cobblestone, stone_bricks ]
+#
+# default_variations:
+#   <<: *dirt
+#   <<: *stone
+#
+# And you can even set an alias for default_variations and go on!
+#
+
+
+
+cobblestone_var: &cobblestone_var
+  cobblestone:
+    type: random
+    replaced_by: { cobblestone: 75, andesite: 25 }
+  cobblestone_stairs:
+    type: random
+    replaced_by: { cobblestone_stairs: 75, andesite_stairs: 25 }
+  cobblestone_wall:
+    type: random
+    replaced_by: { cobblestone_wall: 75, andesite_wall: 25 }
+  cobblestone_slab:
+    type: random
+    replaced_by: { cobblestone_slab: 75, andesite_slab: 25 }
+
+stone_bricks_foundation: &stone_bricks_foundation
+  stone_bricks:
+    type: random
+    replaced_by: { stone_bricks: 75, diorite: 15, cobblestone: 10}
+  stone_brick_stairs:
+    type: random
+    replaced_by: { stone_brick_stairs: 75, diorite_stairs: 15, cobblestone_stairs: 10 }
+  stone_brick_slab:
+    type: random
+    replaced_by: { stone_brick_slab: 75, diorite_slab: 15, cobblestone_slab: 10 }
+
+bricks_var: &bricks_var
+  bricks:
+    type: random
+    replaced_by: { bricks: 75, granite: 20, polished_granite: 5}
+  brick_stairs:
+    type: random
+    replaced_by: { brick_stairs: 75, granite_stairs: 20, polished_granite_stairs: 5 }
+  brick_slab:
+    type: random
+    replaced_by: { brick_slab: 75, granite_slab: 20, polished_granite_slab: 5 }
+
+terracotta: &terracotta
+  white_terracotta:
+    type: one_color
+    replaced_by: _terracotta
+
+glass: &glass
+  white_stained_glass:
+    type: one_color
+    replaced_by: _stained_glass
+
+  white_stained_glass_pane:
+      type: one_color
+      replaced_by: _stained_glass_pane
+
+utility: &utility
+  crafting_table:
+    type: sequence
+    replaced_by: [ chest, crafting_table, smoker, furnace, brewing_stand, cauldron, air ]
+
+old_and_mess: &old_and_mess
+  cobweb:
+    type: random
+    replaced_by: [ piston, dispenser, note_block, cobweb, end_portal_frame, skeleton_skull, air, barrel, hay_block]
+
+fun: &fun
+  iron_block:
+    type: random
+    replaced_by: [ cyan_shulker_box, cartography_table, chest, air, jukebox, note_block ]
+
+carpet: &carpet
+  white_carpet:
+    type: one_color
+    replaced_by: _carpet
+
+banner: &banner
+  white_wall_banner:
+      type: one_color
+      replaced_by: _wall_banner
+
+bed: &bed
+  white_bed:
+    type: one_color
+    replaced_by: _bed
+
+potted_flowers: &potted_flowers
+  flower_pot:
+    type: potted_flowers
+    replaced_by:
+
+default_colors: &default_colors
+  <<: *terracotta
+  <<: *glass
+  <<: *bed
+  <<: *carpet
+  <<: *banner
+
+graveyard:
+  lapis_block:
+    type: flowers
+    replaced_by:
+  gold_block:
+    type: random
+    replaced_by: { cobblestone_wall: 20, andesite_wall: 20, 'cobblestone_slab[type=bottom]': 10,
+                   'andesite_slab[type=bottom]': 10, lantern: 9, soul_lantern: 1, iron_bars: 10, air: 20 }
+  diamond_block:
+    type: random
+    replaced_by: [ air ]
+  iron_block:
+    type: random
+    replaced_by: { dirt: 25, grass_path: 75 }
+  dirt:
+    type: random
+    replaced_by: { dirt: 80, coarse_dirt: 19, podzol: 1 }
+
+
+housing:
+  <<: *default_colors
+  <<: *cobblestone_var
+  <<: *utility
+  <<: *old_and_mess
+  <<: *fun
+  <<: *potted_flowers
+
+
+mine:
+  <<: *cobblestone_var
+  <<: *stone_bricks_foundation
+  iron_block:
+    type: random
+    replaced_by: { air: 75, 'lantern[hanging=true]': 25 }
+
+
+forge:
+  iron_block:
+    type: sequence
+    replaced_by: [ air, 'grindstone[face=floor]', smithing_table, anvil, chest ]
+
+
+decoration:
+  gold_block:
+    type: one_flower
+    replaced_by:
+  iron_block:
+    type: one_flower
+    replaced_by:
+
+
+wedding:
+  cornflower:
+    type: random
+    replaced_by: [ air ]
+
+bakery:
+  furnace:
+    type: random
+    replaced_by: [ furnace, smoker, blast_furnace ]
+  iron_block:
+    type: random
+    replaced_by: { cake: 70, air: 20, 'cake[bites=1]': 10 }
+  <<: *bricks_var
+
+
+brickyard:
+  <<: *bricks_var
+  <<: *stone_bricks_foundation
+

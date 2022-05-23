@@ -26,3 +26,7 @@ class BuildingType(Enum):
     GRAVEYARD = 7
 
     WEDDING = 8
+
+    BAKERY = 9
+
+    TOWN_HALL = 10

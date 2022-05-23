@@ -10,6 +10,7 @@ from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
 from src.blocks.collections import palette
+from src.blocks.collections.palette import Palette
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.buildings.relations import RelationsHandler
@@ -81,80 +82,4 @@ _buildings = ()
 
 RELATIONS = RelationsHandler(get_content('relations.yaml'))
 
-# One block palettes must be generated when building the building, else the buildings would have the same blocks.
-ALL_PALETTES = {
-    BuildingType.HABITATION: {
-        'lapis_block': palette.RandomSequencePalette(
-            ['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
-        'gold_block': palette.RandomPalette(
-            ['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
-        'gold_ore': [color + '_carpet' for color in lookup.COLORS],
-        'white_bed': [color + '_bed' for color in lookup.COLORS],
-        'iron_block': palette.RandomPalette(
-            ['cyan_shulker_box', 'cartography_table', 'chest', 'air', 'jukebox', 'note_block']),
-        'diamond_ore': palette.RandomPalette(
-            ['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel',
-             'hay_block']),
-        'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
-        'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
-        'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS],
-        'cobblestone': palette.RandomPalette({'cobblestone': 75, 'andesite': 25}),
-        'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 75, 'andesite_stairs': 25}),
-        'cobblestone_wall': palette.RandomPalette({'cobblestone_wall': 75, 'andesite_wall': 25}),
-        'cobblestone_slab': palette.RandomPalette({'cobblestone_slab': 75, 'andesite_slab': 25}),
-
-    },
-
-    BuildingType.FORGING: {
-        'lapis_block': palette.RandomSequencePalette(
-            ['air', 'grindstone[face=floor]', 'smithing_table', 'anvil', 'chest'])
-    },
-
-    BuildingType.FARM: {
-        'lapis_block': palette.RandomSequencePalette(
-            ['chest', 'crafting_table', 'smoker', 'furnace', 'brewing_stand', 'cauldron', 'air']),
-        'gold_block': palette.RandomPalette(
-            ['air', 'lantern'] + ['potted_' + flower.replace('minecraft:', '') for flower in lookup.SHORTFLOWERS]),
-        'gold_ore': [color + '_carpet' for color in lookup.COLORS],
-        'white_bed': [color + '_bed' for color in lookup.COLORS],
-        'diamond_ore': palette.RandomPalette(
-            ['piston', 'dispenser', 'note_block', 'cobweb', 'end_portal_frame', 'skeleton_skull', 'air', 'barrel',
-             'hay_block']),
-        'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
-        'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
-        'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
-    },
-
-    BuildingType.WOODCUTTING: {
-        'white_terracotta': [color + '_terracotta' for color in lookup.COLORS],
-        'white_stained_glass': [color + '_stained_glass' for color in lookup.COLORS],
-        'white_stained_glass_pane': [color + '_stained_glass_pane' for color in lookup.COLORS]
-    },
-
-    BuildingType.MINING: {
-        'stone_bricks': palette.RandomPalette({'stone_bricks': 75, 'diorite': 15, 'cobblestone': 10}),
-        'cobblestone': palette.RandomPalette({'cobblestone': 50, 'andesite': 50}),
-        'cobblestone_stairs': palette.RandomPalette({'cobblestone_stairs': 50, 'andesite_stairs': 50}),
-        'gold_block': palette.RandomPalette({'air': 75, 'lantern[hanging=true]': 25}),
-    },
-
-    BuildingType.DECORATION: {
-        'gold_block': [flower for flower in lookup.FLOWERS],
-        'iron_block': [flower for flower in lookup.FLOWERS],
-    },
-
-    BuildingType.GRAVEYARD: {
-        'lapis_block': palette.RandomPalette([flower for flower in lookup.FLOWERS]),
-        'gold_block': palette.RandomPalette({'cobblestone_wall': 20, 'andesite_wall': 20,
-                                             'cobblestone_slab[type=bottom]': 10, 'andesite_slab[type=bottom]': 10,
-                                             'lantern': 9, 'soul_lantern': 1, 'iron_bars': 10, 'air': 20}),
-        'diamond_block': ['air'],
-        'iron_block': palette.RandomPalette({'dirt': 25, 'grass_path': 75}),
-        'dirt': palette.RandomPalette({'dirt': 80, 'coarse_dirt': 19, 'podzol': 1}),
-    },
-    BuildingType.WEDDING: {
-        'cornflower': ['air'],
-        'white_wall_banner': palette.RandomPalette([color + '_wall_banner' for color in lookup.COLORS])
-    }
-
-}
+ALL_PALETTES = {palette: Palette.deserialize(value) for palette, value in get_content('palettes.yaml').items()}

@@ -1,17 +1,49 @@
+from __future__ import annotations
+
 import random
 from abc import ABC
 from abc import abstractmethod
 
+from gdpc import lookup
+
+_palettes_type = {'random': lambda replace: RandomPalette(replace),
+                  'sequence': lambda replace: RandomSequencePalette(replace),
+                  'one_color': lambda replace: [color + replace for color in lookup.COLORS],
+
+                  'flowers': lambda replace: RandomPalette([flower for flower in lookup.FLOWERS]),
+                  'potted_flowers': lambda replace: RandomPalette(
+                      ['potted_' + flower.replace('minecraft:', '') for flower in
+                       lookup.SHORTFLOWERS]),
+                  'one_flower': lambda replace: [flower for flower in lookup.FLOWERS],
+
+                  # You can add your custom type here
+                  }
+
 
 class Palette(ABC):
     """Abstract class representing a palette of bloc"""
+
     @abstractmethod
     def get_block_name(self):
         pass
 
+    @staticmethod
+    def deserialize(data: dict[str, dict[str, str | dict | list]]) -> dict[str, Palette | list]:
+        return {bloc: _palettes_type[data[bloc]['type']](data[bloc]['replaced_by']) for bloc in data}
+
+    @staticmethod
+    def assemble(palettes: list[dict[str, Palette | list]]) -> dict[str, Palette | list]:
+        final_palette = {}
+        for pal in palettes:
+            for key, value in pal.items():
+                if key not in final_palette:
+                    final_palette[key] = value
+        return final_palette
+
 
 class RandomPalette(Palette):
     """Palette of blocs giving bloc randomly, with weights"""
+
     def __init__(self, blocks_and_proba_or_list: dict[str, float] | list[str]):
         super().__init__()
         if isinstance(blocks_and_proba_or_list, dict):
@@ -28,6 +60,7 @@ class RandomPalette(Palette):
 
 class RandomSequencePalette(Palette):
     """palette of blocs giving blocs in a random sequence, that can be repeated or reshuffled"""
+
     def __init__(self, blocks: list[str], reshuffle: bool = True):
         super().__init__()
         self.blocks = blocks
@@ -49,6 +82,7 @@ class RandomSequencePalette(Palette):
 
 class OneBlockPalette(Palette):
     """Palette with one block"""
+
     def __init__(self, block_or_list_to_randomly_take_from: str | list[str]):
         data = block_or_list_to_randomly_take_from
         if isinstance(data, list):

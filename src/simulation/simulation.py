@@ -53,7 +53,6 @@ class Event:
                              "BAILEY", "CHIP", "BEAR ", "CASH ", "WALTER", "MILO ", "JASPER", "BLAZE", "BENTLEY", "BO",
                              "OZZY", "Bella", "Luna", "Lucy", "Daisy", "Zoe", "Lily", "Lola", "Bailey", "Stella",
                              "Molly", "Coco", "Maggie", "Penny"]
-
                 x, y, z = random.choice(city.buildings).get_entrance()
                 y += 1
                 for i in range(random.randint(5, 20)):

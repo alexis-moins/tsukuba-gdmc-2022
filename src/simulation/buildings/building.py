@@ -43,8 +43,8 @@ class BuildingProperties:
 class Building:
     """Class representing a list of blocks (structure) on a given plot"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False,
-                 maximum: int = 1):
+    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, palettes: list[str] = None,
+                 extension: bool = False, maximum: int = 1):
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
@@ -63,6 +63,9 @@ class Building:
         self.entrances: BlockList = None
         self.display_name = None
 
+        self.palettes = palettes
+
+
     @staticmethod
     def deserialize(building_info: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
@@ -79,8 +82,9 @@ class Building:
         if isinstance(path, list):
             path = path[0]
         structure = Structure.parse_nbt_file(path)
+        palettes = building_info.pop('palettes') if 'palettes' in building_info else None
 
-        build = Building(properties=properties, structure=structure, **building_info)
+        build = Building(properties=properties, structure=structure, palettes=palettes, **building_info)
 
         if build.name == 'Mine':
             return Mine.deserialize_mine(original, build)
@@ -178,12 +182,14 @@ class Building:
         self.blocks = structure.get_blocks(plot.start, rotation)
         self.entrances = self.blocks.filter('emerald')
         # Apply palette
-        if self.properties.building_type in env.ALL_PALETTES and force_palette is None:
-            self._randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
-        elif force_palette is not None:
+        if force_palette:
             self._randomize_building(force_palette)
+        elif self.palettes:
+            self._randomize_building(Palette.assemble([env.ALL_PALETTES[field] for field in self.palettes]))
+
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
+
 
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
@@ -288,7 +294,6 @@ class Building:
         for key in palettes:
             if isinstance(palettes[key], list):
                 palettes[key] = palette.OneBlockPalette(palettes[key])
-
         for b in self.blocks:
             current_name = b.name.replace('minecraft:', '')
             if current_name in palettes:
@@ -312,7 +317,8 @@ class Building:
 
 class ChildBuilding(Building):
     def __init__(self, parent: Building):
-        super().__init__(parent.name, parent.properties, parent.structure, parent.is_extension, parent.max_number)
+        super().__init__(parent.name, parent.properties, parent.structure, palettes=parent.palettes,
+                         extension=parent.is_extension, maximum=parent.max_number)
 
 
 class Mine(ChildBuilding):
