@@ -1,0 +1,18 @@
+cobblestone_var:
+  cobblestone:
+    type: random
+    replaced_by: { cobblestone: 75, andesite: 25 }
+  cobblestone_stairs:
+    type: random
+    replaced_by: { cobblestone_stairs: 75, andesite_stairs: 25 }
+  cobblestone_wall:
+    type: random
+    replaced_by: { cobblestone_wall: 75, andesite_wall: 25 }
+  cobblestone_slab:
+    type: random
+    replaced_by: { cobblestone_slab: 75, andesite_slab: 25 }
+
+terracotta:
+  white_terracotta:
+    type: random_colors
+    replaced_by: '_terracotta'

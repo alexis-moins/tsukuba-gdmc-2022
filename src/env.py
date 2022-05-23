@@ -10,6 +10,7 @@ from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
 from src.blocks.collections import palette
+from src.blocks.collections.palette import Palette
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.buildings.relations import RelationsHandler
@@ -162,3 +163,5 @@ ALL_PALETTES = {
     }
 
 }
+palettes_dict = get_content('palettes.yaml')
+loaded_palettes = {palette: Palette.deserialize(value) for palette, value in palettes_dict.items()}

@@ -19,13 +19,14 @@
   maximum: 1
   action: BED
   type: HABITATION
+  palettes: [stone, glass, terracotta]
 
 - name: Small Town Hall
   path: small_town_hall.nbt
   properties: { cost: 999, number of beds: 5, workers: 5, food production: 5 }
   maximum: 1
   action: BED
-  type: NONE
+  type: HABITATION
 
 - name: Little House
   path: house_little.nbt

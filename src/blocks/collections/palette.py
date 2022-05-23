@@ -9,6 +9,10 @@ class Palette(ABC):
     def get_block_name(self):
         pass
 
+    @staticmethod
+    def deserialize(data):
+        pass
+
 
 class RandomPalette(Palette):
     """Palette of blocs giving bloc randomly, with weights"""
