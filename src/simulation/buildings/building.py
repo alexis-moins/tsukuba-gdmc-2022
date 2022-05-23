@@ -41,8 +41,8 @@ class BuildingProperties:
 class Building:
     """Class representing a list of blocks (structure) on a given plot"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, extension: bool = False,
-                 maximum: int = 1):
+    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, palettes: list[str] = None,
+                 extension: bool = False, maximum: int = 1):
         """Parameterised constructor creating a new building"""
         self.name = name
         self.properties = replace(properties)  # Return a copy of the dataclass
@@ -61,6 +61,13 @@ class Building:
         self.entrances: BlockList = None
         self.display_name = None
 
+        # build palettes TODO FIX THIS
+        if palettes:
+            self.palettes = palettes
+        else:
+            print("NO PALETTE")
+            self.palettes = None
+
     @staticmethod
     def deserialize(building_info: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given dictionary"""
@@ -77,8 +84,9 @@ class Building:
         if isinstance(path, list):
             path = path[0]
         structure = Structure.parse_nbt_file(path)
+        palettes = building_info.pop('palettes') if 'palettes' in building_info else None
 
-        build = Building(properties=properties, structure=structure, **building_info)
+        build = Building(properties=properties, structure=structure, palettes=palettes, **building_info)
 
         if build.name == 'Mine':
             return Mine.deserialize_mine(original, build)
@@ -128,7 +136,6 @@ class Building:
                 return self.entrances[0]
         return self.plot.start
 
-
     def build(self, plot: Plot, rotation: int, city: Plot):
         """Build the current building onto the building's plot"""
         self.plot = plot
@@ -177,10 +184,11 @@ class Building:
         self.blocks = structure.get_blocks(plot.start, rotation)
         self.entrances = self.blocks.filter('emerald')
         # Apply palette
-        if self.properties.building_type in env.ALL_PALETTES and force_palette is None:
-            self._randomize_building(dict(env.ALL_PALETTES[self.properties.building_type]))
-        elif force_palette is not None:
+        if force_palette:
             self._randomize_building(force_palette)
+        elif self.palettes:
+            self._randomize_building(Palette.assemble([env.ALL_PALETTES[field] for field in self.palettes]))
+
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
