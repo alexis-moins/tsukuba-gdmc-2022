@@ -15,7 +15,9 @@ from src import env
 from src.blocks.block import Block
 from src.blocks.collections import palette
 from src.blocks.collections.block_list import BlockList
-from src.blocks.collections.palette import Palette, RandomPalette, OneBlockPalette
+from src.blocks.collections.palette import OneBlockPalette
+from src.blocks.collections.palette import Palette
+from src.blocks.collections.palette import RandomPalette
 from src.blocks.structure import Structure
 from src.plots.plot import Plot
 from src.simulation.buildings.building_type import BuildingType
@@ -122,12 +124,11 @@ class Building:
             return Coordinates(0, 0, 0)
         return entrances[0].coordinates
 
-    def get_entrance(self):
+    def get_entrance(self) -> Coordinates:
         if self.entrances:
             if self.entrances[0]:
-                return self.entrances[0]
+                return self.entrances[0].coordinates
         return self.plot.start
-
 
     def build(self, plot: Plot, rotation: int, city: Plot):
         """Build the current building onto the building's plot"""
@@ -146,18 +147,18 @@ class Building:
                         continue
 
                     if block.name not in (
-                            'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt'):
+                            'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt', 'minecraft:podzol'):
                         continue
 
                     farm_field.add(block.coordinates)
-                    block_name = random.choices(['farmland', 'lapis_block'], [90, 10])[0]
+                    block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
                     INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
 
-                    if block_name == 'farmland':
+                    if 'farmland' in block_name:
                         INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(lookup.CROPS))
 
             INTERFACE.sendBlocks()
-            self.plot.update()
+
             for coordinates in farm_field:
                 block = self.plot.get_block_at(*coordinates)
                 print(block.name)
@@ -242,11 +243,36 @@ class Building:
 
         INTERFACE.sendBlocks()
 
-    def repair(self, amount: int) -> None:
+    def set_on_fire(self, amount: int) -> None:
         """"""
-        for original_block in random.sample(list(self.old_blocks.keys()), amount):
-            INTERFACE.placeBlock(*original_block.coordinates, original_block.full_name)
-            del self.old_blocks[original_block]
+
+        # ensure it stays between 0 and 100
+        amount = abs(amount) % 100
+        sample: list[Block] = random.sample(self.blocks.without(('air', 'water')),
+                                            amount * len(self.blocks.without(('air', 'water'))) // 100)
+
+        for block in sample:
+
+            if block.is_one_of(('lectern', 'rail', 'sign')):
+                continue
+
+            population = (block.name, 'basalt', 'magma_block', 'soul_sand', 'blackstone_stairs', 'air')
+            weights = (5, 27, 25, 20, 20, 3)
+
+            name = random.choices(population, weights, k=1)
+
+            if name == block.name:
+                continue
+
+            if 'stairs' in name:
+                facing = random.choice(['north', 'east', 'south', 'west'])
+                half = random.choice(['top', 'bottom'])
+                shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
+                replacement = replace(block, properties={'facing': facing, 'half': half, 'shape': shape})
+            else:
+                replacement = replace(block, name=name[0], properties={})
+
+            INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
 
         INTERFACE.sendBlocks()
 
