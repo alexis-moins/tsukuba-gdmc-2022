@@ -111,12 +111,15 @@ class City:
             if env.DEBUG:
                 print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
 
-            end = random.choice(
-                self.buildings[0].entrances).coordinates if self.buildings[0].entrances else self.buildings[0].plot.start
-            start = random.choice(
-                self.buildings[-1].entrances).coordinates if self.buildings[-1].entrances else self.buildings[-1].plot.start
+            road_done = False
+            i = 0
+            max_i = len(self.buildings) - 1
+            while not road_done and i < max_i:
+                end = self.buildings[i].get_entrance()
+                start = self.buildings[-1].get_entrance()
 
-            self.plot.compute_roads(start, end)
+                road_done = self.plot.compute_roads(start, end)
+                i += 1
 
     @property
     def production_points(self) -> int:
