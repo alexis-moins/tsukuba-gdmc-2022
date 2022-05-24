@@ -110,13 +110,13 @@ class Building:
         self.inhabitants.add(villager)
         villager.house = self
 
-        self.history.append(f'Year {year}:\n {villager.name} is now living in the {self.name.lower()}')
+        self.history.append(f'Year {year}:\\n {villager.name} is now living in the {self.name.lower()}')
 
     def add_worker(self, villager, year: int) -> None:
         """"""
         self.workers.add(villager)
         villager.work_place = self
-        self.history.append(f'Year {year}:\n {villager.name} has started working at the {self.name.lower()}')
+        self.history.append(f'Year {year}:\\n {villager.name} has started working at the {self.name.lower()}')
 
     def get_size(self, rotation: int) -> Size:
         """Return the size of the building considering the given rotation"""
