@@ -313,6 +313,10 @@ class Building:
             self.display_name = f'The {random.choice(adjectives)} {self.name.lower()}'
         return self.display_name
 
+    def update_name_adjective(self, adjective):
+        self.display_name = f'The {adjective} {self.name}'
+        self._place_sign()  # update the sign
+
 
 class ChildBuilding(Building):
     def __init__(self, parent: Building):

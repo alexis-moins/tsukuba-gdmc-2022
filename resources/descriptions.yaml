@@ -26,7 +26,7 @@ wolf attack:
       We should train people to prevent such a tragedy in the futur. We should remember those {victims} victims.'
 
 fire:
-  - description: '{moment} a fire started, some were able to evacuate quickly enough but a whole house turned into ashes.
+  - description: '{moment} a fire started, some were able to evacuate quickly enough but {building} turned into ashes.
       I believe we lost track of {victims} persons'
     moment: [Today, Yesterday]
 

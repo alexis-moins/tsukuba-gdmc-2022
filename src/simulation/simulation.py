@@ -53,11 +53,14 @@ class Event:
                              "BAILEY", "CHIP", "BEAR ", "CASH ", "WALTER", "MILO ", "JASPER", "BLAZE", "BENTLEY", "BO",
                              "OZZY", "Bella", "Luna", "Lucy", "Daisy", "Zoe", "Lily", "Lola", "Bailey", "Stella",
                              "Molly", "Coco", "Maggie", "Penny"]
-                x, y, z = random.choice(city.buildings).get_entrance()
+                building = random.choice(city.buildings)
+                x, y, z = building.get_entrance()
                 y += 1
                 for i in range(random.randint(5, 20)):
                     interface.runCommand(
                         f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(dog_names).capitalize()}\\""}}')
+
+                building.update_name_adjective('wolves')
 
             mod = 0
             for building in city.buildings:
@@ -74,8 +77,10 @@ class Event:
                 city.villager_die(v, year, self.name.lower())
 
             data = get_data(self.name)
-            description = data.pop('description').format(
-                victims=kills, **{key: random.choice(value) for key, value in data.items()})
+            description = ''
+            if self.name != 'Fire':
+                description = data.pop('description').format(
+                    victims=kills, **{key: random.choice(value) for key, value in data.items()})
 
             if self.name == 'Pillager attack':
 
@@ -101,7 +106,10 @@ class Event:
             if self.name == 'Fire':
                 building = random.choice(city.buildings)
                 building.set_on_fire(random.randint(65, 80))
-                # TODO add to building history
+                description = data.pop('description').format(
+                    victims=kills, building=building, **{key: random.choice(value) for key, value in data.items()})
+                building.history.append(f'This building took fire during year {year}, taking the lives of {kills} people.')
+                building.update_name_adjective('burnt')
 
             if self.name.lower() not in _descriptions:
                 events.remove(self)
