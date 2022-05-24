@@ -166,7 +166,7 @@ class Plot:
         self.all_roads.add(road_coord)
         self.occupied_coordinates.add(road_coord)
 
-    def compute_roads(self, start: Coordinates, end: Coordinates):
+    def compute_roads(self, start: Coordinates, end: Coordinates) -> bool:
         if self.graph is None:
             self.fill_graph()
 
@@ -176,7 +176,7 @@ class Plot:
         try:
             path = nx.dijkstra_path(self.graph, start, end)
         except nx.NetworkXException:
-            return
+            return False
 
         self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
         for coord in path:
@@ -203,6 +203,8 @@ class Plot:
         for c1, c2 in zip(path[:-2], path[1:]):
             if self.graph.has_edge(c1, c2):
                 self.graph[c1][c2]['weight'] = 10
+
+        return True
 
     def add_roads_signs(self, amount: int, buildings: list):
         if not self.roads_y:
