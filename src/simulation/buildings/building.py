@@ -190,7 +190,6 @@ class Building:
         for block in self.blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
-
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
         if not self.blocks:
@@ -199,7 +198,7 @@ class Building:
         signs = self.blocks.filter('sign')
         if not signs:
             return
-
+        INTERFACE.sendBlocks()
         signs[0].coordinates.place_sign(self.get_display_name())
 
     def grow_old(self, amount: int) -> None:
