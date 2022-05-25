@@ -20,6 +20,7 @@ from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.city import City
 from src.simulation.decisions.decision_maker import DecisionMaker
+from src.utils.book_maker import BookMaker
 from src.utils.criteria import Criteria
 
 _descriptions: dict[str, list] = env.get_content('descriptions.yaml')
@@ -108,7 +109,8 @@ class Event:
                 building.set_on_fire(random.randint(65, 80))
                 description = data.pop('description').format(
                     victims=kills, building=building, **{key: random.choice(value) for key, value in data.items()})
-                building.history.append(f'This building took fire during year {year}, taking the lives of {kills} people.')
+                building.history.append(
+                    f'This building took fire during year {year}, taking the lives of {kills} people.')
                 building.update_name_adjective('burnt')
 
             if self.name.lower() not in _descriptions:
@@ -228,7 +230,8 @@ class Simulation:
 
         chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
 
-        for coord, flower in zip(chosen_coords, random.choices(lookup.SHORTFLOWERS + ('minecraft:lantern',), k=len(chosen_coords))):
+        for coord, flower in zip(chosen_coords,
+                                 random.choices(lookup.SHORTFLOWERS + ('minecraft:lantern',), k=len(chosen_coords))):
             if (real_block := surface.find(coord)).is_one_of('grass_block'):
                 interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
 
@@ -247,9 +250,12 @@ class Simulation:
             general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
             general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
             general_data += f'Food: {color}+{building.properties.food_production}§0'
-            book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
-                                          title=f'Year {year}\'s report',
-                                          author='Settlement Construction Community (SCC)')
+            # book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
+            #                               title=f'Year {year}\'s report',
+            #                               author='Settlement Construction Community (SCC)')
+            book_data = BookMaker(f'{general_data}\n\n' + '\n\n'.join(building.history),
+                                  title=f'Year {year}\'s report',
+                                  author='Settlement Construction Community (SCC)').write_book()
             lectern_list = building.blocks.filter('lectern')
 
             interface.sendBlocks()
@@ -260,7 +266,8 @@ class Simulation:
                 toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         # make a book
-        book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
+        # book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
+        book_data = BookMaker('\n\n'.join(self.history), title='City history', author='The Mayor').write_book()
         lectern_list = self.city.buildings[0].blocks.filter('lectern')
         if len(lectern_list):
             lectern: Block = lectern_list[0]
