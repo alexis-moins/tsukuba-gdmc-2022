@@ -1,20 +1,14 @@
-from dataclasses import dataclass
+import yaml
 from time import sleep
-from typing import Any
-from typing import Iterator
+from typing import Any, Iterator
+from dataclasses import dataclass
 
 import gdpc.interface as INTERFACE
-import yaml
-from gdpc import lookup
 from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
-from src.blocks.collections import palette
-from src.blocks.collections.palette import Palette
-from src.simulation.buildings.building import Building
-from src.simulation.buildings.building_type import BuildingType
-from src.simulation.buildings.relations import RelationsHandler
 from src.utils.coordinates import Coordinates
+from src.simulation.buildings.relations import RelationsHandler
 
 # The default build are
 BUILD_AREA = None
@@ -64,22 +58,26 @@ def get_world_slice() -> WorldSlice | None:
     print(f'Error: Could not get a world slice in {retry_amount} try')
 
 
-def get_content(file_name: str) -> Any:
-    """Return the content of the file found under the 'resouces' directory"""
-    with open(f'resources/{file_name}', 'r') as content:
+def get_content(file: str) -> Any:
+    """Return the content of the given [file]. The function will search the file
+    under the the local 'resouces' directory"""
+    with open(f'resources/{file}', 'r') as content:
         return yaml.safe_load(content)
 
 
 # Mapping of a material and its replacement and keepProperties (tuple)
+# TODO refactoring
 BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}
 
-# Mapping of a building name and its Building object
-BUILDINGS: dict[str, Building] = {building['name']: Building.deserialize(building)
-                                  for building in get_content('buildings.yaml')}
+# Mapping of a building name to its data dictionary
+# It has the same structure as the resources/buildings.yaml
+# file so check this file out for more information
+BUILDINGS: dict[str, dict[str, Any]] = get_content('buildings.yaml')
 
-# Build relations
-_buildings = ()
+# Mapping of palette groups and their corresponding block palettes
+# It has the same structure as the resources/palettes.yaml
+# file so check this file out for more information
+PALETTE_GROUPS: dict[str, dict[str, Any]] = get_content('palettes.yaml')
 
+# TODO doc
 RELATIONS = RelationsHandler(get_content('relations.yaml'))
-
-ALL_PALETTES = {palette: Palette.deserialize(value) for palette, value in get_content('palettes.yaml').items()}

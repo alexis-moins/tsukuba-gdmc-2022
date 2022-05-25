@@ -1,25 +1,22 @@
 import math
 import random
-from cgitb import lookup
-from collections import Counter
-from copy import copy
-from copy import deepcopy
+
 from dataclasses import dataclass
 from dataclasses import field
-from textwrap import wrap
 
 from colorama import Fore
 from gdpc import interface
 from gdpc import lookup
 from gdpc import toolbox
+from src.simulation.buildings.building import Building
+
+from src.simulation.decisions import DecisionMaking, choose_building
 
 from src import env
 from src.blocks.block import Block
 from src.plots.plot import Plot
-from src.simulation.buildings.building import Building
-from src.simulation.buildings.building_type import BuildingType
-from src.simulation.city import City
-from src.simulation.decisions.decision_maker import DecisionMaker
+from simulation.buildings.utils.building_type import BuildingType
+from src.simulation.city import Settlement
 from src.utils.criteria import Criteria
 
 _descriptions: dict[str, list] = env.get_content('descriptions.yaml')
@@ -43,7 +40,7 @@ class Event:
     is_dangerous: bool = field(default=False)
     kills: tuple[int, int] = field(default_factory=lambda: (0, 0))
 
-    def resolve(self, city: City, year: int) -> str:
+    def resolve(self, city: Settlement, year: int) -> str:
         """"""
         if self.is_dangerous and year >= 10:
 
@@ -53,7 +50,7 @@ class Event:
                              "BAILEY", "CHIP", "BEAR ", "CASH ", "WALTER", "MILO ", "JASPER", "BLAZE", "BENTLEY", "BO",
                              "OZZY", "Bella", "Luna", "Lucy", "Daisy", "Zoe", "Lily", "Lola", "Bailey", "Stella",
                              "Molly", "Coco", "Maggie", "Penny"]
-                x, y, z = random.choice(city.buildings).get_entrance()
+                x, y, z = random.choice(city.buildings).entrance
                 y += 1
                 for i in range(random.randint(5, 20)):
                     interface.runCommand(
@@ -87,7 +84,7 @@ class Event:
                         rotation = random.choice([0, 90, 180, 270])
                         plot = city.plot.get_subplot(building, rotation, city_buildings=city.buildings)
                         if plot:
-                            city.add_building(building, plot, rotation)
+                            city.build(building, plot, rotation)
                             x, y, z = building.get_entrance()
                             y += 10
                             for i in range(random.randint(3, 10)):
@@ -125,98 +122,67 @@ events = [Event('Wedding'), Event('Wandering trader'), Event('Town Celebration')
 
 
 class Simulation:
-    """"""
+    """Simulates the generation of a human settlement"""
 
-    def __init__(self, plot: Plot, decision_maker: DecisionMaker, years: int, friendliness: float = 1,
-                 field_productivity: float = 1, humidity: float = 1):
-        """"""
-        self.decision_maker = decision_maker
-        self.humidity = humidity
-        self.field_productivity = field_productivity
-        self.friendliness = friendliness
-        self.plot = plot
-        self.years = years
+    def __init__(self, plot: Plot, simulation_end: int, building_selection: DecisionMaking = None):
+        """Creates a new simulation on the given [plot]. The simulation will end at year
+        [simulation end]. Finally, the logic of selecting buildings will be handled by
+        the optional [building selection] function (see module src.decisions)"""
+        self.__plot = plot
+        self.current_year = 0
+        self.simulation_end = simulation_end
 
-        self.city: City = None
-        self.events = []
-        self.actions = []
+        # TODO add logic for big plots
+        self.settlements = [Settlement(self.__plot)]
+
+        # Use default logic if no one was given to the simulation
+        self.choose_building = building_selection if building_selection else choose_building
+
+        # TODO maybe a History class
         self.history: list[str] = []
 
-    def start(self):
-        year = 1
-
-        # If you have multiple cities, just give a subplot here
-        self.city = City(self.plot, year)
-        self.decision_maker.city = self.city
-
+    def start(self) -> None:
+        """Start the simulation and generate the (possibly many) settlement(s). The
+        simulation will stop if it reaches the year of the simulation end"""
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
-        town_hall = env.BUILDINGS['Town Hall']
-        rotation = self.decision_maker.get_rotation()
-        if env.DEBUG:
-            print(f'rotation {rotation}')
-        plot = self.city.plot.get_subplot(town_hall, rotation, max_score=100_000)
+        town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Town Hall'])
 
-        if plot is None:
-            town_hall = env.BUILDINGS['Small Town Hall']
-            plot = self.city.plot.get_subplot(town_hall, rotation)
+        success = self.settlements[0].add_building(town_hall, max_score=100_000)
 
-        self.city.add_building(town_hall, plot, rotation)
-        self.city.update(0)
-        self.city.display()
+        if not success:
+            town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Small Town Hall'])
+            self.settlements[0].add_building(town_hall)
 
-        while year < self.years:
-            print(f'\n\n\n=> Start of year {Fore.RED}[{year}]{Fore.WHITE}')
+        while self.current_year < self.simulation_end:
+            print(f'\n\n\n=> Start of year {Fore.RED}[{self.current_year}]{Fore.WHITE}')
 
-            buildings = self.get_constructible_buildings()
+            for settlement in self.settlements:
+                self.run_on(settlement)
 
-            if buildings:
-                rotation = self.decision_maker.get_rotation()
-                choice, plot = self.decision_maker.choose_building(buildings, rotation)
+            self.current_year += 1
 
-                if choice is not None and plot is not None:
-                    self.city.add_building(choice, plot, rotation)
+        self.settlements.end_simulation()
 
-            # Get event
-
-            if random.randint(1, 4) == 4:
-                event = random.choice(events)
-                self.history.append(event.resolve(self.city, year))
-            else:
-                print('=> No event this year')
-
-            # Update city
-            self.city.update(year)
-
-            # self.city.make_buildings_grow_old()
-
-            # self.city.repair_buildings()
-
-            # End of turn
-            self.city.display()
-            year += 1
-
-        self.city.end_simulation()
-
-        for building in random.sample(self.city.buildings, k=math.ceil(0.3 * len(self.city.buildings))):
+        for building in random.sample(self.settlements.buildings, k=math.ceil(0.3 * len(self.settlements.buildings))):
             building.grow_old(random.randint(65, 80))
 
         decoration_buildings = [building for building in env.BUILDINGS.values()
                                 if building.properties.building_type is BuildingType.DECORATION]
 
         print('\nAdding decorations:')
-        for decoration in random.choices(decoration_buildings, k=len(self.city.buildings) * 2):
-            rotation = self.decision_maker.get_rotation()
-            plot = self.city.plot.get_subplot(decoration, rotation)
+        for decoration in random.choices(decoration_buildings, k=len(self.settlements.buildings) * 2):
+            rotation = self.choose_building.get_rotation()
+            plot = self.settlements.plot.get_subplot(decoration, rotation)
 
             if plot is not None:
                 if plot.water_mode:
                     continue
                 else:
-                    self.city.add_building(decoration, plot, rotation)
+                    self.settlements.add_building(decoration, plot, rotation)
 
-        coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.plot.occupied_coordinates
-        surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
+        coords = set([coord.as_2D() for coord in self.__plot.surface()]) - self.__plot.occupied_coordinates
+        surface = self.__plot.get_blocks(Criteria.WORLD_SURFACE)
 
         chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
 
@@ -225,13 +191,13 @@ class Simulation:
                 interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
 
         print(
-            f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
+            f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.simulation_end}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
         interface.sendBlocks()
         interface.setBuffering(False)
 
         # History of buildings
-        for building in self.city.buildings[1:]:
+        for building in self.settlements.buildings[1:]:
             colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
             color = random.choice(colors)
 
@@ -253,7 +219,7 @@ class Simulation:
 
         # make a book
         book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
-        lectern_list = self.city.buildings[0].blocks.filter('lectern')
+        lectern_list = self.settlements.buildings[0].blocks.filter('lectern')
         if len(lectern_list):
             lectern: Block = lectern_list[0]
             toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
@@ -261,16 +227,28 @@ class Simulation:
         interface.setBuffering(True)
         interface.sendBlocks()
 
-    def get_constructible_buildings(self) -> list[Building]:
-        """Return the available buildings for the year"""
-        counter = Counter([building.name for building in self.city.buildings])
+    def run_on(self, settlement: Settlement) -> None:
+        """Run the simulation for 1 year on the given [settlement]. The simulation will try to add
+        a new building, randomly generate an event and update the settlement's indicators"""
+        settlement.update(self.current_year)
+        buildings = settlement.get_constructible_buildings()
 
-        actions = [deepcopy(building) for building in env.BUILDINGS.values()
-                   if building.properties.cost <= self.city.production_points
-                   and building.properties.building_type is not BuildingType.DECORATION
-                   and counter[building.name] < building.max_number]
+        # formatted = textwrap.fill(", ".join(str(building) for building in buildings), width=80)
+        # print(f'Available buildings: [{formatted}]')
 
-        formatted = f"\n{' ' * 22}".join(wrap(", ".join(str(action) for action in actions), width=80))
-        print(f'Available buildings: [{formatted}]')
+        chosen_building = self.choose_building(settlement, buildings)
 
-        return actions
+        if chosen_building is not None:
+            settlement.add_building(chosen_building)
+
+        # Get event
+        if random.randint(1, 4) == 4:
+            event = random.choice(events)
+            self.history.append(event.resolve(settlement, self.current_year))
+        else:
+            print('=> No event this year')
+
+        settlement.update(self.current_year)
+
+        # End of turn
+        settlement.display()

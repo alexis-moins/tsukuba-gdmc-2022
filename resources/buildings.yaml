@@ -1,202 +1,235 @@
 # List of the different buildings you can generate in the simulation.
 # Documentation of the attributes used below :
 #
-# - name: name of the structure (arbitrary)
-# - path: path to the NBT file (relative to the ./resources/structures directory)
-# - properties: mapping of the building properties. Each entry is optional (0 by default)
-#   {
-#     cost: cost of the building (in production points),
-#     number of beds: number of inhabitants the building can host,
-#     work production: how many points the building can produce in a year
-#     food production: how many food the building can produce in a year
-#   }
-# - action: action associated with the building
+# - path: list of paths to NBT file(s)                                    relative to ./resources/structures
+# - palettes: list of palette groups                                      default: []
 # - type: type of the building
+# - resource: resource associated with the building
+# - cost: cost of the building (in production points)                     default: 0
+# - padding: padding used for this building                               default: 5
+# - is-extension: wether the building is an extension or not              default: false
+# - maximum: the maximum number of this building that can be built        default: 1
+# - workers: how many points the building can produce in a year           default: 0
+# - number-of-beds: number of inhabitants the building can host           default: 0
+# - food-production: how many food the building can produce in a year     default: 0
 
-- name: Town Hall
-  path: town_hall.nbt
-  properties: { cost: 999, number of beds: 5, workers: 5, food production: 5 }
-  maximum: 1
-  action: BED
+Town Hall:
+  path: [town_hall.nbt]
+  palettes:
+    - cobblestone_var
+    - default_colors
   type: HABITATION
-  palettes: [ cobblestone_var, default_colors ]
-
-- name: Small Town Hall
-  path: small_town_hall.nbt
-  properties: { cost: 999, number of beds: 5, workers: 5, food production: 5 }
+  resource: BED
+  cost: 999
   maximum: 1
-  action: BED
+  workers: 5
+  number-of-beds: 5
+  food-production: 5
+
+Small Town Hall:
+  path: [small_town_hall.nbt]
+  resource: BED
   type: HABITATION
+  cost: 999
+  workers: 5
+  number-of-beds: 5
+  food-production: 5
+  maximum: 1
 
 
-- name: Little House
-  path: house_little.nbt
-  properties: { cost: 5, number of beds: 3 }
+Little House:
+  path: [house_little.nbt]
+  palettes: [housing]
+  resource: BED
+  type: HABITATION
+  cost: 5
   maximum: 3
-  action: BED
-  type: HABITATION
-  palettes: [ housing ]
+  number-of-beds: 3
 
-- name: Farm
-  path: farm.nbt
-  properties: { cost: 5, workers: 2, food production: 5 }
-  maximum: 2
-  action: FOOD
+Farm:
+  path: [farm.nbt]
+  palettes: [housing]
+  resource: FOOD
   type: FARM
-  palettes: [ housing ]
-
-- name: Sawmill
-  path: sawmill.nbt
-  properties: { cost: 5, workers: 2 }
+  cost: 5
+  workers: 2
+  food-production: 5
   maximum: 2
-  action: WORK
+
+Sawmill:
+  path: [sawmill.nbt]
+  palettes: [default_colors]
+  resource: WORK
   type: WOODCUTTING
-  palettes: [ default_colors ]
-
-- name: Mine
-  path: [mine_top.nbt, mine_stairs.nbt, extensions/crane_body.nbt, extensions/crane_rope.nbt, extensions/crane_effector.nbt]
-  properties: { cost: 7, workers: 4 }
+  cost: 5
+  workers: 2
   maximum: 2
-  action: WORK
+
+Mine:
+  path:
+    - mine_top.nbt
+    - mine_stairs.nbt
+    - extensions/crane_body.nbt
+    - extensions/crane_rope.nbt
+    - extensions/crane_effector.nbt
+  palettes: [mine]
+  resource: WORK
   type: MINING
-  palettes: [ mine ]
+  cost: 7
+  workers: 4
+  maximum: 2
 
-- name: Forge
-  path: forge.nbt
-  properties: { cost: 12, workers: 2 }
-  maximum: 1
-  action: WORK
+Forge:
+  path: [forge.nbt]
+  palettes: [forge]
+  resource: WORK
   type: FORGING
-  palettes: [ forge ]
-
-- name: Brickyard
-  path: brickyard.nbt
-  properties: { cost: 12, workers: 1 }
+  cost: 12
   maximum: 1
-  action: WORK
+  workers: 2
+
+Brickyard:
+  path: [brickyard.nbt]
+  palettes: [brickyard]
+  resource: WORK
   type: NONE
-  palettes: [ brickyard ]
-
-- name: Bakery
-  path: bakery.nbt
-  properties: { cost: 12, workers: 1 }
+  cost: 12
   maximum: 1
-  action: FOOD
+  workers: 1
+
+Bakery:
+  path: [bakery.nbt]
+  palettes: [bakery]
+  cost: 12
+  workers: 1
+  maximum: 1
+  resource: FOOD
   type: BAKERY
-  palettes: [ bakery ]
 
-- name: Big House
-  path: big_house.nbt
-  properties: { cost: 12, number of beds: 5 }
-  maximum: 4
-  action: BED
+Big House:
+  path: [big_house.nbt]
+  palettes: [housing]
   type: HABITATION
-  palettes: [ housing ]
+  resource: BED
+  cost: 12
+  maximum: 4
+  number-of-beds: 5
 
-- name: Wheat Pack 1
-  path: extensions/wheat_pack_1.nbt
-  properties: { cost: 20, food production: 5 }
+Wheat Pack 1:
+  path: [extensions/wheat_pack_1.nbt]
+  resource: FOOD
+  type: FARM
+  cost: 20
+  is-extension: true
+  food-production: 5
+
+Wheat Pack 2:
+  path: [extensions/wheat_pack_2.nbt]
+  resource: FOOD
+  type: FARM
+  cost: 20
   extension: true
-  action: FOOD
-  type: FARM
+  food-production: 5
 
-- name: Wheat Pack 2
-  path: extensions/wheat_pack_2.nbt
-  properties: { cost: 20, food production: 5 }
-  extension: true
-  action: FOOD
+Silo tier 1:
+  path: [extensions/silo_t1.nbt]
+  palettes: [default_colors]
+  resource: FOOD
   type: FARM
+  cost: 7
+  food-production: 5
 
-- name: Silo tier 1
-  path: extensions/silo_t1.nbt
-  properties: { cost: 7, food production: 5 }
-  action: FOOD
+Silo tier 2:
+  path: [extensions/silo_t2.nbt]
+  palettes: [default_colors]
   type: FARM
-  palettes: [ default_colors ]
+  resource: FOOD
+  cost: 12
+  food-production: 5
 
-- name: Silo tier 2
-  path: extensions/silo_t2.nbt
-  properties: { cost: 12, food production: 5 }
-  action: FOOD
-  type: FARM
-  palettes: [ default_colors ]
-
-- name: Ore Pack
-  path: extensions/ore_pack.nbt
-  properties: { cost: 25, workers: 1 }
-  extension: true
-  action: WORK
+Ore Pack:
+  path: [extensions/ore_pack.nbt]
+  resource: WORK
   type: FORGING
+  cost: 25
+  workers: 1
+  is-extension: true
 
-- name: Wood Stack
-  path: extensions/wood_stack.nbt
-  properties: { cost: 25, workers: 1 }
-  extension: true
-  action: WORK
+Wood Stack:
+  path: [extensions/wood_stack.nbt]
+  cost: 25
+  workers: 1
+  is-extension: true
+  resource: WORK
   type: WOODCUTTING
 
-- name: Graveyard
-  path: graveyard.nbt
-  properties: { cost: 10, workers: 1 }
+Graveyard:
+  path: [graveyard.nbt]
+  palettes: [graveyard]
+  cost: 10
+  workers: 1
   maximum: 1
-  extension: false
-  action: UTILITY
+  resource: UTILITY
   type: GRAVEYARD
-  palettes: [ graveyard ]
 
-- name: Wedding Totem
-  path: wedding_totem.nbt
-  properties: { cost: 10, workers: 1 }
-  extension: false
+Wedding Totem:
+  path: [wedding_totem.nbt]
+  cost: 10
+  workers: 1
   maximum: 1
-  action: UTILITY
+  resource: UTILITY
   type: WEDDING
-  palettes: [ wedding ]
+  palettes: [wedding]
 
-- name: Tower
-  path: [tower_base.nbt, tower_slice.nbt, tower_top.nbt]
-  properties: { cost: 20, workers: 1 }
+Tower:
+  path:
+    - tower_base.nbt
+    - tower_slice.nbt
+    - tower_top.nbt
+  cost: 20
+  workers: 1
   maximum: 1
-  action: UTILITY
+  resource: UTILITY
   type: HABITATION
-  palettes: [ housing ]
+  palettes: [housing]
 
-- name: Watch Tower
-  path: watch_tower.nbt
-  properties: { cost: 10, workers: 1 }
+Watch Tower:
+  path: [watch_tower.nbt]
+  cost: 10
+  workers: 1
   maximum: 0
-  action: UTILITY
+  resource: UTILITY
   type: NONE
+
+#
 # DECORATIONS
+#
 
-
-- name: Big Tree
-  path: extensions/big_tree.nbt
-  properties: { cost: 0 }
-  extension: true
-  action: DECORATION
+Big Tree:
+  path: [extensions/big_tree.nbt]
+  is-extension: true
+  resource: DECORATION
   type: DECORATION
-  palettes: [ decoration ]
+  palettes: [decoration]
 
-- name: Medium Tree
-  path: extensions/medium_tree.nbt
-  properties: { cost: 0 }
-  extension: true
-  action: DECORATION
+Medium Tree:
+  path: [extensions/medium_tree.nbt]
+  is-extension: true
+  palettes: [decoration]
+  resource: DECORATION
   type: DECORATION
-  palettes: [ decoration ]
+  cost: 0
 
-- name: Small Tree
-  path: extensions/small_tree.nbt
-  properties: { cost: 0 }
-  extension: true
-  action: DECORATION
-  type: DECORATION
+Small Tree:
+  path: [extensions/small_tree.nbt]
   palettes: [ decoration ]
+  is-extension: true
+  resource: DECORATION
+  type: DECORATION
 
 # - name: Fountain
 #   path: extensions/fountain.nbt
 #   properties: { cost: 0 }
 #   extension: true
-#   action: DECORATION
+#   resource: DECORATION
 #   type: DECORATION

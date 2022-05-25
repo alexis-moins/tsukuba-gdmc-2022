@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 
 
@@ -30,3 +31,9 @@ class BuildingType(Enum):
     BAKERY = 9
 
     TOWN_HALL = 10
+
+    @staticmethod
+    def deserialize(_type: str) -> BuildingType:
+        """Return the building type corresponding to the given [_type]"""
+        key = _type.upper()
+        return BuildingType[key]

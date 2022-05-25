@@ -18,17 +18,17 @@ from src.utils.direction import Direction
 class HouseGenerator:
     def __init__(self):
         self.walls: dict[tuple, list[Structure]] = dict()
-        self.walls[(2, 2)] = [Structure.parse_nbt_file('src/walls/wall_2x1_plain_a')]
-        self.walls[(3, 2)] = [Structure.parse_nbt_file('src/walls/wall_3x2_plain_a')]
-        self.walls[(4, 2)] = [Structure.parse_nbt_file('src/walls/wall_4x2_plain_a')]
-        self.walls[(5, 2)] = [Structure.parse_nbt_file('src/walls/wall_5x2_window_a')]
-        self.walls[(6, 2)] = [Structure.parse_nbt_file('src/walls/wall_6x2_window_a')]
-        self.walls[(7, 2)] = [Structure.parse_nbt_file('src/walls/wall_7x2_window_a')]
+        self.walls[(2, 2)] = [Structure.deserialize_nbt_file('src/walls/wall_2x1_plain_a')]
+        self.walls[(3, 2)] = [Structure.deserialize_nbt_file('src/walls/wall_3x2_plain_a')]
+        self.walls[(4, 2)] = [Structure.deserialize_nbt_file('src/walls/wall_4x2_plain_a')]
+        self.walls[(5, 2)] = [Structure.deserialize_nbt_file('src/walls/wall_5x2_window_a')]
+        self.walls[(6, 2)] = [Structure.deserialize_nbt_file('src/walls/wall_6x2_window_a')]
+        self.walls[(7, 2)] = [Structure.deserialize_nbt_file('src/walls/wall_7x2_window_a')]
 
         self.corners: dict[tuple, list[Structure]] = dict()
-        self.corners[(2, 2)] = [Structure.parse_nbt_file('src/corners/corner_2x2_plain_a')]
-        self.corners[(3, 3)] = [Structure.parse_nbt_file('src/corners/corner_3x3_plain_a')]
-        self.corners[(4, 4)] = [Structure.parse_nbt_file('src/corners/corner_4x4_plain_a')]
+        self.corners[(2, 2)] = [Structure.deserialize_nbt_file('src/corners/corner_2x2_plain_a')]
+        self.corners[(3, 3)] = [Structure.deserialize_nbt_file('src/corners/corner_3x3_plain_a')]
+        self.corners[(4, 4)] = [Structure.deserialize_nbt_file('src/corners/corner_4x4_plain_a')]
 
     # Could be a function in construction plot ?
 

@@ -24,7 +24,7 @@ class Structure:
         self.variations: dict[str, BlockList] = dict()
 
     @staticmethod
-    def parse_nbt_file(file_name: str, ) -> Structure:
+    def deserialize_nbt_file(file_name: str, ) -> Structure:
         """Parse the nbt file found under resources.structure.{file_name}.nbt and return a structure object"""
         file = NBTFile(f'resources/structures/{file_name}')
         dimensions = [int(i.valuestr()) for i in file['size']]

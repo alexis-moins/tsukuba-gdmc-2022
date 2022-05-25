@@ -14,7 +14,7 @@ from numpy import ndarray
 from src import env
 from src.blocks.block import Block
 from src.blocks.collections.block_list import BlockList
-from src.simulation.buildings.building_type import BuildingType
+from simulation.buildings.utils.building_type import BuildingType
 from src.utils import math_utils
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
@@ -240,7 +240,7 @@ class Plot:
 
         INTF.sendBlocks()
 
-    @ staticmethod
+    @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
         """Return a new plot created from the given start and end coordinates"""
         return Plot(*start, Size.from_coordinates(start, end))
@@ -250,7 +250,7 @@ class Plot:
         env.get_world_slice()
         self.surface_blocks.clear()
 
-    @ staticmethod
+    @staticmethod
     def _delta_sum(values: list, base: int) -> int:
         return sum(abs(base - v) for v in values)
 
@@ -403,12 +403,14 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None, max_score: int = None) -> Plot | None:
+    def get_subplot(self, building, rotation: int, max_score: int, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
 
-        size = building.get_size(rotation)
+        size = building.get_size()
+
         if max_score is None:
             max_score = size.x * size.z
+
         shift = building.get_entrance_shift(rotation)
 
         if self.graph is None:
@@ -473,13 +475,13 @@ class Plot:
             print(best_coordinates)
             print(coord in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
 
-        if building.properties.building_type is BuildingType.FARM:
-            padding = 8
+        # if building.properties.building_type is BuildingType.FARM:
+        #     padding = 8
 
-        if building.properties.building_type is BuildingType.DECORATION:
-            padding = 2
+        # if building.properties.building_type is BuildingType.DECORATION:
+        #     padding = 2
 
-        for coordinates in sub_plot.surface(padding):
+        for coordinates in sub_plot.surface(building.properties.padding):
 
             self.occupied_coordinates.add(coordinates.as_2D())
 
@@ -517,7 +519,7 @@ class Plot:
         score = coordinates.as_2D().distance(center) * .1
 
         # For mines : Try to place them up a cave
-        if building.properties.building_type == BuildingType.MINING:
+        if building.properties.type == BuildingType.MINING:
             # we shift 10 blocs into the ground and search for air, because that would be a cave.
             # y - 30 to not go too deep
             # x and z shift to get to the center
@@ -585,11 +587,13 @@ class Plot:
             return max_score
 
         # And now modifications for specials buildings
-        relation = env.RELATIONS.get_building_relation(building.name)
+        # relation = env.RELATIONS.get_building_relation(building.name)
+
         score_modif = 0
-        if relation and city_buildings:
-            score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(
-                lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
+        # if relation and city_buildings:
+        #     score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(
+        #         lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
+        # TODO refactor relations!
 
         return score + score_modif
 

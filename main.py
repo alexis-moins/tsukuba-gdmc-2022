@@ -7,7 +7,6 @@ from gdpc import interface as INTERFACE
 from src import env
 from src.blocks.block import Block
 from src.plots.plot import Plot
-from src.simulation.decisions.smart import SmartDecisionMaker
 from src.simulation.simulation import Simulation
 from src.utils.criteria import Criteria
 
@@ -59,8 +58,7 @@ def start_simulation(years: int) -> None:
 
     find_building_materials(build_area)
 
-    decision_maker = SmartDecisionMaker(build_area)
-    simulation = Simulation(build_area, decision_maker, years)
+    simulation = Simulation(build_area, years)
     simulation.start()
 
     INTERFACE.sendBlocks()

@@ -1,31 +1,6 @@
 from src import env
 from src.simulation.buildings.building import Building
-from src.simulation.buildings.building_type import BuildingType
-
-
-class RelationsHandler:
-    def __init__(self, relation_data):
-        self.relations: dict[str | BuildingType, BuildingRelation] = dict()
-
-        for data in relation_data:
-            if 'building' in data:
-                self.relations[data['building']] = BuildingRelation.deserialize(data)
-            else:
-                self.relations[BuildingType[data['building_type']]] = BuildingRelation.deserialize(data)
-
-    def get_building_relation(self, building: str | BuildingType):
-        if isinstance(building, str):
-            if building in self.relations:
-                return self.relations[building]
-            else:
-                building_type = env.BUILDINGS[building].properties.building_type
-        else:
-            building_type = building
-
-        if building_type in self.relations:
-            return self.relations[building_type]
-        else:
-            return None
+from simulation.buildings.utils.building_type import BuildingType
 
 
 class BuildingRelation:
@@ -60,3 +35,29 @@ class BuildingRelation:
     def deserialize(data: dict[str, any]):
 
         return BuildingRelation({BuildingType[k] if k in [bt.name for bt in BuildingType] else k: data['buildings'][k] for k in data['buildings']}, data['blocks'])
+
+
+class RelationsHandler:
+    def __init__(self, relation_data):
+        self.relations: dict[str | BuildingType, BuildingRelation] = dict()
+
+        for data in relation_data:
+            if 'building' in data:
+                self.relations[data['building']] = BuildingRelation.deserialize(data)
+            else:
+                self.relations[BuildingType[data['building_type']]] = BuildingRelation.deserialize(data)
+
+    def get_building_relation(self, building: str | BuildingType) -> BuildingRelation:
+        """"""
+        if isinstance(building, str):
+            if building in self.relations:
+                return self.relations[building]
+            else:
+                building_type = env.BUILDINGS[building].properties.building_type
+        else:
+            building_type = building
+
+        if building_type in self.relations:
+            return self.relations[building_type]
+        else:
+            return None

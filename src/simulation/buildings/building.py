@@ -1,109 +1,100 @@
 from __future__ import annotations
+from abc import ABC, abstractclassmethod
 
 import math
 import random
-import textwrap
-from dataclasses import dataclass
 from dataclasses import replace
-from typing import Any
+from typing import Any, Callable
 
 from colorama import Fore
 from gdpc import interface as INTERFACE
-from gdpc import lookup
+from gdpc import lookup as LOOKUP
 
-from src import env
+from src.simulation.buildings.utils.building_properties import BuildingProperties
+from src.plots.plot import Plot
 from src.blocks.block import Block
-from src.blocks.collections import palette
 from src.blocks.collections.block_list import BlockList
 from src.blocks.collections.palette import OneBlockPalette
 from src.blocks.collections.palette import Palette
-from src.blocks.collections.palette import RandomPalette
 from src.blocks.structure import Structure
-from src.plots.plot import Plot
-from src.simulation.buildings.building_type import BuildingType
+
+from simulation.buildings.utils.building_type import BuildingType
 from src.utils import math_utils
-from src.utils.action_type import ActionType
-from src.utils.coordinates import Coordinates
-from src.utils.coordinates import Size
+
 from src.utils.criteria import Criteria
 from src.utils.direction import Direction
+from src.utils.coordinates import Coordinates, Size
 
 
-@dataclass(kw_only=True)
-class BuildingProperties:
-    """Class representing the properties of a building"""
-    cost: int
-    building_type: BuildingType
-    action_type: ActionType
-    number_of_beds: int = 0
-    workers: int = 0
-    food_production: int = 0
+# Tuple of available adjectives for buildings
+_adjectives = ('beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy', 'cute', 'dangerous', 'dark', 'enchanting', 'evil',
+               'fancy', 'fantastic', 'fragile', 'friendly', 'lazy', 'kind', 'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint')
 
 
-class Building:
-    """Class representing a list of blocks (structure) on a given plot"""
+class AbstractBuilding(ABC):
+    """Represents an abstract building regrouping usefull common methods"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structure: Structure, palettes: list[str] = None,
-                 extension: bool = False, maximum: int = 1):
-        """Parameterised constructor creating a new building"""
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
+        """Creates a new building with the given [name], [properties], basic [structures] and [palettes]
+        that may dynamically change the blocks used in the different structures"""
         self.name = name
-        self.properties = replace(properties)  # Return a copy of the dataclass
-        self.structure = structure
-        self.old_blocks: dict[Block, Block] = {}
-        self.is_extension = extension
-        self.max_number = maximum
-        self.history = []
-
-        self.inhabitants = set()
-        self.workers = set()
-
-        self.plot: Plot = None
-        self.rotation: int = None
-        self.blocks: BlockList = None
-        self.entrances: BlockList = None
-        self.display_name = None
-
+        self.properties = replace(properties)
+        self.structures = structures
         self.palettes = palettes
 
+        self.rotation = random.choice([0, 90, 180, 270])
+        self.adjective = random.choice(_adjectives)
+
+        self.workers = set()
+        self.inhabitants = set()
+
+        self.history = []
+        self.entrance: Coordinates = None
+        self.blocks: dict[Structure, BlockList] = {}
+
+    @abstractclassmethod
+    def build(self, plot: Plot, settlement: Plot) -> None:
+        """Build the building onto the given [plot], using data from the [settlement]"""
+        pass
 
     @staticmethod
-    def deserialize(building_info: dict[str, Any]) -> Building:
-        """Return a new building deserialized from the given dictionary"""
-        original = building_info.copy()
-        properties = {key.replace(' ', '_'): value
-                      for key, value in building_info.pop('properties').items()}
+    def deserialize(name: str, data: dict[str, Any]) -> Building:
+        """Return a new building deserialized from the given [name] and [data]. The returned
+        object might be any subclass of Building as well, one of Mine, Graveyard, Wedding
+        Totem and Tower"""
+        data = dict(data)
 
-        action_type = ActionType[building_info.pop('action').upper()]
-        building_type = BuildingType[building_info.pop('type').upper()]
-        properties = BuildingProperties(**properties,
-                                        action_type=action_type, building_type=building_type)
+        structures = [Structure.deserialize_nbt_file(path) for path in data.pop('path')]
+        palettes = data.pop('palettes', [])
 
-        path = building_info.pop('path')
-        if isinstance(path, list):
-            path = path[0]
-        structure = Structure.parse_nbt_file(path)
-        palettes = building_info.pop('palettes') if 'palettes' in building_info else None
+        properties = BuildingProperties.deserialize(data, data.pop('resource'), data.pop('type'))
 
-        build = Building(properties=properties, structure=structure, palettes=palettes, **building_info)
+        # Getting the class constructor
+        constructor = BUILDING_CLASSES[properties.type] if properties.type in BUILDING_CLASSES else Building
+        return constructor(name, properties, structures, Palette.parse_groups(palettes))
 
-        if build.name == 'Mine':
-            return Mine.deserialize_mine(original, build)
-        elif build.name == 'Graveyard':
-            return Graveyard(parent=build)
-        elif build.name == 'Wedding Totem':
-            return WeddingTotem(parent=build)
-        elif build.name == 'Tower':
-            return Tower.deserialize_tower(original, build)
+    @property
+    def full_name(self) -> str:
+        """Return the full name of the building. Full name is following this particular
+        format: 'The {adjective} {name}' where adjective is randomly generated upon creating
+        the instance, and name is the building's name"""
+        return f'The {self.adjective} {self.name.lower()}'
 
-        return build
-
+    @property
     def has_empty_beds(self) -> bool:
-        """"""
+        """Return true if the building has empty beds, return false otherwise"""
         return len(self.inhabitants) < self.properties.number_of_beds
 
+    @property
     def can_offer_work(self) -> bool:
-        """"""
+        """Return true if the building has available worker slots, return
+        false otherwise"""
         return len(self.workers) < self.properties.workers
+
+    def get_size(self) -> Size:
+        """Return the size of the building considering the building rotation. This method uses the first
+        structure associated with the building as the main building structure abd thus return its size"""
+        return self.structures[0].get_size(self.rotation)
 
     def add_inhabitant(self, villager, year: int) -> None:
         """"""
@@ -116,91 +107,8 @@ class Building:
         """"""
         self.workers.add(villager)
         villager.work_place = self
+
         self.history.append(f'Year {year}:\n {villager.name} has started working at the {self.name.lower()}')
-
-    def get_size(self, rotation: int) -> Size:
-        """Return the size of the building considering the given rotation"""
-        return self.structure.get_size(rotation)
-
-    def get_entrance_shift(self, rotation: int) -> Coordinates:
-        entrances = self.structure.get_blocks(Coordinates(0, 0, 0), rotation).filter('emerald')
-        if not entrances or len(entrances) < 1:
-            return Coordinates(0, 0, 0)
-        return entrances[0].coordinates
-
-    def get_entrance(self) -> Coordinates:
-        if self.entrances:
-            if self.entrances[0]:
-                return self.entrances[0].coordinates
-        return self.plot.start
-
-    def build(self, plot: Plot, rotation: int, city: Plot):
-        """Build the current building onto the building's plot"""
-        self.plot = plot
-        self.rotation = rotation
-        self._build_structure(self.structure, self.plot, self.rotation)
-
-        surface = city.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
-
-        if self.properties.building_type is BuildingType.FARM and not self.is_extension:
-            farm_field: set[Coordinates] = set()
-            for coordinates in self.plot.surface(padding=6):
-                if coordinates not in self.plot and coordinates.as_2D() not in city.all_roads:
-
-                    if (block := surface.find(coordinates.as_2D())) is None:
-                        continue
-
-                    if block.name not in (
-                            'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt', 'minecraft:podzol'):
-                        continue
-
-                    farm_field.add(block.coordinates)
-                    block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
-                    INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
-
-                    if 'farmland' in block_name:
-                        INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(lookup.CROPS))
-
-            INTERFACE.sendBlocks()
-
-            for coordinates in farm_field:
-                block = self.plot.get_block_at(*coordinates)
-                print(block.name)
-                if block.is_one_of('lapis'):
-                    for c in block.neighbouring_coordinates(
-                            (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
-                        if city.get_block_at(*c).name in lookup.AIR + lookup.PLANTS + ('minecraft:snow',):
-                            INTERFACE.placeBlock(*block.coordinates, 'redstone_lamp[lit=true]')
-                        else:
-                            INTERFACE.placeBlock(*block.coordinates, 'water')
-
-        self._place_sign()
-        INTERFACE.sendBlocks()
-
-    def _build_structure(self, structure: Structure, plot: Plot, rotation: int,
-                         force_palette: dict[str, Palette] = None):
-        self.blocks = structure.get_blocks(plot.start, rotation)
-        self.entrances = self.blocks.filter('emerald')
-        # Apply palette
-        if force_palette:
-            self._randomize_building(force_palette)
-        elif self.palettes:
-            self._randomize_building(Palette.assemble([env.ALL_PALETTES[field] for field in self.palettes]))
-
-        for block in self.blocks:
-            INTERFACE.placeBlock(*block.coordinates, block.full_name)
-
-
-    def _place_sign(self):
-        """Place a sign indicating informations about the building"""
-        if not self.blocks:
-            return
-
-        signs = self.blocks.filter('sign')
-        if not signs:
-            return
-
-        signs[0].coordinates.place_sign(self.get_display_name())
 
     def grow_old(self, amount: int) -> None:
         """Make a building grow old"""
@@ -230,7 +138,6 @@ class Building:
                     half = random.choice(['top', 'bottom'])
                     shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
                     replacement = replace(replacement, properties={'facing': facing, 'half': half, 'shape': shape})
-                self.old_blocks[block] = replacement
 
             else:
                 population = (block.name, 'oak_leaves', 'cobweb')
@@ -243,7 +150,6 @@ class Building:
 
                 replacement = Block(name[0], block.coordinates, properties={
                     'persistent': 'true'} if name[0] == 'oak_leaves' else {})
-                self.old_blocks[block] = replacement
 
             INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
 
@@ -282,110 +188,59 @@ class Building:
 
         INTERFACE.sendBlocks()
 
+    def _build_structure(self, structure: Structure, start: Coordinates, palettes: dict[str, Palette] | None = None):
+        """Build the given [structure] at the given [start] coordinates, optionally using the
+        given block [palettes] instead of the palettes from this building"""
+        blocks = structure.get_blocks(start, self.rotation)
+
+        entrance = blocks.filter('emerald').first()
+        self.entrance = entrance.coordinates if entrance else start
+
+        # Use the blocks from the palettes
+        blocks = self._apply_palettes(blocks, palettes)
+        self.blocks[structure] = blocks
+
+        # Actually placing the blocks
+        for block in blocks:
+            INTERFACE.placeBlock(*block.coordinates, block.full_name)
+
+    def _apply_palettes(self, blocks: BlockList, palettes: dict[str, Palette] | None = None):
+        """Return a modified version of the given [blocks]. Modification are made according
+        to the given [palettes] of blocks"""
+        palettes = palettes if palettes else self.palettes
+
+        new_blocks = [palettes[block.name].get_block(block)
+                      if block.name in palettes else block
+                      for block in blocks]
+
+        return BlockList(new_blocks)
+
+    def _place_sign(self):
+        """Place a sign indicating informations about the building"""
+        signs = self.blocks.filter('sign')
+        if not signs:
+            return
+
+        signs[0].coordinates.place_sign(self.full_name())
+
     def __str__(self) -> str:
-        """Return the string representation of the current building"""
+        """Return the string representation of the building"""
         return f'{Fore.MAGENTA}{self.name}{Fore.WHITE}'
 
-    def _randomize_building(self, palettes: dict[str, Palette | list]):
-        """Create a new block list with modified blocks according to given palettes"""
-        new_block_list = []
 
-        # prepare palettes
-        for key in palettes:
-            if isinstance(palettes[key], list):
-                palettes[key] = palette.OneBlockPalette(palettes[key])
-        for b in self.blocks:
-            current_name = b.name.replace('minecraft:', '')
-            if current_name in palettes:
-                new_block_list.append(b.with_name(palettes[current_name].get_block_name()))
-            else:
-                new_block_list.append(b)
+class Building(AbstractBuilding):
+    """Represents a generic building"""
 
-        self.blocks = BlockList(new_block_list)
+    def build(self, plot: Plot, settlement: Plot):
+        """Build the building onto the given [plot], using data from the [settlement]"""
+        for structure in self.structures:
+            self._build_structure(structure, plot.start)
 
-    def get_display_name(self):
-        if not self.display_name:
-            adjectives = ['beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy',
-                          'cute',
-                          'dangerous', 'dark', 'enchanting', 'evil', 'fancy', 'fantastic', 'fragile', 'friendly',
-                          'lazy',
-                          'kind',
-                          'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint']
-            self.display_name = f'The {random.choice(adjectives)} {self.name.lower()}'
-        return self.display_name
-
-
-class ChildBuilding(Building):
-    def __init__(self, parent: Building):
-        super().__init__(parent.name, parent.properties, parent.structure, palettes=parent.palettes,
-                         extension=parent.is_extension, maximum=parent.max_number)
-
-
-class Mine(ChildBuilding):
-    def __init__(self, parent, structures):
-        super().__init__(parent)
-        self.structures = structures
-        self.depth = None
-
-    @staticmethod
-    def deserialize_mine(building: dict[str, Any], parent: Building) -> Building:
-        """Return a new building deserialized from the given dictionary"""
-        structures = [Structure.parse_nbt_file(file) for file in building['path']]
-        return Mine(parent, structures)
-
-    def build(self, plot: Plot, rotation: int, city: Plot):
-        if not self.depth:
-            self.depth = random.randint(2, 10)
-
-        self.plot = plot
-        self.rotation = rotation
-        rotations = [270, 180, 90, 0]
-        rotation_index = rotations.index(rotation) + 2  # set as starting rotation | need a 180 rotation between the
-        # 2 modules
-
-        start = plot.start
-        plot.start = plot.start.shift(y=1)
-
-        for i in range(self.depth):
-            rotation_index = (rotation_index + 1) % 4
-            plot.start = plot.start.shift(y=-5)
-
-            self._build_structure(self.structures[1], plot, rotations[rotation_index])
-
-        plot.start = start  # reset start
-
-        self._build_structure(self.structures[0], plot, rotation)
-
-        # 1/2 chances of building a crane
-        if random.randint(0, 1):
-            # Yes it is cheating, but if you can, do it with a proper rotation system.
-            if rotation == 0:
-                plot.start = start.shift(x=-1, y=2, z=4)
-            elif rotation == 90:
-                plot.start = start.shift(x=-1, y=2, z=-1)
-            elif rotation == 180:
-                plot.start = start.shift(x=4, y=2, z=-1)
-            elif rotation == 270:
-                plot.start = start.shift(x=4, y=2, z=4)
-
-            self._build_structure(self.structures[2], plot, rotation)
-
-            plot.start = start.shift(x=4, y=4, z=4)
-            max_depth = self.depth * 5 - 6
-            rope_length = random.randint(1, max_depth)
-            for i in range(rope_length):
-                self._build_structure(self.structures[3], plot, rotation)
-                plot.start = plot.start.shift(y=-1)
-            plot.start = plot.start.shift(y=-5)
-            self._build_structure(self.structures[4], plot, rotation)
-
-        plot.start = start  # reset start
-        self.entrances = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
 
 
-class Tower(ChildBuilding):
+class Tower(Building):
     def __init__(self, parent, structures):
         super().__init__(parent)
         self.structures = structures
@@ -394,29 +249,29 @@ class Tower(ChildBuilding):
         self.plot = plot
         self.rotation = rotation
         start = plot.start
-        dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in lookup.COLORS])}
-        self._build_structure(self.structures[0], plot, rotation, force_palette=dict_palette)
+        dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in LOOKUP.COLORS])}
+        self._build_structure(self.structures[0], plot, rotation, palettes=dict_palette)
 
         plot.start = plot.start.shift(y=4)
 
         for i in range(random.randint(10, min(30, 255 - self.plot.start.y))):
-            self._build_structure(self.structures[1], plot, rotation, force_palette=dict_palette)
+            self._build_structure(self.structures[1], plot, rotation, palettes=dict_palette)
             plot.start = plot.start.shift(y=1)
 
-        self._build_structure(self.structures[2], plot, rotation, force_palette=dict_palette)
+        self._build_structure(self.structures[2], plot, rotation, palettes=dict_palette)
         plot.start = start  # reset start
-        self.entrances = self.blocks.filter('emerald')
+        self.entrance = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
 
-    @staticmethod
+    @ staticmethod
     def deserialize_tower(building: dict[str, Any], parent: Building) -> Building:
         """Return a new building deserialized from the given dictionary"""
-        structures = [Structure.parse_nbt_file(file) for file in building['path']]
+        structures = [Structure.deserialize_nbt_file(file) for file in building['path']]
         return Tower(parent, structures)
 
 
-class ChildWithSlots(ChildBuilding):
+class BuildingWithSlots(Building):
     def __init__(self, parent: Building, slot_pattern: str):
         super().__init__(parent)
         self.free_slots: list[Block] = []
@@ -424,7 +279,7 @@ class ChildWithSlots(ChildBuilding):
         self.slot_block = slot_pattern
 
     def build(self, plot: Plot, rotation: int, city: Plot):
-        self.free_slots = list(self.structure.get_blocks(plot.start, rotation).filter(self.slot_block))
+        self.free_slots = list(self.structures.get_blocks(plot.start, rotation).filter(self.slot_block))
         super().build(plot, rotation, city)
 
     def get_free_slot(self):
@@ -435,7 +290,7 @@ class ChildWithSlots(ChildBuilding):
         return slot
 
 
-class Graveyard(ChildWithSlots):
+class Graveyard(BuildingWithSlots):
     def __init__(self, parent: Building):
         super().__init__(parent, 'diamond_block')
 
@@ -443,8 +298,8 @@ class Graveyard(ChildWithSlots):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
-            if self.entrances and self.entrances[0]:
-                sign_angle = slot.coordinates.angle(self.entrances[0].coordinates)
+            if self.entrance and self.entrance[0]:
+                sign_angle = slot.coordinates.angle(self.entrance[0].coordinates)
                 slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
                                                        replace_block=True,
                                                        rotation=math_utils.radian_to_orientation(sign_angle,
@@ -459,11 +314,127 @@ class Graveyard(ChildWithSlots):
         pass
 
 
-class WeddingTotem(ChildWithSlots):
+class WeddingTotem(BuildingWithSlots):
     def __init__(self, parent: Building):
         super().__init__(parent, 'cornflower')
 
     def add_wedding(self):
         slot = super().get_free_slot()
         if slot:
-            INTERFACE.placeBlock(*slot.coordinates, random.choice(lookup.FLOWERS))
+            INTERFACE.placeBlock(*slot.coordinates, random.choice(LOOKUP.FLOWERS))
+
+
+class Farm(Building):
+    """"""
+
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: list[str] = None):
+        """Creates a new building with the given [name], [properties] and basic [structure].
+        Optionally, a [palette] can may be specified to dynamically change the blocks of the
+        structure when generating on a plot"""
+        super().__init__(name, properties, structures, palettes)
+
+    def build(self, plot: Plot, settlement: Plot) -> None:
+        """"""
+        super().build(plot, settlement)
+
+        surface = settlement.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+
+        farm_field: set[Coordinates] = set()
+        for coordinates in plot.surface(padding=6):
+            if coordinates not in plot and coordinates.as_2D() not in settlement.all_roads:
+
+                if (block := surface.find(coordinates.as_2D())) is None:
+                    continue
+
+                if block.name not in (
+                        'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt', 'minecraft:podzol'):
+                    continue
+
+                farm_field.add(block.coordinates)
+                block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
+                INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
+
+                if 'farmland' in block_name:
+                    INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(LOOKUP.CROPS))
+
+        INTERFACE.sendBlocks()
+
+        for coordinates in farm_field:
+            block = plot.get_block_at(*coordinates)
+            # print(block.name)
+            if block.is_one_of('lapis'):
+                for c in block.neighbouring_coordinates(
+                        (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
+                    if settlement.get_block_at(*c).name in LOOKUP.AIR + LOOKUP.PLANTS + ('minecraft:snow',):
+                        INTERFACE.placeBlock(*block.coordinates, 'redstone_lamp[lit=true]')
+                    else:
+                        INTERFACE.placeBlock(*block.coordinates, 'water')
+
+
+class Mine(Building):
+    """"""
+
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette] | None = None):
+        """Creates a new building with the given [name], [properties] and basic [structure].
+        Optionally, a [palette] can may be specified to dynamically change the blocks of the
+        structure when generating on a plot"""
+        super().__init__(name, properties, structures, palettes)
+        self.floor_number: int = random.randint(2, 10)
+
+    def build(self, plot: Plot, settlement: Plot):
+        """"""
+        # set as starting rotation | need a 180 rotation between the 2 modules
+        rotation_index = (270, 180, 90, 0).index(self.rotation) + 2
+
+        stairs_start = plot.start.shift(y=1)
+        for _ in range(self.floor_number):
+            # Shift every coordinates by 180 at each iteration
+            rotation_index = (rotation_index + 1) % 4
+            stairs_start = stairs_start.shift(y=-5)
+
+            self._build_structure(self.structures[1], stairs_start)
+
+        self._build_structure(self.structures[0], plot.start)
+
+        # 1/2 chances of building a crane
+        if random.randint(0, 1):
+            self._build_crane(plot.start)
+
+        self.entrance = self.blocks.filter('emerald')
+        self._place_sign()
+        INTERFACE.sendBlocks()
+
+    def _build_crane(self, start: Coordinates) -> None:
+        """Build a crane on top of the mine, """
+        crane_coordinates = self.__get_crane_coordinates(start)
+        self._build_structure(self.structures[2], crane_coordinates)
+
+        center = start.shift(x=4, y=4, z=4)
+        rope_length = random.randint(1, self.floor_number * 5 - 6)
+
+        for _ in range(rope_length):
+            self._build_structure(self.structures[3], center)
+            center = center.shift(y=-1)
+
+        self._build_structure(self.structures[4], center.shift(y=-1))
+
+    def __get_crane_coordinates(self, start: Coordinates) -> Coordinates:
+        """Return the starting position of the crane on the form of coordinates, relatively
+        to the given [start]ing coordinates"""
+        if self.rotation == 0:
+            return start.shift(x=-1, y=2, z=4)
+
+        if self.rotation == 90:
+            return start.shift(x=-1, y=2, z=-1)
+
+        if self.rotation == 180:
+            return start.shift(x=4, y=2, z=-1)
+
+        return start.shift(x=4, y=2, z=4)
+
+
+    # Default dictionary mapping building type to their Building object
+BUILDING_CLASSES: dict[BuildingType, Callable[..., Building]] = {
+    BuildingType.FARM: Farm,
+    BuildingType.MINING: Mine
+}

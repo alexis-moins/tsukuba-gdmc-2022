@@ -2,6 +2,7 @@ import random
 import textwrap
 import time
 from collections import Counter
+from typing import Any
 
 from colorama import Fore
 from gdpc import interface
@@ -13,7 +14,7 @@ from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building import Graveyard
 from src.simulation.buildings.building import WeddingTotem
-from src.simulation.buildings.building_type import BuildingType
+from simulation.buildings.utils.building_type import BuildingType
 from src.utils.criteria import Criteria
 
 
@@ -27,7 +28,7 @@ with open('resources/last-names.txt', 'r') as file:
 class Villager:
     """"""
 
-    def __init__(self, birth_year: int) -> None:
+    def __init__(self, birth_year: int = 0) -> None:
         """"""
         self.name = f'{random.choice(_first_names)} {random.choice(_last_names)}'
         self.productivity = 1
@@ -44,20 +45,32 @@ class Villager:
             self.house.history.append(f'{self.name} died at {year} of {cause}')
 
 
-class City:
-    def __init__(self, plot: Plot, start_year: int):
-        """"""
+class Settlement:
+    """Represents a settlement, with villagers and buildings"""
+
+    def __init__(self, plot: Plot):
+        """Creates a new settlement on the given [plot]. The settlement starts with a
+        default population of 5 and a default food stock of 5."""
         self.plot = plot
+
+        # TODO change into a dict str, Building
         self.buildings: list[Building] = []
+
+        self.deserialized_buildings = {}
+
+        # TODO get rid of this
         self.graveyard: Graveyard | None = None
         self.wedding_totem: WeddingTotem | None = None
-        self.start_year = start_year
 
-        self.inhabitants = [Villager(start_year) for _ in range(5)]
+        self.counter = Counter()
+
+        self.inhabitants = [Villager() for _ in range(5)]
+
         self.food_available = 5
 
         self.possible_light_blocks = ('minecraft:shroomlight', 'minecraft:sea_lantern',
-                                      'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]')
+                                      'minecraft:glowstone')
+
         self.road_light = random.choice(self.possible_light_blocks)
 
     @property
@@ -65,37 +78,81 @@ class City:
         """Return the number of inhabitants in the city"""
         return len(self.inhabitants)
 
+    @property
     def inactive_villagers(self) -> list[Villager]:
         """Return the list of all villagers that don't have a job"""
         return [villager for villager in self.inhabitants if villager.work_place is None]
 
+    @property
     def homeless_villagers(self) -> list[Villager]:
-        """return the list of all villagers that don't have a house"""
+        """Return the list of all villagers that don't have a house"""
         return [villager for villager in self.inhabitants if villager.house is None]
 
     @property
     def number_of_beds(self) -> int:
-        """Return the number of beds in the city"""
+        """Return the total number of beds in the city"""
         return sum(building.properties.number_of_beds for building in self.buildings)
 
-    def add_building(self, building: Building, plot: Plot, rotation: int) -> None:
-        """Add a new building to the current city"""
+    @property
+    def worker_number(self) -> int:
+        """Return the total number of workers in the settlement, that is to say
+        of villagers with a job"""
+        return sum(len(building.workers) for building in self.buildings)
+
+    @property
+    def total_worker_slots(self) -> int:
+        """Return the maximum number of workers that can work in the settlement"""
+        return sum(building.properties.workers for building in self.buildings)
+
+    @property
+    def food_production(self):
+        return sum(building.properties.food_production for building in self.buildings)
+
+    def get_constructible_buildings(self) -> list[Building]:
+        """Return the available buildings of the year in the form of a list of Building objects
+
+        Constructible buildings are selected based on the following criteriae:
+        - its cost (in production points) is <= to the current production points of the city
+        - its type is not one of DECORATION
+        - the city has not reached the maximum number for this buildings"""
+        return [Building.deserialize(name, data) for name, data in env.BUILDINGS.items()
+                if self.is_building_constructible(name, data)]
+
+    def is_building_constructible(self, name: str, data: dict[str, Any]) -> bool:
+        """Return true if the building is constructible, false if it is not. The building is formed
+        by the given [name] associated with the given [data]"""
+        return data.get('cost', 0) <= self.worker_number and data['type'] != 'DECORATION' \
+            and self.counter[name] < data.get('maximum', 1)
+
+    def add_building(self, building: Building, max_score: int = None) -> bool:
+        """Add the given [building] to this settlement. If no available plot is found, the function
+        returns false and the building is not built. Return true upon successful construction of the
+        building. Additionally, a [max score] parameter may tell the inner logic after what score it
+        should give the current plot up when looking for a decent spot on the map"""
+        plot = self.plot.get_subplot(building, building.rotation,
+                                     max_score, city_buildings=self.buildings)
+
+        if plot is None:
+            return False
+
+        self.build(building, plot)
+        self.counter[building.name] += 1
+        print(self.counter)
+
+        return True
+
+    def build(self, building: Building, plot: Plot) -> None:
+        """Build the given [building] on a [plot]. If you don't have a plot for your building yet,
+        consider calling the add_building method instead"""
 
         if isinstance(building, Graveyard):
             self.graveyard = building
         elif isinstance(building, WeddingTotem):
             self.wedding_totem = building
 
-        padding = 5
-        if building.properties.building_type is BuildingType.FARM or building.properties.building_type is BuildingType.WOODCUTTING:
-            padding = 8
-
-        if building.properties.building_type is BuildingType.DECORATION:
-            padding = 2
-
         area_with_padding = BlockList(
             list(map(lambda coord: self.plot.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coord),
-                     filter(lambda coord: coord in self.plot, plot.surface(padding)))))
+                     filter(lambda coord: coord in self.plot, plot.surface(building.properties.padding)))))
 
         plot.remove_trees(area_with_padding)
         time.sleep(2)
@@ -104,10 +161,10 @@ class City:
 
         print(f'{building} added to the settlement')
 
-        building.build(plot, rotation, self.plot)
+        building.build(plot, self.plot)
         self.buildings.append(building)
 
-        if len(self.buildings) > 1 and not self.buildings[-1].is_extension:
+        if len(self.buildings) > 1 and not self.buildings[-1].properties.is_extension:
             if env.DEBUG:
                 print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
 
@@ -115,25 +172,11 @@ class City:
             i = 0
             max_i = len(self.buildings) - 1
             while not road_done and i < max_i:
-                end = self.buildings[i].get_entrance()
-                start = self.buildings[-1].get_entrance()
+                end = self.buildings[i].entrance
+                start = self.buildings[-1].entrance
 
                 road_done = self.plot.compute_roads(start, end)
                 i += 1
-
-    @property
-    def production_points(self) -> int:
-        """"""
-        return sum(len(building.workers) for building in self.buildings)
-
-    @property
-    def available_production(self) -> int:
-        """"""
-        return sum(building.properties.workers for building in self.buildings)
-
-    @property
-    def food_production(self):
-        return sum(building.properties.food_production for building in self.buildings)
 
     def update(self, year: int) -> None:
         """Update the city's indicators"""
@@ -168,7 +211,7 @@ class City:
         # First, give every homeless villager a house (if possible)
         available_houses = [building for building in self.buildings if building.has_empty_beds()]
 
-        for villager in self.homeless_villagers():
+        for villager in self.homeless_villagers:
             if not available_houses:
                 break
 
@@ -181,7 +224,7 @@ class City:
         # Then, give every inactive villager a place to work at (if possible)
         available_work_places = [building for building in self.buildings if building.can_offer_work()]
 
-        for villager in self.inactive_villagers():
+        for villager in self.inactive_villagers:
             if not available_work_places:
                 break
 
@@ -191,38 +234,18 @@ class City:
             if work_place.can_offer_work():
                 available_work_places.append(work_place)
 
-    def make_buildings_grow_old(self) -> None:
-        """"""
-        print(f'=> Deteriorating {Fore.RED}[{len(self.buildings)}]{Fore.WHITE} building(s)')
-
-        for building in self.buildings:
-            building.grow_old(env.DETERIORATION)
-
-    def repair_buildings(self):
-        """"""
-        print(f'=> Repairing deteriorated buildings')
-
-        for building in self.buildings:
-            if building.old_blocks:
-
-                if building.properties.workers == len(building.workers) and building.properties.number_of_beds == len(building.inhabitants):
-                    building.repair(len(building.old_blocks))
-                else:
-                    building.repair(len(building.old_blocks) // 2)
-
     def display(self) -> None:
         """Display a summary of the city at the end of the current year"""
         print('==== Summary ====')
         print(
-            f'\n   Population: {Fore.GREEN}{self.population}/{self.number_of_beds}{Fore.WHITE} ({Fore.GREEN}{len(self.inactive_villagers())}{Fore.WHITE} inactive)')
+            f'\n   Population: {Fore.GREEN}{self.population}/{self.number_of_beds}{Fore.WHITE} ({Fore.GREEN}{len(self.inactive_villagers)}{Fore.WHITE} inactive)')
         print(f'   Food: {Fore.GREEN}{self.food_available}{Fore.WHITE} ({Fore.GREEN}{self.food_production}{Fore.WHITE} per year)')
-        print(f'   Work: {Fore.GREEN}{self.production_points}/{self.available_production}{Fore.WHITE}')
+        print(f'   Work: {Fore.GREEN}{self.worker_number}/{self.total_worker_slots}{Fore.WHITE}')
 
         print(f'\n   Buildings {Fore.GREEN}[{len(self.buildings)}]{Fore.WHITE}\n')
 
-        counter = Counter([building.name for building in self.buildings])
         buildings = "\n      ".join(textwrap.wrap(
-            ", ".join([f"{building.name}: {Fore.GREEN}{counter[building.name]}/{building.max_number}{Fore.WHITE}" for building in self.buildings])))
+            ", ".join([f"{building.name}: {Fore.GREEN}{self.counter[building.name]}/{building.properties.maximum}{Fore.WHITE}" for building in self.buildings])))
         print(f'\n      {buildings}')
 
     def wedding(self):
@@ -237,7 +260,7 @@ class City:
         self.inhabitants.remove(villager)
 
     def spawn_villagers_and_guards(self):
-        x, y, z = self.buildings[0].entrances[0].coordinates
+        x, y, z = self.buildings[0].entrance[0].coordinates
         for villager in self.inhabitants:
             interface.runCommand(f'summon villager {x} {y + 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
         for i in range(random.randint(5, 15)):

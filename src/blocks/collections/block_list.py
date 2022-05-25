@@ -74,6 +74,10 @@ class BlockList(Sequence):
         """Return the current block list converted into a block set"""
         return BlockSet(self)
 
+    def first(self) -> Block | None:
+        """Return the first block of the block list or None if there are no blocks"""
+        return self.__blocks[0] if self.__blocks else None
+
     def __iter__(self) -> Generator[Block]:
         """Return a generator of the blocks in the current list"""
         return (block for block in self.__blocks)
