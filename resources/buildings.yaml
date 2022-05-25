@@ -32,7 +32,7 @@
 - name: Little House
   path: house_little.nbt
   properties: { cost: 5, number of beds: 3 }
-  maximum: 3
+  maximum: 5
   action: BED
   type: HABITATION
   palettes: [ housing ]
@@ -40,7 +40,7 @@
 - name: Farm
   path: farm.nbt
   properties: { cost: 5, workers: 2, food production: 5 }
-  maximum: 2
+  maximum: 8
   action: FOOD
   type: FARM
   palettes: [ housing ]
@@ -48,7 +48,7 @@
 - name: Sawmill
   path: sawmill.nbt
   properties: { cost: 5, workers: 2 }
-  maximum: 2
+  maximum: 4
   action: WORK
   type: WOODCUTTING
   palettes: [ default_colors ]
@@ -56,7 +56,7 @@
 - name: Mine
   path: [mine_top.nbt, mine_stairs.nbt, extensions/crane_body.nbt, extensions/crane_rope.nbt, extensions/crane_effector.nbt]
   properties: { cost: 7, workers: 4 }
-  maximum: 2
+  maximum: 5
   action: WORK
   type: MINING
   palettes: [ mine ]
@@ -64,7 +64,7 @@
 - name: Forge
   path: forge.nbt
   properties: { cost: 12, workers: 2 }
-  maximum: 1
+  maximum: 3
   action: WORK
   type: FORGING
   palettes: [ forge ]
@@ -72,7 +72,7 @@
 - name: Brickyard
   path: brickyard.nbt
   properties: { cost: 12, workers: 1 }
-  maximum: 1
+  maximum: 6
   action: WORK
   type: NONE
   palettes: [ brickyard ]
@@ -80,7 +80,7 @@
 - name: Bakery
   path: bakery.nbt
   properties: { cost: 12, workers: 1 }
-  maximum: 1
+  maximum: 3
   action: FOOD
   type: BAKERY
   palettes: [ bakery ]
@@ -88,7 +88,7 @@
 - name: Big House
   path: big_house.nbt
   properties: { cost: 12, number of beds: 5 }
-  maximum: 4
+  maximum: 15
   action: BED
   type: HABITATION
   palettes: [ housing ]
@@ -156,7 +156,7 @@
 - name: Tower
   path: [tower_base.nbt, tower_slice.nbt, tower_top.nbt]
   properties: { cost: 20, workers: 1 }
-  maximum: 1
+  maximum: 3
   action: UTILITY
   type: HABITATION
   palettes: [ housing ]

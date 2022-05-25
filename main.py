@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import click
 from colorama import Fore
 from gdpc import interface as INTERFACE
@@ -21,11 +23,17 @@ from src.utils.criteria import Criteria
 @click.option('-y', '--years', default=40, type=int, show_default=True, help='The number of years during which the simulation will run')
 @click.option('-d', '--deterioration', default=5, type=int, show_default=True, help='The percentage of blocks in a building that will suffer from the passing of time')
 @click.option('-a', '--auto-build-area', default=False, is_flag=True, type=bool, show_default=True, help='Automatically set the build area around the player\'s current position')
-def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bool, drops: bool, years: int, deterioration: int, auto_build_area: bool) -> None:
+@click.option('--show-time', default=False, is_flag=True, type=bool, show_default=True, help='Show time taken during generation')
+def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bool, drops: bool, years: int, deterioration: int, auto_build_area: bool, show_time: bool) -> None:
     """Prepare the environment using CLI options"""
     env.DEBUG = debug
     env.TP = tp
     env.DETERIORATION = deterioration
+    env.SHOW_TIME = show_time
+
+    if env.SHOW_TIME:
+        env.start_time = time.time()
+        print("Starting timer !")
 
     print()
 
@@ -43,6 +51,10 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bo
     INTERFACE.runCommand(f'gamerule randomTickSpeed {tick_speed}')
 
     start_simulation(years)
+
+    if env.SHOW_TIME:
+        time_took = time.time() - env.start_time
+        print(f'Process took {time_took:.2f} s.')
 
 
 def start_simulation(years: int) -> None:

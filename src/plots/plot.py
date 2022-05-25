@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import time
 from collections import defaultdict
 from typing import Generator
 
@@ -56,6 +57,7 @@ class Plot:
         self.water_mode = 'water' in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).most_common
 
     def fill_graph(self):
+        start = time.time()
         self.graph = nx.Graph()
         if self.steep_map is None:
             self.compute_steep_map()
@@ -71,6 +73,10 @@ class Plot:
                     if malus > 15:
                         malus = min(malus * 100, 100_000)
                     self.graph.add_edge(coordinates, coord, weight=100 + malus * 10)
+
+        if env.SHOW_TIME:
+            time_took = time.time() - start
+            print(f'Computed graph in {time_took:.2f} s.')
 
     def equalize_roads(self):
         if len(self.all_roads) < 1:
@@ -167,6 +173,7 @@ class Plot:
         self.occupied_coordinates.add(road_coord)
 
     def compute_roads(self, start: Coordinates, end: Coordinates) -> bool:
+        time_start = time.time()
         if self.graph is None:
             self.fill_graph()
 
@@ -203,6 +210,10 @@ class Plot:
         for c1, c2 in zip(path[:-2], path[1:]):
             if self.graph.has_edge(c1, c2):
                 self.graph[c1][c2]['weight'] = 10
+
+        if env.SHOW_TIME:
+            time_took = time.time() - time_start
+            print(f'Computed road from {start} to {end} in {time_took:.2f} s.')
 
         return True
 
@@ -405,11 +416,13 @@ class Plot:
 
     def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None, max_score: int = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
+        start = time.time()
 
         size = building.get_size(rotation)
         if max_score is None:
             max_score = size.x * size.z
         shift = building.get_entrance_shift(rotation)
+        accepted_score = min(size.x, size.z)
 
         if self.graph is None:
             self.fill_graph()
@@ -423,32 +436,24 @@ class Plot:
             excluded = ('lava',)
         surface = surface.without(excluded).not_inside(self.occupied_coordinates)
 
-        random_blocks = int(len(surface) * (10 / 100))
+        random_blocks = min(int(len(surface) * (20 / 100)), 8000)  # more than 8000 should be overkill, our
+        # average plot area should like 60k blocks
 
         blocks_to_check = surface.random_elements(random_blocks)
 
         if self.priority_blocks is None:
             self.compute_steep_map()
-
             if env.DEBUG:
                 self.visualize_steep_map()
 
-        blocks_to_check = self.priority_blocks + blocks_to_check
+        # Take 10 % of the best coordinates + a % of the rest, randomly
+        blocks_to_check = self.priority_blocks.random_elements(max(1, int(len(self.priority_blocks) * 1/10))) + blocks_to_check
         if env.DEBUG:
             print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
 
-        # DEBUG
-        if env.DEBUG and False:
-            colors = list(lookup.COLORS)
-            random.shuffle(colors)
-            for block in surface:
-                INTF.placeBlock(*block.coordinates, colors[0] + '_wool')
-
-            INTF.sendBlocks()
-
         # >Get the minimal score in the coordinate list
         min_score = max_score
-
+        amount_of_block_checked = 0
         for block in blocks_to_check:
             block_score = self.__get_score(coordinates=block.coordinates, surface=surface, max_score=max_score,
                                            best_current_score=min_score, building=building, size=size, shift=shift,
@@ -457,6 +462,10 @@ class Plot:
             if block_score < min_score:
                 best_coordinates = block.coordinates
                 min_score = block_score
+
+            if block_score < accepted_score:
+                break
+            amount_of_block_checked += 1
 
         if env.DEBUG:
             print(f'Best score : {min_score}')
@@ -494,6 +503,11 @@ class Plot:
         if env.DEBUG:
             self.visualize_roads(10)
             self.visualize_graph()
+
+        if env.SHOW_TIME:
+            time_took = time.time() - start
+            print(f'Found plot for building {building.name} in {time_took:.2f} s.')
+            print(f'Check {amount_of_block_checked}, average : { amount_of_block_checked / time_took :.2f} blocks per seconds.')
 
         return sub_plot
 

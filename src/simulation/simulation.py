@@ -1,5 +1,6 @@
 import math
 import random
+import time
 from cgitb import lookup
 from collections import Counter
 from copy import copy
@@ -153,6 +154,7 @@ class Simulation:
         self.history: list[str] = []
 
     def start(self):
+        time_start = time.time()
         year = 1
 
         # If you have multiple cities, just give a subplot here
@@ -160,6 +162,9 @@ class Simulation:
         self.decision_maker.city = self.city
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
+
+        if env.SHOW_TIME:
+            print(f'Current time {time.time() - env.start_time:.2f} s.')
 
         town_hall = env.BUILDINGS['Town Hall']
         rotation = self.decision_maker.get_rotation()
@@ -208,32 +213,42 @@ class Simulation:
 
         self.city.end_simulation()
 
-        for building in random.sample(self.city.buildings, k=math.ceil(0.3 * len(self.city.buildings))):
-            building.grow_old(random.randint(65, 80))
+        if env.SHOW_TIME:
+            time_took = time.time() - time_start
+            print(f'Finished simulation in {time_took:.2f} s.')
+            print(f'Done {year} years, average : {time_took / max(1, year):.2f} s per year.')
 
-        decoration_buildings = [building for building in env.BUILDINGS.values()
-                                if building.properties.building_type is BuildingType.DECORATION]
+        # time_decoration = time.time()
+        # for building in random.sample(self.city.buildings, k=math.ceil(0.3 * len(self.city.buildings))):
+        #     building.grow_old(random.randint(65, 80))
+        #
+        # decoration_buildings = [building for building in env.BUILDINGS.values()
+        #                         if building.properties.building_type is BuildingType.DECORATION]
 
-        print('\nAdding decorations:')
-        for decoration in random.choices(decoration_buildings, k=len(self.city.buildings) * 2):
-            rotation = self.decision_maker.get_rotation()
-            plot = self.city.plot.get_subplot(decoration, rotation)
-
-            if plot is not None:
-                if plot.water_mode:
-                    continue
-                else:
-                    self.city.add_building(decoration, plot, rotation)
-
-        coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.plot.occupied_coordinates
-        surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
-
-        chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
-
-        for coord, flower in zip(chosen_coords,
-                                 random.choices(lookup.SHORTFLOWERS + ('minecraft:lantern',), k=len(chosen_coords))):
-            if (real_block := surface.find(coord)).is_one_of('grass_block'):
-                interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
+        # print('\nAdding decorations:')
+        # for decoration in random.choices(decoration_buildings, k=len(self.city.buildings) * 2):
+        #     rotation = self.decision_maker.get_rotation()
+        #     plot = self.city.plot.get_subplot(decoration, rotation)
+        #
+        #     if plot is not None:
+        #         if plot.water_mode:
+        #             continue
+        #         else:
+        #             self.city.add_building(decoration, plot, rotation)
+        #
+        # coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.plot.occupied_coordinates
+        # surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
+        #
+        # chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
+        #
+        # for coord, flower in zip(chosen_coords,
+        #                          random.choices(lookup.SHORTFLOWERS + ('minecraft:lantern',), k=len(chosen_coords))):
+        #     if (real_block := surface.find(coord)).is_one_of('grass_block'):
+        #         interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
+        #
+        # if env.SHOW_TIME:
+        #     time_took = time.time() - time_decoration
+        #     print(f'Added decoration in {time_took:.2f} s.')
 
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{year}/{self.years}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
@@ -275,6 +290,10 @@ class Simulation:
 
         interface.setBuffering(True)
         interface.sendBlocks()
+
+        if env.SHOW_TIME:
+            time_took = time.time() - time_start
+            print(f'Generation done in {time_took:.2f} s.')
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings for the year"""

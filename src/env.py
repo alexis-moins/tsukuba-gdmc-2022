@@ -1,3 +1,4 @@
+import time
 from dataclasses import dataclass
 from time import sleep
 from typing import Any
@@ -31,6 +32,9 @@ TP = True
 # The percentage of blocks in a building that will suffer from the passing of time
 DETERIORATION = 10
 
+SHOW_TIME = False
+start_time = time.time()
+
 
 @dataclass(frozen=True)
 class BuildArea:
@@ -48,7 +52,7 @@ def get_build_area(auto_build_area: bool = False) -> BuildArea:
     """Get the BUILD_AREA"""
     request_build_area = INTERFACE.requestPlayerArea if auto_build_area else INTERFACE.requestBuildArea
 
-    x1, y1, z1, x2, y2, z2 = request_build_area()
+    x1, y1, z1, x2, y2, z2 = request_build_area(250, 250)
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
 
 

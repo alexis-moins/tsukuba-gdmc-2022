@@ -102,4 +102,4 @@ class BlockList(Sequence):
             return BlockList(self.__blocks + other)
 
     def random_elements(self, amount=1) -> BlockList:
-        return BlockList(random.choices(self.__blocks, k=amount))
+        return BlockList(random.sample(self.__blocks, k=amount))
