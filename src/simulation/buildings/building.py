@@ -358,6 +358,8 @@ class Mine(ChildBuilding):
         plot.start = start  # reset start
 
         self._build_structure(self.structures[0], plot, rotation)
+        self.entrances = self.blocks.filter('emerald')
+        self._place_sign()
 
         # 1/2 chances of building a crane
         if random.randint(0, 1):
@@ -383,8 +385,6 @@ class Mine(ChildBuilding):
             self._build_structure(self.structures[4], plot, rotation)
 
         plot.start = start  # reset start
-        self.entrances = self.blocks.filter('emerald')
-        self._place_sign()
         INTERFACE.sendBlocks()
 
 
@@ -399,7 +399,8 @@ class Tower(ChildBuilding):
         start = plot.start
         dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in lookup.COLORS])}
         self._build_structure(self.structures[0], plot, rotation, force_palette=dict_palette)
-
+        self.entrances = self.blocks.filter('emerald')
+        self._place_sign()
         plot.start = plot.start.shift(y=4)
 
         for i in range(random.randint(10, min(30, 255 - self.plot.start.y))):
@@ -408,8 +409,7 @@ class Tower(ChildBuilding):
 
         self._build_structure(self.structures[2], plot, rotation, force_palette=dict_palette)
         plot.start = start  # reset start
-        self.entrances = self.blocks.filter('emerald')
-        self._place_sign()
+
         INTERFACE.sendBlocks()
 
     @staticmethod

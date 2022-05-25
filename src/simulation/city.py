@@ -9,7 +9,7 @@ from gdpc import lookup
 
 from src import env
 from src.blocks.collections.block_list import BlockList
-from src.plots.plot import Plot
+from src.plots.plot import Plot, CityPlot
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building import Graveyard
 from src.simulation.buildings.building import WeddingTotem
@@ -45,7 +45,7 @@ class Villager:
 
 
 class City:
-    def __init__(self, plot: Plot, start_year: int):
+    def __init__(self, plot: CityPlot, start_year: int):
         """"""
         self.plot = plot
         self.buildings: list[Building] = []

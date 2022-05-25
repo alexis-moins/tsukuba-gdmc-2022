@@ -6,7 +6,7 @@ from gdpc import interface as INTERFACE
 
 from src import env
 from src.blocks.block import Block
-from src.plots.plot import Plot
+from src.plots.plot import Plot, CityPlot
 from src.simulation.decisions.smart import SmartDecisionMaker
 from src.simulation.simulation import Simulation
 from src.utils.criteria import Criteria
@@ -49,6 +49,7 @@ def start_simulation(years: int) -> None:
     """Launch the simulation"""
     start, end = env.BUILD_AREA
     build_area = Plot.from_coordinates(start, end)
+    build_area = CityPlot(*build_area.start, build_area.size)  # Delete me when you can
     build_area.remove_lava()
     env.WORLD = env.get_world_slice()
 

@@ -15,7 +15,7 @@ from gdpc import toolbox
 
 from src import env
 from src.blocks.block import Block
-from src.plots.plot import Plot
+from src.plots.plot import Plot, CityPlot
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building_type import BuildingType
 from src.simulation.city import City
@@ -156,7 +156,8 @@ class Simulation:
         year = 1
 
         # If you have multiple cities, just give a subplot here
-        self.city = City(self.plot, year)
+        x, y, z = self.plot.start
+        self.city = City(CityPlot(x, y, z, self.plot.size), year)
         self.decision_maker.city = self.city
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
