@@ -1,21 +1,19 @@
 from __future__ import annotations
+from typing import Generator, Iterable, SupportsIndex
 
 import random
 from collections import Counter
 from collections.abc import Sequence
-from typing import Any
-from typing import Generator
-from typing import Iterable
-from typing import SupportsIndex
 
 from src.blocks.block import Block
+from src.blocks.collections.palette import Palette
 from src.blocks.collections.block_set import BlockSet
+
 from src.utils.coordinates import Coordinates
-from src.utils.coordinates import Size
 
 
 class BlockList(Sequence):
-    """Class representing a list of blocks, implements the abstract Sequence"""
+    """Class representing an immutable list of blocks, implements the abstract Sequence"""
 
     def __init__(self, iterable: Iterable[Block] = None):
         """Parameterised constructor creating a new list of blocks"""
@@ -35,24 +33,28 @@ class BlockList(Sequence):
         return occurences[0][0] if occurences else None
 
     def insert(self, index: SupportsIndex, block: Block) -> None:
-        """Insert the given block et the given index"""
+        """Insert the given block before the given index"""
         self.__blocks.insert(index, block)
 
-    def filter(self, pattern: str | tuple[str, ...]) -> BlockList:
-        """Return a sublist of blocks containing the given pattern in their name"""
-        if type(pattern) == str:
-            pattern = (pattern, )
-
-        iterable = [block for block in self if block.is_one_of(pattern)]
-        return BlockList(iterable)
+    def filter(self, pattern: str | Iterable[str]) -> BlockList:
+        """Return a sublist of blocks containing the given [pattern] in their name"""
+        pattern = [pattern] if type(pattern) is str else pattern
+        return BlockList([block for block in self if block.is_one_of(pattern)])
 
     def without(self, pattern: str | tuple[str, ...]) -> BlockList:
         """Return a sublist of blocks not containing the given pattern in their name"""
         if type(pattern) == str:
             pattern = (pattern, )
 
-        iterable = [block for block in self.__blocks if not block.is_one_of(pattern)]
-        return BlockList(iterable)
+        return BlockList([block for block in self.__blocks if not block.is_one_of(pattern)])
+
+    def apply_palettes(self, palettes: dict[str, Palette]) -> BlockList:
+        """Return a modified version of the current BlockList. Modification are made according
+        to the given [palettes] of blocks"""
+        new_blocks = [palettes[block.name].get_block(block) if block.name in palettes else block
+                      for block in self.__blocks]
+
+        return BlockList(new_blocks)
 
     def not_inside(self, coordinates: set[Coordinates]) -> BlockList:
         """Return a sublist of blocks that are not inside of any of the given plots"""
@@ -65,18 +67,14 @@ class BlockList(Sequence):
             return self.__coordinates[coordinates.as_2D()]
         return None
 
-    def near(self, coordinates: Coordinates, distance: int):
-        """Return the list of block with a distance < the given distance"""
-        iterable = [block for block in self.__blocks if block.coordinates.distance(coordinates) <= distance]
-        return BlockList(iterable)
+    # def near(self, coordinates: Coordinates, distance: int):
+    #     """Return the list of block with a distance < the given distance"""
+    #     iterable = [block for block in self.__blocks if block.coordinates.distance(coordinates) <= distance]
+    #     return BlockList(iterable)
 
     def to_set(self) -> BlockSet:
         """Return the current block list converted into a block set"""
         return BlockSet(self)
-
-    def first(self) -> Block | None:
-        """Return the first block of the block list or None if there are no blocks"""
-        return self.__blocks[0] if self.__blocks else None
 
     def __iter__(self) -> Generator[Block]:
         """Return a generator of the blocks in the current list"""
@@ -90,7 +88,7 @@ class BlockList(Sequence):
         """Return true if the current list is not empty, false otherwise"""
         return len(self.__blocks) > 0
 
-    def __getitem__(self, *arguments) -> Any:
+    def __getitem__(self, *arguments) -> Block:
         """Return the block at the given index"""
         return self.__blocks.__getitem__(*arguments)
 

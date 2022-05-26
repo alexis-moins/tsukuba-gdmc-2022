@@ -21,6 +21,10 @@ class Palette(ABC):
         palettes are deserialized using the palette groups defined in module env and whose name
         are inside of the given [palette groups]"""
         palettes = [env.PALETTE_GROUPS[palette] for palette in palette_groups]
+
+        if not palettes:
+            return dict()
+
         to_deserialize = functools.reduce(lambda origin, new: origin | new, palettes)
 
         return {block: Palette.deserialize(palette)
@@ -63,7 +67,6 @@ class RandomPalette(Palette):
         if type(self.blocks) in [list, tuple]:
             block_name = random.choice(self.blocks)
         else:
-            print(self.__dict__)
             choices = random.choices(
                 list(self.population),
                 list(self.weights), k=1)

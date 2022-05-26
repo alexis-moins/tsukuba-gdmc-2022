@@ -3,14 +3,14 @@ from typing import Callable
 
 from src.utils.action_type import ResourceType
 
-from src.simulation.city import Settlement
+from src.simulation.settlement import Settlement
 from src.simulation.buildings.building import Building
 
 
 # Type alias for functions in charge of the building selection logic
-# Functions given to the Simulation constructor as decision_making must all
+# Functions given to the Simulation constructor as building_selection must all
 # follow the prototype below, which is:
-# - arguments: City, list[Building]
+# - arguments: Settlement, list[Building]
 # - return value: Building | None
 DecisionMaking = Callable[[Settlement, list[Building]], Building | None]
 

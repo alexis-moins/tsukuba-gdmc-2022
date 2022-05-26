@@ -14,7 +14,7 @@ from numpy import ndarray
 from src import env
 from src.blocks.block import Block
 from src.blocks.collections.block_list import BlockList
-from simulation.buildings.utils.building_type import BuildingType
+from src.simulation.buildings.utils.building_type import BuildingType
 from src.utils import math_utils
 from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
@@ -411,7 +411,7 @@ class Plot:
         if max_score is None:
             max_score = size.x * size.z
 
-        shift = building.get_entrance_shift(rotation)
+        shift = building.get_entrance_with_rotation(rotation)
 
         if self.graph is None:
             self.fill_graph()
@@ -569,7 +569,7 @@ class Plot:
         if city_buildings:
 
             try:
-                path = nx.dijkstra_path(self.graph, city_buildings[0].entrances[0].coordinates, coordinates)
+                path = nx.dijkstra_path(self.graph, city_buildings[0].entrance, coordinates)
                 malus = -10
             except nx.NetworkXException:
                 malus = max_score / 5

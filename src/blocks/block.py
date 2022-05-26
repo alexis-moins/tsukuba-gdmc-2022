@@ -47,6 +47,7 @@ class Block:
     @staticmethod
     def deserialize(name: str, coordinates: Coordinates) -> Block:
         """"""
+        print(f'{name} => {type(name)}')
         properties = {}
         if '[' in name:
             raw_properties = name.split('[')

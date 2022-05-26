@@ -11,6 +11,21 @@ from src.utils.coordinates import Coordinates
 from src.utils.coordinates import Size
 
 
+#
+_structures: dict[str, Structure] = dict()
+
+
+def get_structure(file: str) -> Structure:
+    """Return the Structure found in the given NBT [file]. Parse the file if the structure
+    has not already been pased, otherwise simply return the corresponding structure"""
+    if file in _structures:
+        return _structures[file]
+
+    structure = Structure.deserialize_nbt_file(file)
+    _structures[file] = structure
+    return structure
+
+
 class Structure:
     """Class representing the minecraft construction of a structure block"""
     __slots__ = ['name', 'size', 'blocks', 'entrance', 'variations']
@@ -41,7 +56,9 @@ class Structure:
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
 
     def get_blocks(self, start: Coordinates, rotation: int, apply_block_variation: bool = True) -> BlockList:
-        """Return the blocks of the structure, once their coordinates have been prepared for the given plot"""
+        """Return the blocks of the structure, once their coordinates have been prepared for the given plot. It means
+        that coordinates will all be shifted in order to be relative to the new origin [start]. The structure also
+        applies the given [rotation] to all the blocks."""
         if apply_block_variation:
             blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
 

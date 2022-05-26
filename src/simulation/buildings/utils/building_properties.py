@@ -2,8 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from utils.action_type import ResourceType
-from simulation.buildings.utils.building_type import BuildingType
+from src.utils.action_type import ResourceType
+from src.simulation.buildings.utils.building_type import BuildingType
 
 
 @dataclass(kw_only=True, frozen=True)

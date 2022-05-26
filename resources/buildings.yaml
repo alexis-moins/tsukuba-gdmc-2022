@@ -128,7 +128,7 @@ Wheat Pack 2:
   resource: FOOD
   type: FARM
   cost: 20
-  extension: true
+  is-extension: true
   food-production: 5
 
 Silo tier 1:
@@ -230,6 +230,6 @@ Small Tree:
 # - name: Fountain
 #   path: extensions/fountain.nbt
 #   properties: { cost: 0 }
-#   extension: true
+#   is-extension: true
 #   resource: DECORATION
 #   type: DECORATION

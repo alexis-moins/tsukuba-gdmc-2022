@@ -26,8 +26,6 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bo
     env.TP = tp
     env.DETERIORATION = deterioration
 
-    print()
-
     env.BUILD_AREA = env.get_build_area(auto_build_area)
     env.WORLD = env.get_world_slice()
 
@@ -72,6 +70,7 @@ def find_building_materials(build_area: Plot):
     surface = build_area.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
     logs = surface.filter(pattern='_log')
 
+    # TODO use Palettes
     if logs:
         most_used_wood = Block.trim_name(logs.most_common, '_log')
         print(f'=> Most used wood: {most_used_wood}')

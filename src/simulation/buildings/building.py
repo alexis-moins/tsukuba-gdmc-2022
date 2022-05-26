@@ -7,32 +7,33 @@ from dataclasses import replace
 from typing import Any, Callable
 
 from colorama import Fore
-from gdpc import interface as INTERFACE
 from gdpc import lookup as LOOKUP
+from gdpc import interface as INTERFACE
 
-from src.simulation.buildings.utils.building_properties import BuildingProperties
+from src.utils import math_utils
+
 from src.plots.plot import Plot
 from src.blocks.block import Block
+from src.blocks.structure import Structure, get_structure
 from src.blocks.collections.block_list import BlockList
-from src.blocks.collections.palette import OneBlockPalette
-from src.blocks.collections.palette import Palette
-from src.blocks.structure import Structure
+from src.blocks.collections.palette import OneBlockPalette, Palette
 
-from simulation.buildings.utils.building_type import BuildingType
-from src.utils import math_utils
 
 from src.utils.criteria import Criteria
 from src.utils.direction import Direction
 from src.utils.coordinates import Coordinates, Size
 
+from src.simulation.buildings.utils.building_type import BuildingType
+from src.simulation.buildings.utils.building_properties import BuildingProperties
 
-# Tuple of available adjectives for buildings
+
+# Tuple of available adjectives for building names
 _adjectives = ('beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy', 'cute', 'dangerous', 'dark', 'enchanting', 'evil',
                'fancy', 'fantastic', 'fragile', 'friendly', 'lazy', 'kind', 'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint')
 
 
-class AbstractBuilding(ABC):
-    """Represents an abstract building regrouping usefull common methods"""
+class Blueprint(ABC):
+    """Represents an abstract building plan regrouping usefull common methods"""
 
     def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
         """Creates a new building with the given [name], [properties], basic [structures] and [palettes]
@@ -60,11 +61,11 @@ class AbstractBuilding(ABC):
     @staticmethod
     def deserialize(name: str, data: dict[str, Any]) -> Building:
         """Return a new building deserialized from the given [name] and [data]. The returned
-        object might be any subclass of Building as well, one of Mine, Graveyard, Wedding
+        object might be any subclass of Blueprint as well, one of Mine, Graveyard, Wedding
         Totem and Tower"""
         data = dict(data)
 
-        structures = [Structure.deserialize_nbt_file(path) for path in data.pop('path')]
+        structures = [get_structure(path) for path in data.pop('path')]
         palettes = data.pop('palettes', [])
 
         properties = BuildingProperties.deserialize(data, data.pop('resource'), data.pop('type'))
@@ -188,47 +189,62 @@ class AbstractBuilding(ABC):
 
         INTERFACE.sendBlocks()
 
+    def get_entrance_with_rotation(self, rotation: int) -> Coordinates:
+        """"""
+        entrances = self.structures[0].get_blocks(Coordinates(0, 0, 0), rotation).filter('emerald')
+        if not entrances or len(entrances) < 1:
+            return Coordinates(0, 0, 0)
+        return entrances[0].coordinates
+
+        # TODO
+        # entrances = self.structures[0].blocks.filter('emerald')
+
+        # if not entrances:
+        #     return Coordinates(0, 0, 0)
+
+        # return entrances[0].coordinates.rotate(rotation)
+
+    def _find_entrance(self, start: Coordinates) -> Coordinates | None:
+        """"""
+        # TODO do it better
+        if self.structures[0] in self.blocks:
+            entrances = self.blocks[self.structures[0]].filter('emerald')
+            return entrances[0].coordinates if entrances else start
+
+        return None
+
     def _build_structure(self, structure: Structure, start: Coordinates, palettes: dict[str, Palette] | None = None):
         """Build the given [structure] at the given [start] coordinates, optionally using the
         given block [palettes] instead of the palettes from this building"""
         blocks = structure.get_blocks(start, self.rotation)
 
-        entrance = blocks.filter('emerald').first()
-        self.entrance = entrance.coordinates if entrance else start
-
         # Use the blocks from the palettes
-        blocks = self._apply_palettes(blocks, palettes)
+        blocks = blocks.apply_palettes(palettes if palettes else self.palettes)
         self.blocks[structure] = blocks
+
+        if self.entrance is None:
+            self.entrance = self._find_entrance(start)
 
         # Actually placing the blocks
         for block in blocks:
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
-    def _apply_palettes(self, blocks: BlockList, palettes: dict[str, Palette] | None = None):
-        """Return a modified version of the given [blocks]. Modification are made according
-        to the given [palettes] of blocks"""
-        palettes = palettes if palettes else self.palettes
-
-        new_blocks = [palettes[block.name].get_block(block)
-                      if block.name in palettes else block
-                      for block in blocks]
-
-        return BlockList(new_blocks)
-
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
-        signs = self.blocks.filter('sign')
+        first_structure = self.structures[0]
+        signs = self.blocks[first_structure].filter('sign')
+
         if not signs:
             return
 
-        signs[0].coordinates.place_sign(self.full_name())
+        signs[0].coordinates.place_sign(self.full_name)
 
     def __str__(self) -> str:
         """Return the string representation of the building"""
         return f'{Fore.MAGENTA}{self.name}{Fore.WHITE}'
 
 
-class Building(AbstractBuilding):
+class Building(Blueprint):
     """Represents a generic building"""
 
     def build(self, plot: Plot, settlement: Plot):
@@ -400,7 +416,6 @@ class Mine(Building):
         if random.randint(0, 1):
             self._build_crane(plot.start)
 
-        self.entrance = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
 

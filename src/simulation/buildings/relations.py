@@ -1,6 +1,5 @@
 from src import env
-from src.simulation.buildings.building import Building
-from simulation.buildings.utils.building_type import BuildingType
+from src.simulation.buildings.utils.building_type import BuildingType
 
 
 class BuildingRelation:

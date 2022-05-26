@@ -14,7 +14,7 @@ from src.plots.plot import Plot
 from src.simulation.buildings.building import Building
 from src.simulation.buildings.building import Graveyard
 from src.simulation.buildings.building import WeddingTotem
-from simulation.buildings.utils.building_type import BuildingType
+from src.simulation.buildings.utils.building_type import BuildingType
 from src.utils.criteria import Criteria
 
 
@@ -137,8 +137,6 @@ class Settlement:
 
         self.build(building, plot)
         self.counter[building.name] += 1
-        print(self.counter)
-
         return True
 
     def build(self, building: Building, plot: Plot) -> None:
@@ -209,7 +207,7 @@ class Settlement:
 
         # Attributing villagers to buildings
         # First, give every homeless villager a house (if possible)
-        available_houses = [building for building in self.buildings if building.has_empty_beds()]
+        available_houses = [building for building in self.buildings if building.has_empty_beds]
 
         for villager in self.homeless_villagers:
             if not available_houses:
@@ -218,11 +216,11 @@ class Settlement:
             house = available_houses.pop()
             house.add_inhabitant(villager, year)
 
-            if house.has_empty_beds():
+            if house.has_empty_beds:
                 available_houses.append(house)
 
         # Then, give every inactive villager a place to work at (if possible)
-        available_work_places = [building for building in self.buildings if building.can_offer_work()]
+        available_work_places = [building for building in self.buildings if building.can_offer_work]
 
         for villager in self.inactive_villagers:
             if not available_work_places:
@@ -231,7 +229,7 @@ class Settlement:
             work_place = available_work_places.pop()
             work_place.add_worker(villager, year)
 
-            if work_place.can_offer_work():
+            if work_place.can_offer_work:
                 available_work_places.append(work_place)
 
     def display(self) -> None:
