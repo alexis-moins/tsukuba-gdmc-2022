@@ -165,7 +165,7 @@ class Building:
 
             for coordinates in farm_field:
                 block = self.plot.get_block_at(*coordinates)
-                print(block.name)
+                # print(block.name)
                 if block.is_one_of('lapis'):
                     for c in block.neighbouring_coordinates(
                             (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):

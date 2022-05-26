@@ -32,6 +32,14 @@ class Size:
         distance = abs(start - end)
         return Size(distance.x, distance.z)
 
+    @property
+    def length(self):
+        return max(self.x, self.z)
+
+    @property
+    def width(self):
+        return min(self.x, self.z)
+
     def __add__(self, other):
         if isinstance(other, Size):
             return Size(self.x + other.x, self.z + other.z)
@@ -43,6 +51,12 @@ class Size:
             return Size(self.x - other.x, self.z - other.z)
         else:
             return Size(self.x - other, self.z - other)
+
+    def __le__(self, other):
+        if isinstance(other, Size):
+            return self.x <= other.x and self.z <= other.z
+        else:
+            return False
 
 
 @dataclass(frozen=True)

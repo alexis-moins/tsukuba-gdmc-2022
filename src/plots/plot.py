@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import random
 import time
+import timeit
 from collections import defaultdict
 from typing import Generator
 
@@ -36,6 +37,7 @@ class Plot:
         self.construction_coordinates: set[Coordinates] = set()
 
         self.surface_blocks: dict[Criteria, BlockList] = {}
+        self.valid_terrain_blocks: dict[Size, list[Coordinates]] = {}
         self.offset = self.start - env.BUILD_AREA.start, self.end - env.BUILD_AREA.start
 
         # TODO change center into coordinates
@@ -138,14 +140,14 @@ class Plot:
 
                 if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
                                      'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]'):
-                    INTF.placeBlock(x, y-1, z, the_blocks)
+                    INTF.placeBlock(x, y - 1, z, the_blocks)
                     INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
                 else:
                     if Coordinates(x, 0, z) in self.construction_coordinates:
                         continue
 
                     if 'note_block' in the_blocks[0]:
-                        INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
+                        INTF.placeBlock(x, y + 1, z, random.choice(list(slab_pattern['OUTER'].keys())))
 
                     INTF.placeBlock(x, y, z, the_blocks)
 
@@ -233,7 +235,8 @@ class Plot:
                 angle = block.angle(build.plot.start)
 
                 block.shift(y=i).place_sign(f"<------------  {distance} m           {build.get_display_name()}",
-                                            replace_block=True, rotation=math_utils.radian_to_orientation(angle, shift=math.pi))
+                                            replace_block=True,
+                                            rotation=math_utils.radian_to_orientation(angle, shift=math.pi))
 
     def remove_lava(self):
         checked = set()
@@ -251,7 +254,7 @@ class Plot:
 
         INTF.sendBlocks()
 
-    @ staticmethod
+    @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
         """Return a new plot created from the given start and end coordinates"""
         return Plot(*start, Size.from_coordinates(start, end))
@@ -261,7 +264,7 @@ class Plot:
         env.get_world_slice()
         self.surface_blocks.clear()
 
-    @ staticmethod
+    @staticmethod
     def _delta_sum(values: list, base: int) -> int:
         return sum(abs(base - v) for v in values)
 
@@ -373,7 +376,7 @@ class Plot:
 
         if criteria.name in env.WORLD.heightmaps.keys():
             return env.WORLD.heightmaps[criteria.name][self.offset[0].x:self.offset[1].x,
-                                                       self.offset[0].z:self.offset[1].z]
+                   self.offset[0].z:self.offset[1].z]
 
         raise Exception(f'Invalid criteria: {criteria}')
 
@@ -414,72 +417,59 @@ class Plot:
 
         return heightmap
 
-    def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None, max_score: int = None) -> Plot | None:
+    def get_subplot(self, building, rotation: int, padding: int = 5, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
         start = time.time()
 
         size = building.get_size(rotation)
-        if max_score is None:
-            max_score = size.x * size.z
+
         shift = building.get_entrance_shift(rotation)
-        accepted_score = min(size.x, size.z)
 
         if self.graph is None:
             self.fill_graph()
 
         # TODO add .lower_than(max_height=200)
 
-        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
-
-        excluded = ('water', 'lava')
-        if self.water_mode:
-            excluded = ('lava',)
-        surface = surface.without(excluded).not_inside(self.occupied_coordinates)
-
-        random_blocks = min(int(len(surface) * (20 / 100)), 8000)  # more than 8000 should be overkill, our
-        # average plot area should like 60k blocks
-
-        blocks_to_check = surface.random_elements(random_blocks)
-
         if self.priority_blocks is None:
             self.compute_steep_map()
             if env.DEBUG:
                 self.visualize_steep_map()
-
-        # Take 10 % of the best coordinates + a % of the rest, randomly
-        blocks_to_check = self.priority_blocks.random_elements(max(1, int(len(self.priority_blocks) * 1/10))) + blocks_to_check
-        if env.DEBUG:
-            print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
-
-        # >Get the minimal score in the coordinate list
-        min_score = max_score
-        amount_of_block_checked = 0
+        block_checked = 0
+        best_coords = None
+        best_score = -1
+        blocks_to_check = self.get_valid_coords(size, shift)
+        coord_check_start = time.time()
         for block in blocks_to_check:
-            block_score = self.__get_score(coordinates=block.coordinates, surface=surface, max_score=max_score,
-                                           best_current_score=min_score, building=building, size=size, shift=shift,
-                                           city_buildings=city_buildings)
+            score = self.__get_score(block.coordinates, building, size, shift, city_buildings)
+            block_checked += 1
+            INTF.placeBlock(*block.coordinates, 'red_wool')
+            INTF.sendBlocks()
+            if score > best_score:
+                best_coords = block.coordinates
 
-            if block_score < min_score:
-                best_coordinates = block.coordinates
-                min_score = block_score
+        if env.SHOW_TIME:
+            time_took = time.time() - coord_check_start
+            print(f'Check {block_checked} in {time_took} s, average : {block_checked / time_took if time_took != 0 else 1 :.2f} blocks per seconds.')
 
-            if block_score < accepted_score:
-                break
-            amount_of_block_checked += 1
-
-        if env.DEBUG:
-            print(f'Best score : {min_score}')
-
-        if min_score >= max_score:
+        if best_coords is None:
             return None
 
-        sub_plot = Plot(*(best_coordinates - shift), size=size)
+        sub_plot = Plot(*(best_coords - shift), size=size)
 
-        coord = best_coordinates - shift
+        self.visualize_occupied_area()
+        sub_plot.visualize()
+        for x in range(size.x):
+            for z in range(size.z):
+                current_coord = sub_plot.start.shift(x - shift.x, 10, z - shift.z)
+                INTF.placeBlock(*current_coord, 'blue_stained_glass')
+        INTF.sendBlocks()
+        input('Enter to continue')
+
+        coord = best_coords - shift
         if env.DEBUG:
             print(f"shift {shift}")
-            print(best_coordinates in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
-            print(best_coordinates)
+            print(best_coords in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
+            print(best_coords)
             print(coord in map(lambda b: b.coordinates, self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)))
 
         if building.properties.building_type is BuildingType.FARM:
@@ -488,17 +478,7 @@ class Plot:
         if building.properties.building_type is BuildingType.DECORATION:
             padding = 2
 
-        for coordinates in sub_plot.surface(padding):
-
-            self.occupied_coordinates.add(coordinates.as_2D())
-
-            block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
-            if block and block.coordinates.as_2D() not in self.all_roads:
-                for edges in self.graph.edges(block.coordinates):
-                    self.graph.add_edge(*edges, weight=100_000_000)
-
-        for coordinates in sub_plot.surface():
-            self.construction_coordinates.add(coordinates.as_2D())
+        self.occupy_coords(padding, sub_plot)
 
         if env.DEBUG:
             self.visualize_roads(10)
@@ -507,49 +487,75 @@ class Plot:
         if env.SHOW_TIME:
             time_took = time.time() - start
             print(f'Found plot for building {building.name} in {time_took:.2f} s.')
-            print(f'Check {amount_of_block_checked}, average : { amount_of_block_checked / time_took :.2f} blocks per seconds.')
 
         return sub_plot
 
-    def __get_score(self, coordinates: Coordinates, surface: BlockList, max_score: int,
-                    best_current_score: int, building, size: Size, shift: Coordinates,
-                    city_buildings: list = None) -> float:
-        """Return a score evaluating the fitness of a building in an area.
-            The lower the score, the better it fits
+    def occupy_coords(self, padding, sub_plot):
+        for coordinates in sub_plot.surface(padding):
 
-            Score is calculated as follows :
-            malus depending on the distance from the center of the area +
-            Sum of all differences in the y coordinate
-            """
+            self.occupied_coordinates.add(coordinates.as_2D())
 
-        if coordinates in self.occupied_coordinates:
-            return 100_000_000
+            block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coordinates)
+            if block and block.coordinates.as_2D() not in self.all_roads:
+                for edges in self.graph.edges(block.coordinates):
+                    self.graph.add_edge(*edges, weight=100_000_000)
+        for coordinates in sub_plot.surface():
+            self.construction_coordinates.add(coordinates.as_2D())
 
-        # apply malus to score depending on the distance to the 'center'
+    def build_valid_coords_terrain_wise(self, coord_to_check, accepted_score, surface, size, shift):
+        valid_coord_terrain_wise = []
+        for block in coord_to_check:
+            block_score = self.get_terrain_score(coordinates=block.coordinates, surface=surface, size=size, shift=shift)
 
-        center = Coordinates(self.center[0], 0, self.center[1])
-        score = coordinates.as_2D().distance(center) * .1
+            if block_score < accepted_score:
+                valid_coord_terrain_wise.append(block)
 
-        # For mines : Try to place them up a cave
-        if building.properties.building_type == BuildingType.MINING:
-            # we shift 10 blocs into the ground and search for air, because that would be a cave.
-            # y - 30 to not go too deep
-            # x and z shift to get to the center
-            for down in coordinates.shift(x=round(size.x / 2), y=-10, z=round(size.z / 2)).line(coordinates.y - 30,
-                                                                                                Direction.DOWN):
-                if self.get_block_at(*down).is_one_of('air'):
-                    depth = coordinates.y - down.y
-                    bonus = -1000
-                    score += bonus
-                    building.depth = (depth // 5) + 1
-                    break
-            # apply malus, the idea is that the bonus will compensate for it, so mine without bonus should be less frequent
-            score += best_current_score / 2
+        return valid_coord_terrain_wise
 
-        # For tower : place them as high as possible
-        elif building.name == 'Tower':
-            score -= (100 - coordinates.y) * 2
+    def fetch_valid_coord(self, size: Size):
+        valid_coord = []
+        for s, coords in self.valid_terrain_blocks.items():
+            if size <= s:
+                valid_coord += coords
+        return valid_coord
 
+    def build_coords_to_check(self):
+
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+        excluded = ('water', 'lava')
+        if self.water_mode:
+            excluded = ('lava',)
+        surface = surface.without(excluded).not_inside(self.occupied_coordinates)
+        random_blocks = min(int(len(surface) * (20 / 100)), 5000)  # more than 5000 should be overkill, our
+        # average plot area should like 60k blocks
+
+        blocks_to_check = surface.random_elements(random_blocks)
+        # Take 10 % of the best coordinates + a % of the rest, randomly
+        blocks_to_check = self.priority_blocks.random_elements(
+            max(1, int(len(self.priority_blocks) * 1 / 10))) + blocks_to_check
+
+        return blocks_to_check, surface
+
+    def get_valid_coords(self, size: Size, shift: Coordinates, bonus_tolerance: float = 0):
+        valid_terrain_coords = self.fetch_valid_coord(size)
+        print(f'Fetched coords : {len(valid_terrain_coords)}')
+        if not valid_terrain_coords:
+            print('Building valid terrain coords')
+            start = time.time()
+            max_score = size.width * (1 + bonus_tolerance)
+            print(f'Step 1 : {time.time() - start:.2f} s')
+            start = time.time()
+            coords_to_check, surface = self.build_coords_to_check()
+            print(f'Step 2 : {time.time() - start:.2f} s')
+            start = time.time()
+            valid_terrain_coords = self.build_valid_coords_terrain_wise(coords_to_check, max_score, surface, size,
+                                                                        shift)
+            print(f'Step 3 : {time.time() - start:.2f} s')
+            self.valid_terrain_blocks[size] = valid_terrain_coords
+        return valid_terrain_coords
+
+    def get_terrain_score(self, coordinates: Coordinates, surface: BlockList, size: Size, shift: Coordinates):
+        terrain_score = 0
         # Score = sum of difference between the first point's altitude and the other
         for x in range(size.x):
             for z in range(size.z):
@@ -561,51 +567,111 @@ class Plot:
 
                 if current_block.is_one_of('water'):
                     # little malus to push it to generate on land
-                    score += .5
+                    terrain_score += .5
 
                 # putting foundation isn't a problem compared to digging in the terrain, so we apply a
                 # worsening factor to digging
                 to_add = coordinates.y - current_block.coordinates.y
                 # placing foundation
                 if to_add > 0:
-                    score += int(to_add * .8)
+                    terrain_score += int(to_add * .8)
                 # digging (bad)
                 else:
-                    score += abs(to_add) * 3
+                    terrain_score += abs(to_add) * 3
 
-                # Return earlier if score is already too bad
-                if score >= best_current_score:
-                    return max_score
+        return terrain_score
+
+    def __get_score(self, coordinates: Coordinates, building, size: Size, shift,
+                    city_buildings: list = None) -> float:
+        """Return a score evaluating the fitness of a building in an area.
+            The lower the score, the better it fits
+
+            Score is calculated as follows :
+            malus depending on the distance from the center of the area +
+            Sum of all differences in the y coordinate
+            """
+
+        for x in range(size.x):
+            for z in range(size.z):
+                current_coord = coordinates.shift(x - shift.x, 0, z - shift.z)
+                if current_coord.as_2D() in self.occupied_coordinates or current_coord not in self:
+                    return -100
+
+        # apply malus to score depending on the distance to the 'center'
+        #
+        # center = Coordinates(self.center[0], 0, self.center[1])
+        # score = coordinates.as_2D().distance(center) * .1
+
+        special_score = 0
+        road_score = 0
+        relation_score = 0
+
+        special_time = time.time()
+
+        # For mines : Try to place them up a cave
+        if building.properties.building_type == BuildingType.MINING:
+            # we shift 10 blocs into the ground and search for air, because that would be a cave.
+            # y - 30 to not go too deep
+            # x and z shift to get to the center
+            for down in coordinates.shift(x=round(size.x / 2), y=-10, z=round(size.z / 2)).line(coordinates.y - 30,
+                                                                                                Direction.DOWN):
+                if self.get_block_at(*down).is_one_of('air'):
+                    depth = coordinates.y - down.y
+                    special_score += 5
+                    building.depth = (depth // 5) + 1
+                    break
+            # apply malus, the idea is that the bonus will compensate for it, so mine without bonus should be less frequent
+
+        # For tower : place them as high as possible
+        elif building.name == 'Tower':
+            if coordinates.y > 200:
+                special_score += 5
+            elif coordinates.y > 100:
+                special_score += 3
+
+        # if env.SHOW_TIME:
+        #     time_took = time.time() - special_time
+        #     print(f'Special took {time_took} s')
 
         # add malus due to bad road connectivity
         if city_buildings:
+            # road_time = time.time()
+            # try:
+            #     path = nx.dijkstra_path(self.graph, city_buildings[0].entrances[0].coordinates, coordinates)
+            #     road_score = 3
+            # except nx.NetworkXException:
+            #     pass
+            #
+            # if env.SHOW_TIME:
+            #     time_took = time.time() - road_time
+            #     print(f'Road took {time_took} s')
 
-            try:
-                path = nx.dijkstra_path(self.graph, city_buildings[0].entrances[0].coordinates, coordinates)
-                malus = -10
-            except nx.NetworkXException:
-                malus = max_score / 5
-
+            # connectivity check
+            connectivity_time = time.time()
             horizontal_directions = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.SOUTH)
             for _dir in horizontal_directions:
                 line = list(coordinates.line(3, _dir))
                 for u, v in zip(line[:-2], line[1:]):
                     if not self.graph.has_edge(u, v):
-                        return max_score
+                        return -5
 
-            score += malus
-
-        if score >= best_current_score:
-            return max_score
+            # if env.SHOW_TIME:
+            #     time_took = time.time() - connectivity_time
+            #     print(f'Connectivity took {time_took} s')
 
         # And now modifications for specials buildings
+        relation_time = time.time()
         relation = env.RELATIONS.get_building_relation(building.name)
-        score_modif = 0
+
         if relation and city_buildings:
-            score_modif = max(list(map(lambda build: relation.get_building_value(build.name), filter(
+            relation_score = sum(list(map(lambda build: relation.get_building_value(build.name), filter(
                 lambda b: b.plot.start.distance(coordinates) < 50, city_buildings))) + [0])
 
-        return score + score_modif
+        # if env.SHOW_TIME:
+        #     time_took = time.time() - relation_time
+        #     print(f'Relation took {time_took} s')
+
+        return special_score + road_score + relation_score
 
     def remove_trees(self, surface: BlockList = None) -> None:
         """Remove all plants at the surface of the current plot"""
@@ -693,8 +759,8 @@ class Plot:
     def __contains__(self, coordinates: Coordinates) -> bool:
         """Return true if the current plot contains the given coordinates"""
         return self.start.x <= coordinates.x < self.end.x and \
-            self.start.y <= coordinates.y <= self.end.y and \
-            self.start.z <= coordinates.z < self.end.z
+               self.start.y <= coordinates.y <= self.end.y and \
+               self.start.z <= coordinates.z < self.end.z
 
     def surface(self, padding: int = 0) -> Generator[Coordinates]:
         """Return a generator over the coordinates of the current plot"""
