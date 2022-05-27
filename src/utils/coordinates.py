@@ -33,6 +33,10 @@ class Size:
         return Size(distance.x, distance.z)
 
     @property
+    def area(self):
+        return self.x * self.z
+
+    @property
     def length(self):
         return max(self.x, self.z)
 

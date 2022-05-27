@@ -456,14 +456,18 @@ class Plot:
 
         sub_plot = Plot(*(best_coords - shift), size=size)
 
-        self.visualize_occupied_area()
-        sub_plot.visualize()
-        for x in range(size.x):
-            for z in range(size.z):
-                current_coord = sub_plot.start.shift(x - shift.x, 10, z - shift.z)
-                INTF.placeBlock(*current_coord, 'blue_stained_glass')
-        INTF.sendBlocks()
-        input('Enter to continue')
+        # self.visualize_occupied_area()
+        # sub_plot.visualize()
+        # for x in range(size.x):
+        #     for z in range(size.z):
+        #         current_coord = sub_plot.start.shift(x - shift.x, 10, z - shift.z)
+        #         INTF.placeBlock(*current_coord, 'blue_stained_glass')
+        # for x in range(size.x):
+        #     for z in range(size.z):
+        #         current_coord = sub_plot.start.shift(x, 11, z)
+        #         INTF.placeBlock(*current_coord, 'orange_stained_glass')
+        # INTF.sendBlocks()
+        # input('Enter to continue')
 
         coord = best_coords - shift
         if env.DEBUG:
@@ -503,14 +507,19 @@ class Plot:
             self.construction_coordinates.add(coordinates.as_2D())
 
     def build_valid_coords_terrain_wise(self, coord_to_check, accepted_score, surface, size, shift):
-        valid_coord_terrain_wise = []
+        blocks_scores = []
+        blocks = []
         for block in coord_to_check:
             block_score = self.get_terrain_score(coordinates=block.coordinates, surface=surface, size=size, shift=shift)
+            if block_score <= accepted_score:
+                blocks_scores.append(block_score)
+                blocks.append(block)
 
-            if block_score < accepted_score:
-                valid_coord_terrain_wise.append(block)
+        k = min(round(0.05 * self.size.area), len(blocks) - 1)
+        idx_of_bests = np.argpartition(blocks_scores, k)
 
-        return valid_coord_terrain_wise
+        best_block = [blocks[i] for i in idx_of_bests]
+        return best_block
 
     def fetch_valid_coord(self, size: Size):
         valid_coord = []
@@ -542,7 +551,7 @@ class Plot:
         if not valid_terrain_coords:
             print('Building valid terrain coords')
             start = time.time()
-            max_score = size.width * (1 + bonus_tolerance)
+            max_score = size.area * (1 + bonus_tolerance)
             print(f'Step 1 : {time.time() - start:.2f} s')
             start = time.time()
             coords_to_check, surface = self.build_coords_to_check()

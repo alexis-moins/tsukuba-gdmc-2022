@@ -170,7 +170,14 @@ class Simulation:
         rotation = self.decision_maker.get_rotation()
         if env.DEBUG:
             print(f'rotation {rotation}')
-        plot = self.city.plot.get_subplot(town_hall, rotation)
+        import cProfile
+        import pstats
+        with cProfile.Profile() as pr:
+            plot = self.city.plot.get_subplot(town_hall, rotation)
+        stats = pstats.Stats(pr)
+        stats.sort_stats(pstats.SortKey.TIME)
+        stats.print_stats()
+        input('Enter to continue')
 
         if plot is None:
             town_hall = env.BUILDINGS['Small Town Hall']
