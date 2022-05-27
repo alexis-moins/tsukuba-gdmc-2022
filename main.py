@@ -15,16 +15,23 @@ from src.utils.criteria import Criteria
 
 
 @click.command()
-@click.option('-t', '--tick-speed', default=200, type=int, show_default=True, help='Set the number of entities checked at each tick')
+@click.option('-t', '--tick-speed', default=200, type=int, show_default=True,
+              help='Set the number of entities checked at each tick')
 @click.option('--debug', is_flag=True, default=False, help='Launch the simulation in debug mode')
 @click.option('--no-buffering', is_flag=True, default=False, help='Send blocks one at a time, without using a buffer')
-@click.option('--tp/--no-tp', default=True, show_default=True, help='Teleport the player to the start of the building area')
+@click.option('--tp/--no-tp', default=True, show_default=True,
+              help='Teleport the player to the start of the building area')
 @click.option('--drops', is_flag=True, default=False, help='Enable drops from entities (may cause issues)')
-@click.option('-y', '--years', default=40, type=int, show_default=True, help='The number of years during which the simulation will run')
-@click.option('-d', '--deterioration', default=5, type=int, show_default=True, help='The percentage of blocks in a building that will suffer from the passing of time')
-@click.option('-a', '--auto-build-area', default=False, is_flag=True, type=bool, show_default=True, help='Automatically set the build area around the player\'s current position')
-@click.option('--show-time', default=False, is_flag=True, type=bool, show_default=True, help='Show time taken during generation')
-def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bool, drops: bool, years: int, deterioration: int, auto_build_area: bool, show_time: bool) -> None:
+@click.option('-y', '--years', default=40, type=int, show_default=True,
+              help='The number of years during which the simulation will run')
+@click.option('-d', '--deterioration', default=5, type=int, show_default=True,
+              help='The percentage of blocks in a building that will suffer from the passing of time')
+@click.option('-a', '--auto-build-area', default=False, is_flag=True, type=bool, show_default=True,
+              help='Automatically set the build area around the player\'s current position')
+@click.option('--show-time', default=False, is_flag=True, type=bool, show_default=True,
+              help='Show time taken during generation')
+def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bool, drops: bool, years: int,
+                        deterioration: int, auto_build_area: bool, show_time: bool) -> None:
     """Prepare the environment using CLI options"""
     env.DEBUG = debug
     env.TP = tp
@@ -50,7 +57,16 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bo
     INTERFACE.runCommand(f'gamerule doTileDrops {str(drops).lower()}')
     INTERFACE.runCommand(f'gamerule randomTickSpeed {tick_speed}')
 
-    start_simulation(years)
+    import cProfile
+    import pstats
+
+    with cProfile.Profile() as pr:
+        start_simulation(years)
+
+    stats = pstats.Stats(pr)
+    stats.sort_stats(pstats.SortKey.TIME)
+    stats.print_stats()
+    stats.dump_stats(filename='profiler.prof')
 
     if env.SHOW_TIME:
         time_took = time.time() - env.start_time
@@ -107,7 +123,9 @@ def find_building_materials(build_area: Plot):
 
 
 if __name__ == '__main__':
+
     try:
         prepare_environment()
+
     except KeyboardInterrupt:
         print("Pressed Ctrl-C to kill program.")
