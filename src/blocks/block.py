@@ -1,62 +1,50 @@
 from __future__ import annotations
 
-import dataclasses
-import textwrap
-from dataclasses import dataclass
-from dataclasses import field
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
+from typing import Dict, List, Tuple
+from dataclasses import dataclass, replace, field
 
-from gdpc import interface
-from gdpc.lookup import BLOCKS
-from nbt.nbt import TAG_Compound
-from nbt.nbt import TAG_List
+from gdpc import lookup
+from nbt.nbt import TAG_Compound, TAG_List
 
-from src.utils.coordinates import Coordinates
+from src.blocks.utils.block_properties import BlockProperties
+
 from src.utils.direction import Direction
+from src.utils.coordinates import Coordinates
 
 
 @dataclass(frozen=True)
 class Block:
-    """Represents a block in the world"""
+    """Represents a block in the world, along with its coordinates and properties"""
     name: str
     coordinates: Coordinates
-    properties: Dict[str, str | Direction] = field(default_factory=dict)
+    properties: BlockProperties = field(default_factory=BlockProperties)
 
     @staticmethod
     def parse_nbt(block: TAG_Compound, palette: TAG_List) -> Block:
-        """Return a new block object parsed from the given NBT tag compound and palette"""
+        """Return a new block object parsed from the given NBT [block] tag compound and [palette]"""
         index = int(block['state'].valuestr())
         name = palette[index]['Name'].valuestr()
 
-        properties = dict()
+        properties = BlockProperties()
         if 'Properties' in palette[index].keys():
-            properties = Block.__parse_properties(palette[index]['Properties'])
+            properties = BlockProperties.parse_nbt(palette[index]['Properties'])
 
         coordinates = Coordinates.parse_nbt(block['pos'])
-        return Block(name, coordinates, properties=properties)
-
-    @staticmethod
-    def __parse_properties(properties: TAG_Compound) -> Dict[str, Any]:
-        """Return a dictionary of the given pared properties"""
-        return {key: (Direction.parse_nbt(value) if key == 'facing' else value.valuestr())
-                for key, value in properties.iteritems()}
+        return Block(name, coordinates, properties)
 
     @staticmethod
     def deserialize(name: str, coordinates: Coordinates) -> Block:
         """"""
-        print(f'{name} => {type(name)}')
-        properties = {}
+        properties = dict()
+
         if '[' in name:
             raw_properties = name.split('[')
             name = raw_properties[0]
             properties = dict((key.strip(), value.strip())
-                              for key, value in (element.split(':')
+                              for key, value in (element.split('=')
                                                  for element in raw_properties[1][:-1].split(', ')))
 
-        return Block(name, coordinates, properties=properties)
+        return Block(name, coordinates, properties=BlockProperties(properties))
 
     @staticmethod
     def trim_name(name: str, pattern: str) -> str:
@@ -73,7 +61,7 @@ class Block:
     @staticmethod
     def exists(block_name: str) -> bool:
         """Return true if the given block name exists in minecraft"""
-        return block_name.split('[')[0] in BLOCKS
+        return block_name.split('[')[0] in lookup.BLOCKS
 
     def replace_first(self, materials: Dict[str, tuple[str, bool]]) -> Block:
         """Return a new block whose material has been replaced by the first match of the given building materials"""
@@ -103,17 +91,9 @@ class Block:
                 return True
         return False
 
-    def __hash__(self) -> int:
-        """Return the hashed value of the current block"""
-        return hash(self.coordinates)
-
-    def __str__(self) -> str:
-        """Return the string representation of the block"""
-        return self.full_name
-
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
         """Rotate the block coordinates and modify its properties to mimic rotation around a given rotation point"""
-        properties = self.properties.copy()
+        properties = replace(self.properties)
         if 'facing' in properties:
             properties['facing'] = properties['facing'].get_rotated_direction(angle)
 
@@ -129,6 +109,14 @@ class Block:
     def with_name(self, new_name: str, erase_properties: bool = False):
         """Return a block with the same properties and coordinates but different name"""
         if erase_properties:
-            return dataclasses.replace(self, name=new_name, properties={})
-        else:
-            return dataclasses.replace(self, name=new_name)
+            return replace(self, name=new_name, properties={})
+
+        return replace(self, name=new_name)
+
+    def __hash__(self) -> int:
+        """Return the hashed value of the current block"""
+        return hash(self.coordinates)
+
+    def __str__(self) -> str:
+        """Return the string representation of the block"""
+        return self.full_name

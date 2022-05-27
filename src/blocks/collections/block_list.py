@@ -6,7 +6,7 @@ from collections import Counter
 from collections.abc import Sequence
 
 from src.blocks.block import Block
-from src.blocks.collections.palette import Palette
+from src.blocks.utils.palette import Palette
 from src.blocks.collections.block_set import BlockSet
 
 from src.utils.coordinates import Coordinates

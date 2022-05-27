@@ -14,7 +14,7 @@ from src.blocks.block import Block
 from src.plots.plot import Plot
 from src.simulation.settlement import Settlement
 
-from src.simulation.events import get_event
+from src.simulation.events.event import get_event
 
 
 class Simulation:
@@ -58,10 +58,9 @@ class Simulation:
 
             self.current_year += 1
 
-        self.settlements.end_simulation()
-
-        for building in random.sample(self.settlements.buildings, k=math.ceil(0.3 * len(self.settlements.buildings))):
-            building.grow_old(random.randint(65, 80))
+        for settlement in self.settlements:
+            settlement.end_simulation()
+            settlement.grow_old()
 
         # TODO move in decoration logic in settlement ?
 
@@ -94,33 +93,33 @@ class Simulation:
         interface.sendBlocks()
         interface.setBuffering(False)
 
-        # History of buildings
-        for building in self.settlements.buildings[1:]:
-            colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
-            color = random.choice(colors)
+        # # History of buildings
+        # for building in self.settlements.buildings[1:]:
+        #     colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
+        #     color = random.choice(colors)
 
-            general_data = f'{color}{building.name}§0\n{"=" * 18}\n'
-            general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
-            general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
-            general_data += f'Food: {color}+{building.properties.food_production}§0'
-            book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
-                                          title=f'Year {self.current_year}\'s report',
-                                          author='Settlement Construction Community (SCC)')
-            lectern_list = building.blocks.filter('lectern')
+        #     general_data = f'{color}{building.name}§0\n{"=" * 18}\n'
+        #     general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
+        #     general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
+        #     general_data += f'Food: {color}+{building.properties.food_production}§0'
+        #     book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
+        #                                   title=f'Year {self.current_year}\'s report',
+        #                                   author='Settlement Construction Community (SCC)')
+        #     lectern_list = building.blocks.filter('lectern')
 
-            interface.sendBlocks()
+        #     interface.sendBlocks()
 
-            if len(lectern_list):
-                lectern: Block = lectern_list[0]
-                interface.placeBlock(*lectern.coordinates, 'air')
-                toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
+        #     if len(lectern_list):
+        #         lectern: Block = lectern_list[0]
+        #         interface.placeBlock(*lectern.coordinates, 'air')
+        #         toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
-        # make a book
-        book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
-        lectern_list = self.settlements.buildings[0].blocks.filter('lectern')
-        if len(lectern_list):
-            lectern: Block = lectern_list[0]
-            toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
+        # # make a book
+        # book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
+        # lectern_list = self.settlements.buildings[0].blocks.filter('lectern')
+        # if len(lectern_list):
+        #     lectern: Block = lectern_list[0]
+        #     toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         interface.setBuffering(True)
         interface.sendBlocks()
@@ -142,7 +141,8 @@ class Simulation:
         event = get_event(self.current_year)
 
         if event is not None:
-            self.history.append(event.resolve(settlement, self.current_year))
+            # TODO do something with the history
+            self.history.append(event.resolve(settlement))
 
         settlement.update(self.current_year)
         settlement.display()

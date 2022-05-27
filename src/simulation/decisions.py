@@ -1,14 +1,14 @@
 import random
 from typing import Callable
 
-from src.utils.action_type import ResourceType
+from src.utils.resource import Resource
 
 from src.simulation.settlement import Settlement
 from src.simulation.buildings.building import Building
 
 
 # Type alias for functions in charge of the building selection logic
-# Functions given to the Simulation constructor as building_selection must all
+# Functions given to the Simulation constructor as 'building_selection' must all
 # follow the prototype below, which is:
 # - arguments: Settlement, list[Building]
 # - return value: Building | None
@@ -25,7 +25,7 @@ def choose_building(settlement: Settlement, buildings: list[Building]) -> Buildi
     main_resource = _choose_resource_type(settlement)
 
     selected_buildings = list(filter(lambda building: building.properties.resource in (
-        main_resource, ResourceType.UTILITY), buildings))
+        main_resource, Resource.UTILITY), buildings))
 
     if not selected_buildings:
         return None
@@ -33,7 +33,7 @@ def choose_building(settlement: Settlement, buildings: list[Building]) -> Buildi
     return random.choice(selected_buildings)
 
 
-def _choose_resource_type(settlement: Settlement) -> ResourceType:
+def _choose_resource_type(settlement: Settlement) -> Resource:
     """Return the ResourceType on which the settlement should be focusing on.
 
     The optimal resource is selected based on the following criteriae:
@@ -43,16 +43,16 @@ def _choose_resource_type(settlement: Settlement) -> ResourceType:
     - [NONE] if there are: no available jobs, no unemployment and no free beds
     - [BED]  if there are available jobs"""
     if settlement.food_production <= settlement.population:
-        return ResourceType.FOOD
+        return Resource.FOOD
 
     if settlement.worker_number == settlement.total_worker_slots:
 
         if settlement.inactive_villagers:
-            return ResourceType.WORK
+            return Resource.WORK
 
         if settlement.number_of_beds == settlement.population:
-            return ResourceType.BED
+            return Resource.BED
 
-        return ResourceType.NONE
+        return Resource.NONE
 
-    return ResourceType.BED
+    return Resource.BED

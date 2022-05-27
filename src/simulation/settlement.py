@@ -1,3 +1,4 @@
+import math
 import random
 import textwrap
 import time
@@ -232,6 +233,12 @@ class Settlement:
             if work_place.can_offer_work:
                 available_work_places.append(work_place)
 
+    def grow_old(self) -> None:
+        """"""
+        amount = 0.3 * len(self.buildings)
+        for building in random.sample(self.buildings, k=math.ceil(amount)):
+            building.grow_old(random.randint(65, 80))
+
     def display(self) -> None:
         """Display a summary of the city at the end of the current year"""
         print('==== Summary ====')
@@ -258,7 +265,8 @@ class Settlement:
         self.inhabitants.remove(villager)
 
     def spawn_villagers_and_guards(self):
-        x, y, z = self.buildings[0].entrance[0].coordinates
+        """"""
+        x, y, z = self.buildings[0].entrance
         for villager in self.inhabitants:
             interface.runCommand(f'summon villager {x} {y + 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
         for i in range(random.randint(5, 15)):

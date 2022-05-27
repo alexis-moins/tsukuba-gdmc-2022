@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from src.utils.action_type import ResourceType
+from src.utils.resource import Resource
 from src.simulation.buildings.utils.building_type import BuildingType
 
 
@@ -10,7 +10,7 @@ from src.simulation.buildings.utils.building_type import BuildingType
 class BuildingProperties:
     """Represents the immutable properties of a building"""
     type: BuildingType
-    resource: ResourceType
+    resource: Resource
     padding: int = 5
 
     cost: int = 0
@@ -27,6 +27,6 @@ class BuildingProperties:
         properties = {key.replace('-', '_'): value for key, value in properties.items()}
 
         properties['type'] = BuildingType.deserialize(_type)
-        properties['resource'] = ResourceType.deserialize(resource)
+        properties['resource'] = Resource.deserialize(resource)
 
         return BuildingProperties(**properties)

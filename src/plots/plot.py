@@ -217,11 +217,11 @@ class Plot:
         for block in random.sample(self.all_roads, amount):
             block = block.with_points(y=round(self.roads_y[block]) + 1)
             for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
-                distance = block.distance(build.plot.start)
+                distance = block.distance(build.entrance)
 
-                angle = block.angle(build.plot.start)
+                angle = block.angle(build.entrance)
 
-                block.shift(y=i).place_sign(f"<------------  {distance} m           {build.get_display_name()}",
+                block.shift(y=i).place_sign(f"<------------  {distance} m           {build.full_name}",
                                             replace_block=True, rotation=math_utils.radian_to_orientation(angle, shift=math.pi))
 
     def remove_lava(self):

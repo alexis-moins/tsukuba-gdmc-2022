@@ -58,11 +58,12 @@ def get_world_slice() -> WorldSlice | None:
     print(f'Error: Could not get a world slice in {retry_amount} try')
 
 
-def get_content(file: str) -> Any:
-    """Return the content of the given [file]. The function will search the file
-    under the the local 'resouces' directory"""
+def get_content(file: str, YAML: bool = True) -> Any:
+    """Return the content of the given YAML [file]. The function will search the
+    file under the the local 'resouces' directory. Optionally, specifying [YAML]
+    to false enables the function to parse txt files"""
     with open(f'resources/{file}', 'r') as content:
-        return yaml.safe_load(content)
+        return yaml.safe_load(content) if YAML else content.read().splitlines()
 
 
 # Mapping of a material and its replacement and keepProperties (tuple)

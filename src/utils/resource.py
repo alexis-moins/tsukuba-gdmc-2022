@@ -2,7 +2,7 @@ from __future__ import annotations
 from enum import Enum
 
 
-class ResourceType(Enum):
+class Resource(Enum):
     """"""
 
     NONE = -1
@@ -13,7 +13,7 @@ class ResourceType(Enum):
     UTILITY = 4
 
     @staticmethod
-    def deserialize(_type: str) -> ResourceType:
+    def deserialize(_type: str) -> Resource:
         """Return the resource type corresponding to the given [_type]"""
         key = _type.upper()
-        return ResourceType[key]
+        return Resource[key]
