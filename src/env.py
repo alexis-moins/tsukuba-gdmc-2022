@@ -24,6 +24,8 @@ TP = True
 # The percentage of blocks in a building that will suffer from the passing of time
 DETERIORATION = 10
 
+SHOW_TIME = False
+
 
 @dataclass(frozen=True)
 class BuildArea:
