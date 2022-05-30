@@ -28,8 +28,14 @@ class Simulation:
         self.current_year = 0
         self.simulation_end = simulation_end
 
+        # If you have multiple cities, just give a subplot here
+        x, y, z = plot.start
+
+        # Clamp the city size to 150 by 150
+        plot = Plot(x, y, z, plot.size.min(150))
+
         # TODO add logic for big plots
-        self.settlements = [Settlement(self.__plot)]
+        self.settlements = [Settlement(plot)]
 
         # Use default logic if no one was given to the simulation
         self.choose_building = building_selection if building_selection else choose_building
@@ -98,14 +104,17 @@ class Simulation:
         #     colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
         #     color = random.choice(colors)
 
-        #     general_data = f'{color}{building.name}§0\n{"=" * 18}\n'
-        #     general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
-        #     general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
-        #     general_data += f'Food: {color}+{building.properties.food_production}§0'
-        #     book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
-        #                                   title=f'Year {self.current_year}\'s report',
-        #                                   author='Settlement Construction Community (SCC)')
-        #     lectern_list = building.blocks.filter('lectern')
+        # general_data = f'{color}{building.name}§0\n{"=" * 18}\n'
+        # general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
+        # general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
+        # general_data += f'Food: {color}+{building.properties.food_production}§0'
+        # # book_data = toolbox.writeBook(f'{general_data}\n\n' + '\n\n'.join(building.history),
+        # #                               title=f'Year {year}\'s report',
+        # #                               author='Settlement Construction Community (SCC)')
+        # book_data = BookMaker(f'{general_data}\n\n' + '\n\n'.join(building.history),
+        #                         title=f'Year {year}\'s report',
+        #                         author='Settlement Construction Community (SCC)').write_book()
+        # lectern_list = building.blocks.filter('lectern')
 
         #     interface.sendBlocks()
 
@@ -114,9 +123,10 @@ class Simulation:
         #         interface.placeBlock(*lectern.coordinates, 'air')
         #         toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
-        # # make a book
+        # make a book
         # book_data = toolbox.writeBook('\n\n'.join(self.history), title='City history', author='The Mayor')
-        # lectern_list = self.settlements.buildings[0].blocks.filter('lectern')
+        # book_data = BookMaker('\n\n'.join(self.history), title='City history', author='The Mayor').write_book()
+        # lectern_list = self.city.buildings[0].blocks.filter('lectern')
         # if len(lectern_list):
         #     lectern: Block = lectern_list[0]
         #     toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])

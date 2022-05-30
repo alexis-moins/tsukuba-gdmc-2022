@@ -44,6 +44,10 @@ class Size:
         else:
             return Size(self.x - other, self.z - other)
 
+    def min(self, value: int):
+        """Return a new size of minimal size between the given value and the current size"""
+        return Size(min(self.x, value), min(self.z, value))
+
 
 @dataclass(frozen=True)
 class Coordinates:
