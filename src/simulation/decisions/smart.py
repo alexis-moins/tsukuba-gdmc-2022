@@ -26,7 +26,7 @@ class SmartDecisionMaker(DecisionMaker):
         # No point in computing anything if there is one option
         if len(possible_actions) == 1:
             building = possible_actions[0]
-            plot = self.plot.get_subplot(building, rotation, city_buildings=self.city.buildings)
+            plot = self.city.plot.get_subplot(building, rotation, city_buildings=self.city.buildings)
             return building, plot
 
         if self.city.food_production <= self.city.population:
@@ -60,7 +60,7 @@ class SmartDecisionMaker(DecisionMaker):
         if env.DEBUG:
             print(f'rotation {rotation}')
 
-        plot = self.plot.get_subplot(building, rotation, city_buildings=self.city.buildings)
+        plot = self.city.plot.get_subplot(building, rotation, city_buildings=self.city.buildings)
 
         if plot is not None:
             return building, plot

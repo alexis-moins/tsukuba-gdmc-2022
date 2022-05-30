@@ -156,7 +156,9 @@ class Simulation:
         year = 1
 
         # If you have multiple cities, just give a subplot here
-        self.city = City(self.plot, year)
+        x, y, z = self.plot.start
+        # Clamp the city size to 150 by 150
+        self.city = City(Plot(x, y, z, self.plot.size.min(150)), year)
         self.decision_maker.city = self.city
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
@@ -225,7 +227,7 @@ class Simulation:
                 else:
                     self.city.add_building(decoration, plot, rotation)
 
-        coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.plot.occupied_coordinates
+        coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.city.plot.occupied_coordinates
         surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
 
         chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
