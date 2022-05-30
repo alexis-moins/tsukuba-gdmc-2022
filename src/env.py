@@ -1,5 +1,5 @@
 import yaml
-from time import sleep
+import time
 from typing import Any, Iterator
 from dataclasses import dataclass
 
@@ -24,6 +24,11 @@ TP = True
 # The percentage of blocks in a building that will suffer from the passing of time
 DETERIORATION = 10
 
+SHOW_TIME = False
+start_time = time.time()
+
+PROFILE_TIME = False
+
 
 @dataclass(frozen=True)
 class BuildArea:
@@ -39,21 +44,19 @@ class BuildArea:
 
 def get_build_area(auto_build_area: bool = False) -> BuildArea:
     """Get the BUILD_AREA"""
-    request_build_area = INTERFACE.requestPlayerArea if auto_build_area else INTERFACE.requestBuildArea
-
-    x1, y1, z1, x2, y2, z2 = request_build_area()
+    x1, y1, z1, x2, y2, z2 = INTERFACE.requestPlayerArea(250, 250) if auto_build_area else INTERFACE.requestBuildArea()
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
 
 
 def get_world_slice() -> WorldSlice | None:
     """Set the WORLD attribute"""
-    while retry_amount := 10:
+    while retry_amount := 20:
         try:
             return WorldSlice(BUILD_AREA.start.x, BUILD_AREA.start.z,
                               BUILD_AREA.end.x + 1, BUILD_AREA.end.z + 1)
         except MalformedFileError:
             retry_amount -= 1
-            sleep(2)
+            time.sleep(1)
     print(f'Error: Could not get a world slice in {retry_amount} try')
 
 

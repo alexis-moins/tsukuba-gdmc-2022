@@ -94,8 +94,9 @@ class Block:
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
         """Rotate the block coordinates and modify its properties to mimic rotation around a given rotation point"""
         if 'facing' in self.properties:
+            # print(self.properties)
             self.properties['facing'] = self.properties['facing'].get_rotated_direction(angle)
-
+            # input(self.properties)
         # invert axis between x and z
         if 'axis' in self.properties and (angle == 90 or angle == 270):
             if self.properties['axis'] == 'x':

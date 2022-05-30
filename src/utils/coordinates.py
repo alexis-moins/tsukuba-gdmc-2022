@@ -103,10 +103,13 @@ class Coordinates:
         rotated_x, rotated_z = round(rotated_x), round(rotated_z)
         return Coordinates(rotated_x, self.y, rotated_z) + rotation_point
 
-    def around_2d(self, radius):
+    def around_2d(self, radius, y=None):
+        if y is None:
+            y = self.y
+        point = self.with_points(y=y)
         for x in range(- radius, radius + 1, 1):
             for z in range(- radius, radius + 1, 1):
-                yield self.shift(x=x, z=z)
+                yield point.shift(x=x, z=z)
 
     def line(self, length: int, direction: Direction):
         current = self
@@ -123,7 +126,7 @@ class Coordinates:
         data += f'Text4:\'{{"text":"{texts[3]}"}}\'' + "}"
         if replace_block:
             interface.placeBlock(self.x, self.y, self.z, f'oak_sign[rotation={rotation}]')
-            interface.sendBlocks()
+        interface.sendBlocks()
         interface.runCommand(f"data merge block {self.x} {self.y} {self.z} {data}")
 
     def angle(self, other: Coordinates):
@@ -142,8 +145,7 @@ class Coordinates:
 
     def __iter__(self) -> Iterator[int]:
         """Return an iterator over the current coordinates"""
-        coordinates = astuple(self)
-        return iter(coordinates)
+        return iter((self.x, self.y, self.z))
 
     def __sub__(self, other: Any) -> Coordinates:
         """Return the substraction between the current coordinates and the given ones"""

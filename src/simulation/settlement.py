@@ -9,7 +9,7 @@ from gdpc import interface, lookup
 from numpy import greater
 
 from src import env
-from src.plots.plot import Plot
+from src.plots.plot import Plot, CityPlot
 from src.utils.criteria import Criteria
 from src.simulation.villager import Villager
 from src.blocks.collections.block_list import BlockList
@@ -21,7 +21,7 @@ class Settlement(MutableMapping):
         a dictionary (keys, valyes, etc...) while also providing a chronology of the buildings
         added to the settlement"""
 
-    def __init__(self, plot: Plot, *, population: int = 5, food: int = 5):
+    def __init__(self, plot: CityPlot, *, population: int = 5, food: int = 5):
         """Creates a new settlement on the given [plot]. The settlement starts with a
         default [population] of 5 and a default [food] stock of 5"""
         self.plot = plot
