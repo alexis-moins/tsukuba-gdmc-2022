@@ -99,10 +99,13 @@ class Coordinates:
         rotated_x, rotated_z = round(rotated_x), round(rotated_z)
         return Coordinates(rotated_x, self.y, rotated_z) + rotation_point
 
-    def around_2d(self, radius):
+    def around_2d(self, radius, y=None):
+        if y is None:
+            y = self.y
+        origin = self.with_points(y=y)
         for x in range(- radius, radius + 1, 1):
             for z in range(- radius, radius + 1, 1):
-                yield self.shift(x=x, z=z)
+                yield origin.shift(x=x, z=z)
 
     def line(self, length: int, direction: Direction):
         current = self

@@ -86,7 +86,7 @@ class Plot:
 
         for road in self.all_roads:
             neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
-                                   filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(5)))
+                                   filter(self.all_roads.__contains__, road.around_2d(5, y=0)))
 
             neighbors_y = list(map(lambda block: block.coordinates.y, filter(lambda block: block, neighbors_blocks)))
 
@@ -103,7 +103,7 @@ class Plot:
 
         # clean above roads
         for road in self.all_roads:
-            for i in range(1, 20):
+            for i in range(1, 8):
                 coordinates = road.with_points(y=int(self.roads_y[road]) + i)
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
