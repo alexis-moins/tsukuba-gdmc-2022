@@ -1,5 +1,5 @@
 import yaml
-from time import sleep
+import time
 from typing import Any, Iterator
 from dataclasses import dataclass
 
@@ -25,6 +25,9 @@ TP = True
 DETERIORATION = 10
 
 SHOW_TIME = False
+start_time = time.time()
+
+PROFILE_TIME = False
 
 
 @dataclass(frozen=True)
@@ -49,13 +52,13 @@ def get_build_area(auto_build_area: bool = False) -> BuildArea:
 
 def get_world_slice() -> WorldSlice | None:
     """Set the WORLD attribute"""
-    while retry_amount := 10:
+    while retry_amount := 20:
         try:
             return WorldSlice(BUILD_AREA.start.x, BUILD_AREA.start.z,
                               BUILD_AREA.end.x + 1, BUILD_AREA.end.z + 1)
         except MalformedFileError:
             retry_amount -= 1
-            sleep(2)
+            time.sleep(1)
     print(f'Error: Could not get a world slice in {retry_amount} try')
 
 
