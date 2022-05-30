@@ -98,13 +98,13 @@ class City:
                      filter(lambda coord: coord in self.plot, plot.surface(padding)))))
 
         plot.remove_trees(area_with_padding)
-        time.sleep(2)
+        # time.sleep(2)
 
         plot.build_foundation(self.plot)
 
         print(f'{building} added to the settlement')
 
-        building.build(plot, rotation, self.plot)
+        await building.build(plot, rotation, self.plot)
         self.buildings.append(building)
 
         if len(self.buildings) > 1 and not self.buildings[-1].is_extension:

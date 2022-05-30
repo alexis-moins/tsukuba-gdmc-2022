@@ -58,14 +58,14 @@ def get_build_area(auto_build_area: bool = False) -> BuildArea:
 
 def get_world_slice() -> WorldSlice | None:
     """Set the WORLD attribute"""
-    while retry_amount := 10:
+    while retry_amount := 20:
         try:
             return WorldSlice(BUILD_AREA.start.x, BUILD_AREA.start.z,
                               BUILD_AREA.end.x + 1, BUILD_AREA.end.z + 1)
         except MalformedFileError:
             retry_amount -= 1
-            sleep(2)
-    print(f'Error: Could not get a world slice in {retry_amount} try')
+            sleep(1)
+    print(f'Error: Could not get a world slice')
 
 
 def get_content(file_name: str) -> Any:

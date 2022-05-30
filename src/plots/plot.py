@@ -4,6 +4,7 @@ import math
 import random
 import time
 from collections import defaultdict
+from functools import lru_cache
 from typing import Generator
 
 import networkx as nx
@@ -357,7 +358,9 @@ class Plot:
             INTF.placeBlock(*block.coordinates, ground)
         INTF.sendBlocks()
 
-    def get_block_at(self, x: int, y: int, z: int) -> Block:
+    @staticmethod
+    @lru_cache(maxsize=100_000)
+    def get_block_at(x: int, y: int, z: int) -> Block:
         """Return the block found at the given x, y, z coordinates in the env.WORLD"""
         try:
             name = env.WORLD.getBlockAt(x, y, z)
@@ -580,20 +583,20 @@ class Plot:
         # add malus due to bad road connectivity
         if city_buildings:
 
-            try:
-                path = nx.dijkstra_path(self.graph, city_buildings[0].entrances[0].coordinates, coordinates)
-                malus = -10
-            except nx.NetworkXException:
-                malus = max_score / 5
+            # try:
+            #     path = nx.dijkstra_path(self.graph, city_buildings[0].entrances[0].coordinates, coordinates)
+            #     malus = -10
+            # except nx.NetworkXException:
+            #     malus = max_score / 5
 
             horizontal_directions = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.SOUTH)
             for _dir in horizontal_directions:
-                line = list(coordinates.line(3, _dir))
+                line = list(coordinates.line(5, _dir))
                 for u, v in zip(line[:-2], line[1:]):
                     if not self.graph.has_edge(u, v):
                         return max_score
 
-            score += malus
+            # score += malus
 
         if score >= best_current_score:
             return max_score

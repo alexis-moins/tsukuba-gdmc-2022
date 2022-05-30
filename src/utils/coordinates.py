@@ -138,8 +138,7 @@ class Coordinates:
 
     def __iter__(self) -> Iterator[int]:
         """Return an iterator over the current coordinates"""
-        coordinates = astuple(self)
-        return iter(coordinates)
+        return iter((self.x, self.y, self.z))
 
     def __sub__(self, other: Any) -> Coordinates:
         """Return the substraction between the current coordinates and the given ones"""
