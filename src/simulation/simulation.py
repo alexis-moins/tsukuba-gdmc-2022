@@ -32,7 +32,7 @@ class Simulation:
         x, y, z = plot.start
 
         # Clamp the city size to 150 by 150
-        plot = CityPlot(x, y, z, plot.size.min(150))
+        plot = CityPlot(x, y, z, plot.size.min(250))
 
         # TODO add logic for big plots
         self.settlements = [Settlement(plot)]

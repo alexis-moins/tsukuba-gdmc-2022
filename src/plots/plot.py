@@ -385,7 +385,9 @@ class BuildPlacementPlot(LogicPlot):
             excluded = ('lava',)
         surface = surface.without(excluded).not_inside(self.occupied_coordinates)
 
-        random_blocks = min(int(len(surface) * (20 / 100)), 8000)  # more than 8000 should be overkill, our
+        batch_size = 100
+
+        random_blocks = min(int(len(surface) * (20 / 100)), batch_size)  # more than 8000 should be overkill, our
         # average plot area should like 60k blocks
 
         blocks_to_check = surface.random_elements(random_blocks)
@@ -396,7 +398,7 @@ class BuildPlacementPlot(LogicPlot):
                 self.visualize_steep_map()
 
         # Take 10 % of the best coordinates + a % of the rest, randomly
-        blocks_to_check = self.priority_blocks.random_elements(max(1, int(len(self.priority_blocks) * 1/10))) + blocks_to_check
+        blocks_to_check = self.priority_blocks.random_elements(min(max(1, int(len(self.priority_blocks) * 1/10)), batch_size)) + blocks_to_check
         if env.DEBUG:
             print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
 
@@ -528,20 +530,20 @@ class BuildPlacementPlot(LogicPlot):
         # add malus due to bad road connectivity
         if city_buildings:
 
-            try:
-                path = nx.dijkstra_path(self.graph, city_buildings[0].entrance, coordinates)
-                malus = -10
-            except nx.NetworkXException:
-                malus = max_score / 5
+            # try:
+            #     path = nx.dijkstra_path(self.graph, city_buildings[0].entrance, coordinates)
+            #     malus = -10
+            # except nx.NetworkXException:
+            #     malus = max_score / 5
 
             horizontal_directions = (Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.SOUTH)
             for _dir in horizontal_directions:
-                line = list(coordinates.line(3, _dir))
+                line = list(coordinates.line(6, _dir))
                 for u, v in zip(line[:-2], line[1:]):
                     if not self.graph.has_edge(u, v):
                         return max_score
 
-            score += malus
+            # score += malus
 
         if score >= best_current_score:
             return max_score

@@ -44,9 +44,7 @@ class BuildArea:
 
 def get_build_area(auto_build_area: bool = False) -> BuildArea:
     """Get the BUILD_AREA"""
-    request_build_area = INTERFACE.requestPlayerArea if auto_build_area else INTERFACE.requestBuildArea
-
-    x1, y1, z1, x2, y2, z2 = request_build_area()
+    x1, y1, z1, x2, y2, z2 = INTERFACE.requestPlayerArea(250, 250) if auto_build_area else INTERFACE.requestBuildArea()
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
 
 
