@@ -44,7 +44,8 @@ class Blueprint(ABC):
         self.structures = structures
         self.palettes = palettes
 
-        self.rotation = random.choice([0, 90, 180, 270])
+        # self.rotation = random.choice([0, 90, 180, 270])
+        self.rotation = 0
         self.adjective = random.choice(_adjectives)
 
         self.workers = set()
@@ -216,10 +217,15 @@ class Blueprint(ABC):
 
         return None
 
-    def _build_structure(self, structure: Structure, start: Coordinates, palettes: dict[str, Palette] | None = None):
+    def _build_structure(self, structure: Structure, start: Coordinates, palettes: dict[str, Palette] | None = None,
+                         rotation=None):
         """Build the given [structure] at the given [start] coordinates, optionally using the
         given block [palettes] instead of the palettes from this building"""
-        blocks = structure.get_blocks(start, self.rotation)
+
+        if rotation is None:
+            rotation = self.rotation
+
+        blocks = structure.get_blocks(start, rotation)
 
         # Use the blocks from the palettes
         blocks = blocks.apply_palettes(palettes if palettes else self.palettes)
@@ -268,18 +274,16 @@ class Tower(Building):
     def build(self, plot: Plot, rotation: int, city: Plot):
         self.plot = plot
         self.rotation = rotation
-        start = plot.start
         dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in LOOKUP.COLORS])}
-        self._build_structure(self.structures[0], plot, rotation, palettes=dict_palette)
+        self._build_structure(self.structures[0], plot, palettes=dict_palette)
 
-        plot.start = plot.start.shift(y=4)
+        current = plot.start.shift(y=4)
 
         for i in range(random.randint(10, min(30, 255 - self.plot.start.y))):
-            self._build_structure(self.structures[1], plot, rotation, palettes=dict_palette)
-            plot.start = plot.start.shift(y=1)
+            self._build_structure(self.structures[1], current, palettes=dict_palette)
+            current = current.shift(y=1)
 
-        self._build_structure(self.structures[2], plot, rotation, palettes=dict_palette)
-        plot.start = start  # reset start
+        self._build_structure(self.structures[2], current, palettes=dict_palette)
         self.entrance = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
@@ -404,7 +408,8 @@ class Mine(Building):
     def build(self, plot: Plot, settlement: Plot):
         """"""
         # set as starting rotation | need a 180 rotation between the 2 modules
-        rotation_index = (270, 180, 90, 0).index(self.rotation) + 2
+        rotations = (270, 180, 90, 0)
+        rotation_index = rotations.index(self.rotation) + 2
 
         stairs_start = plot.start.shift(y=1)
         for _ in range(self.floor_number):
@@ -412,7 +417,7 @@ class Mine(Building):
             rotation_index = (rotation_index + 1) % 4
             stairs_start = stairs_start.shift(y=-5)
 
-            self._build_structure(self.structures[1], stairs_start)
+            self._build_structure(self.structures[1], stairs_start, rotation=rotations[rotation_index])
 
         self._build_structure(self.structures[0], plot.start)
 

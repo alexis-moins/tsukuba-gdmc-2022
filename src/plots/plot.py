@@ -30,199 +30,9 @@ class Plot:
         self.start = Coordinates(x, y, z)
         self.end = Coordinates(x + size.x, 255, z + size.z)
         self.size = size
-
-        self.occupied_coordinates: set[Coordinates] = set()
-        self.construction_coordinates: set[Coordinates] = set()
-
-        self.surface_blocks: dict[Criteria, BlockList] = {}
         self.offset = self.start - env.BUILD_AREA.start, self.end - env.BUILD_AREA.start
-
-        # TODO change center into coordinates
-        self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
-
-        self.steep_factor = 2
-        self.steep_map = None
-        self.priority_blocks: BlockList | None = None
-
-        self.graph = None
-
-        self.all_roads: set[Coordinates] = set()
-        self.roads_infos: dict[str, defaultdict[Coordinates, int]] = {'INNER': defaultdict(int),
-                                                                      'MIDDLE': defaultdict(int),
-                                                                      'OUTER': defaultdict(int)}
-        self.__recently_added_roads = None
-        self.roads_y = None
-
+        self.surface_blocks: dict[Criteria, BlockList] = {}
         self.water_mode = 'water' in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).most_common
-
-    def fill_graph(self):
-        self.graph = nx.Graph()
-        if self.steep_map is None:
-            self.compute_steep_map()
-
-        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
-            self.graph.add_node(block.coordinates)
-
-        for coordinates in self.graph.nodes.keys():
-            for coord in coordinates.neighbours():
-                if coord in self.graph.nodes.keys():
-                    # self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
-                    malus = self.get_steep_map_value(coord)
-                    if malus > 15:
-                        malus = min(malus * 100, 100_000)
-                    self.graph.add_edge(coordinates, coord, weight=100 + malus * 10)
-
-    def equalize_roads(self):
-        if len(self.all_roads) < 1:
-            return
-        self.roads_y = dict()
-
-        for road in self.all_roads:
-            neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
-                                   filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(5)))
-
-            neighbors_y = list(map(lambda block: block.coordinates.y, filter(lambda block: block, neighbors_blocks)))
-
-            # Maybe use median if you implement marching cube like technic for placing stairs
-            # median_y = statistics.median_grouped(neighbors_y)
-            average_y = sum(neighbors_y) / max(len(neighbors_y), 1)
-
-            self.roads_y[road.as_2D()] = average_y
-
-    def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
-        self.equalize_roads()
-
-        roads = []
-
-        # clean above roads
-        for road in self.all_roads:
-            for i in range(1, 20):
-                coordinates = road.with_points(y=int(self.roads_y[road]) + i)
-
-                if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
-                    roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
-                    INTF.placeBlock(*coordinates, 'air')
-
-        self.remove_trees(BlockList(roads))
-
-        # place blocks
-        for key in self.roads_infos.keys():
-            for road in self.roads_infos[key]:
-                if road not in self:
-                    continue
-                # Default : place a block
-                chose_pattern = floor_pattern
-                shift = 0
-
-                # If the average block y is near half :
-                if slab_pattern and 0.5 < self.roads_y[road] - int(self.roads_y[road]):
-                    # place a slab
-                    chose_pattern = slab_pattern
-                    shift = 1
-                    if road.as_2D() in self.construction_coordinates:
-                        continue
-
-                x, y, z = (road.with_points(y=int(self.roads_y[road]) + shift))
-                if road.as_2D() in self.construction_coordinates:
-                    if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow', 'sand', 'stone')):
-                        continue
-
-                the_blocks = random.choices(list(chose_pattern[key].keys()),
-                                            k=1, weights=list(chose_pattern[key].values()))
-
-                if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
-                                     'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]'):
-                    INTF.placeBlock(x, y-1, z, the_blocks)
-                    INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
-                else:
-                    if Coordinates(x, 0, z) in self.construction_coordinates:
-                        continue
-
-                    if 'note_block' in the_blocks[0]:
-                        INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
-
-                    INTF.placeBlock(x, y, z, the_blocks)
-
-        INTF.sendBlocks()
-
-    def __add_road_block(self, coordinates: Coordinates, placement: str):
-
-        road_coord = coordinates.as_2D()
-
-        delete = False
-        for key in self.roads_infos:
-            if key == placement:
-                if road_coord not in self.__recently_added_roads[placement]:
-                    self.roads_infos[key][road_coord] += 1
-                delete = True
-            else:
-                if road_coord in self.roads_infos[key]:
-                    if delete:
-                        self.roads_infos[key].pop(road_coord)
-                    else:
-                        return
-
-        self.__recently_added_roads[placement].add(road_coord)
-        self.all_roads.add(road_coord)
-        self.occupied_coordinates.add(road_coord)
-
-    def compute_roads(self, start: Coordinates, end: Coordinates) -> bool:
-        if self.graph is None:
-            self.fill_graph()
-
-        start = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(start)) else start
-        end = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(end)) else end
-
-        try:
-            path = nx.dijkstra_path(self.graph, start, end)
-        except nx.NetworkXException:
-            return False
-
-        self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
-        for coord in path:
-            # INNER PART
-            self.__add_road_block(coord, 'INNER')
-
-            # MIDDLE PART
-            self.__add_road_block(coord.shift(x=1), 'MIDDLE')
-            self.__add_road_block(coord.shift(x=-1), 'MIDDLE')
-            self.__add_road_block(coord.shift(z=1), 'MIDDLE')
-            self.__add_road_block(coord.shift(z=-1), 'MIDDLE')
-
-            # OUTER PART
-            self.__add_road_block(coord.shift(x=1, z=1), 'OUTER')
-            self.__add_road_block(coord.shift(x=-1, z=1), 'OUTER')
-            self.__add_road_block(coord.shift(x=1, z=-1), 'OUTER')
-            self.__add_road_block(coord.shift(x=-1, z=-1), 'OUTER')
-            self.__add_road_block(coord.shift(x=2), 'OUTER')
-            self.__add_road_block(coord.shift(x=-2), 'OUTER')
-            self.__add_road_block(coord.shift(z=2), 'OUTER')
-            self.__add_road_block(coord.shift(z=-2), 'OUTER')
-
-        # Update weights to use the roads
-        for c1, c2 in zip(path[:-2], path[1:]):
-            if self.graph.has_edge(c1, c2):
-                self.graph[c1][c2]['weight'] = 10
-
-        return True
-
-    def add_roads_signs(self, amount: int, buildings: list):
-        if not self.roads_y:
-            self.equalize_roads()
-
-        max_sign_height = min(5, len(buildings))
-        min_sign_height = 2
-        if len(buildings) <= min_sign_height:
-            return
-        for block in random.sample(self.all_roads, amount):
-            block = block.with_points(y=round(self.roads_y[block]) + 1)
-            for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
-                distance = block.distance(build.entrance)
-
-                angle = block.angle(build.entrance)
-
-                block.shift(y=i).place_sign(f"<------------  {distance} m           {build.full_name}",
-                                            replace_block=True, rotation=math_utils.radian_to_orientation(angle, shift=math.pi))
 
     def remove_lava(self):
         checked = set()
@@ -240,7 +50,7 @@ class Plot:
 
         INTF.sendBlocks()
 
-    @staticmethod
+    @ staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
         """Return a new plot created from the given start and end coordinates"""
         return Plot(*start, Size.from_coordinates(start, end))
@@ -249,96 +59,6 @@ class Plot:
         """Update the env.WORLD slice and most importantly the heightmaps"""
         env.get_world_slice()
         self.surface_blocks.clear()
-
-    @staticmethod
-    def _delta_sum(values: list, base: int) -> int:
-        return sum(abs(base - v) for v in values)
-
-    def flat_heightmap_to_plot_block(self, index: int) -> Block | None:
-        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
-
-        span = self.steep_factor
-
-        side_length = self.size.x - 2 * span
-        x = index // side_length
-        z = index - side_length * x
-
-        return surface.find(self.start.shift(x + span, 0, z + span))
-
-    def compute_steep_map(self):
-        span = self.steep_factor
-
-        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_TREES)
-        water_value = 100_000_000 if not self.water_mode else 10
-        steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
-        for i in range(span, self.size.x - span):
-            for j in range(span, self.size.z - span):
-                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(self.start.shift(i, 0, j))
-                if block.is_one_of(('water',)):
-                    steep[i - span, j - span] = water_value
-                else:
-                    steep[i - span, j - span] = self._delta_sum(
-                        heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
-
-        self.steep_map = steep.flatten()
-
-        amount_of_prio = int((10 / 100) * self.steep_map.size)
-
-        prio = np.argpartition(self.steep_map, amount_of_prio)[:amount_of_prio]
-        blocks = []
-        for p in prio:
-            block = self.flat_heightmap_to_plot_block(p)
-            if block and block not in self.occupied_coordinates:
-                blocks.append(block)
-        self.priority_blocks = BlockList(blocks)
-
-    def visualize_roads(self, y_offset: int = 0):
-        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
-        materials = ('concrete', 'wool', 'stained_glass')
-        self.equalize_roads()
-        for i, key in enumerate(self.roads_infos):
-            for road in self.roads_infos[key]:
-                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(
-                    road)  # to be sure that we are in the plot
-                if block:
-                    INTF.placeBlock(*(road.with_points(y=self.roads_y[road] + y_offset)),
-                                    colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
-
-        INTF.sendBlocks()
-
-    def visualize_occupied_area(self):
-        for coord in self.occupied_coordinates:
-            block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord)
-            if block:
-                INTF.placeBlock(*(block.coordinates.shift(y=1)), 'red_stained_glass')
-        INTF.sendBlocks()
-
-    def visualize_graph(self):
-        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
-        for coord in self.graph.nodes():
-            weights = list(map(lambda edge: self.graph[edge[0]][edge[1]]['weight'], self.graph.edges(coord)))
-            if len(weights) == 0:
-                chose_color = 'blue'
-            else:
-                coord_access_value = min(weights)
-                chose_color = 'black'
-                if coord_access_value < 50:
-                    chose_color = colors[0]
-                elif coord_access_value < 110:
-                    continue  # 'default' value, don't show
-                elif coord_access_value < 150:
-                    chose_color = colors[2]
-            INTF.placeBlock(*(coord.shift(y=1)), chose_color + '_stained_glass')
-        INTF.sendBlocks()
-
-    def visualize_steep_map(self):
-        span = self.steep_factor
-        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
-        for i, value in enumerate(self.steep_map):
-            block = self.flat_heightmap_to_plot_block(i, span)
-            if block:
-                INTF.placeBlock(*block.coordinates, colors[min(int(value // span), 8)] + '_stained_glass')
-        INTF.sendBlocks()
 
     def visualize(self, ground: str = 'orange_wool', criteria: Criteria = Criteria.MOTION_BLOCKING_NO_TREES) -> None:
         """Change the blocks at the surface of the plot to visualize it"""
@@ -402,6 +122,235 @@ class Plot:
                     heightmap[x, z] = ground_coord.y
 
         return heightmap
+
+
+    def remove_trees(self, surface: BlockList = None) -> None:
+        """Remove all plants at the surface of the current plot"""
+        pattern = ('log', 'bush', 'mushroom', 'bamboo')
+
+        if surface is None:
+            surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
+
+        amount = 0
+        unwanted_blocks = surface.filter(pattern).to_set()
+
+        if env.DEBUG:
+            print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
+
+        while unwanted_blocks:
+            block = unwanted_blocks.pop()
+            for coord in self.__yield_until_ground(block.coordinates):
+                INTF.placeBlock(*coord, 'minecraft:air')
+                amount += 1
+
+        INTF.sendBlocks()
+        if env.DEBUG:
+            print(f'=> Deleted {amount} blocs\n')
+        # self.update()
+
+    def __yield_until_ground(self, coordinates: Coordinates):
+        """Yield the coordinates """
+        current_coord: Coordinates = coordinates
+
+        while self.get_block_at(*current_coord).is_one_of(('air', 'leaves', 'log', 'vine', 'bamboo')):
+            yield current_coord
+            current_coord = current_coord.shift(0, -1, 0)
+
+    def build_foundation(self, build_area: Plot) -> None:
+        """Build the foundations under the house"""
+        if not self.water_mode:
+            blocks = ('stone_bricks', 'diorite', 'cobblestone')
+            weights = (75, 15, 10)
+
+            for coord in self.__iterate_over_air(self.start.y):
+                block = random.choices(blocks, weights)
+                INTF.placeBlock(*coord, block)
+        else:
+
+            # INSIDE
+            for coord in self.surface():
+                INTF.placeBlock(*coord, "oak_planks")
+
+            # OUTER FRAME
+            for coord in self.start.shift(x=-3, z=-1).line(self.size.x + 4, Direction.EAST):
+                if coord in build_area:
+                    INTF.placeBlock(*coord, "oak_log[axis=x]")
+                c = coord.shift(z=self.size.z + 1)
+                if c in build_area:
+                    INTF.placeBlock(*c, "oak_log[axis=x]")
+            for coord in self.start.shift(x=-1, z=-3).line(self.size.z + 4, Direction.SOUTH):
+                if coord in build_area:
+                    INTF.placeBlock(*coord, "oak_log[axis=z]")
+                c = coord.shift(x=self.size.x + 1)
+                if c in build_area:
+                    INTF.placeBlock(*c, "oak_log[axis=z]")
+
+            # PILLARS
+            for coord in self.start.shift(x=-1, y=2, z=-1).line(50, Direction.DOWN):
+                if coord in build_area:
+                    INTF.placeBlock(*coord, "oak_log[axis=y]")
+                c = coord.shift(x=self.size.x + 1)
+                if c in build_area:
+                    INTF.placeBlock(*c, "oak_log[axis=y]")
+                c = coord.shift(x=self.size.x + 1, z=self.size.z + 1)
+                if c in build_area:
+                    INTF.placeBlock(*c, "oak_log[axis=y]")
+                c = coord.shift(z=self.size.z + 1)
+                if c in build_area:
+                    INTF.placeBlock(*c, "oak_log[axis=y]")
+
+        INTF.sendBlocks()
+
+    def __iterate_over_air(self, max_y: int) -> Coordinates:
+        """"""
+        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
+            for new_y in range(block.coordinates.y, max_y):
+                yield block.coordinates.with_points(y=new_y)
+
+    def __contains__(self, coordinates: Coordinates) -> bool:
+        """Return true if the current plot contains the given coordinates"""
+        return self.start.x <= coordinates.x < self.end.x and \
+            self.start.y <= coordinates.y <= self.end.y and \
+            self.start.z <= coordinates.z < self.end.z
+
+    def surface(self, padding: int = 0) -> Generator[Coordinates]:
+        """Return a generator over the coordinates of the current plot"""
+        for x in range(-padding, self.size.x + padding):
+            for z in range(-padding, self.size.z + padding):
+                yield self.start.shift(x, 0, z)
+
+
+class LogicPlot(Plot):
+    def __init__(self, x: int, y: int, z: int, size: Size):
+        super().__init__(x, y, z, size)
+
+        # BUILDING PLACEMENT LOGIC
+        self.occupied_coordinates: set[Coordinates] = set()
+        self.construction_coordinates: set[Coordinates] = set()
+        # TODO change center into coordinates
+        self.center = self.start.x + self.size.x // 2, self.start.z + self.size.z // 2
+
+        self.steep_factor = 2
+        self.steep_map = None
+        self.priority_blocks: BlockList | None = None
+
+        # ROAD LOGIC
+        self.graph = None
+
+        self.all_roads: set[Coordinates] = set()
+        self.roads_infos: dict[str, defaultdict[Coordinates, int]] = {'INNER': defaultdict(int),
+                                                                      'MIDDLE': defaultdict(int),
+                                                                      'OUTER': defaultdict(int)}
+        self.__recently_added_roads = None
+        self.roads_y = None
+
+    @staticmethod
+    def _delta_sum(values: list, base: int) -> int:
+        return sum(abs(base - v) for v in values)
+
+    def flat_heightmap_to_plot_block(self, index: int) -> Block | None:
+        surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
+
+        span = self.steep_factor
+
+        side_length = self.size.x - 2 * span
+        x = index // side_length
+        z = index - side_length * x
+
+        return surface.find(self.start.shift(x + span, 0, z + span))
+
+    def compute_steep_map(self):
+        span = self.steep_factor
+
+        heightmap: np.ndarray = self.get_heightmap(Criteria.MOTION_BLOCKING_NO_TREES)
+        water_value = 100_000_000 if not self.water_mode else 10
+        steep = np.empty(shape=(self.size.x - 2 * span, self.size.z - 2 * span))
+        for i in range(span, self.size.x - span):
+            for j in range(span, self.size.z - span):
+                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(self.start.shift(i, 0, j))
+                if block.is_one_of(('water',)):
+                    steep[i - span, j - span] = water_value
+                else:
+                    steep[i - span, j - span] = self._delta_sum(
+                        heightmap[i - span: i + 1 + span, j - span: j + 1 + span].flatten(), heightmap[i, j])
+
+        self.steep_map = steep.flatten()
+
+        amount_of_prio = int((10 / 100) * self.steep_map.size)
+
+        prio = np.argpartition(self.steep_map, amount_of_prio)[:amount_of_prio]
+        blocks = []
+        for p in prio:
+            block = self.flat_heightmap_to_plot_block(p)
+            if block and block not in self.occupied_coordinates:
+                blocks.append(block)
+        self.priority_blocks = BlockList(blocks)
+
+    def fill_graph(self):
+        self.graph = nx.Graph()
+        if self.steep_map is None:
+            self.compute_steep_map()
+
+        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
+            self.graph.add_node(block.coordinates)
+
+        for coordinates in self.graph.nodes.keys():
+            for coord in coordinates.neighbours():
+                if coord in self.graph.nodes.keys():
+                    # self.graph.add_edge(coordinates, coord, weight=100 + abs(coord.y - coordinates.y) * 10)
+                    malus = self.get_steep_map_value(coord)
+                    if malus > 15:
+                        malus = min(malus * 100, 100_000)
+                    self.graph.add_edge(coordinates, coord, weight=100 + malus * 10)
+
+    def get_steep_map_value(self, coord: Coordinates) -> int:
+        if self.steep_map is None:
+            self.compute_steep_map()
+
+        steep_map_size = self.size.x - self.steep_factor * 2, self.size.z - self.steep_factor * 2
+        i, j = (coord - self.start).xz
+        i = min(max(i - self.steep_factor, 0), steep_map_size[0] - 1)
+        j = min(max(j - self.steep_factor, 0), steep_map_size[1] - 1)
+        return self.steep_map[j + i * steep_map_size[1]]
+
+    def visualize_occupied_area(self):
+        for coord in self.occupied_coordinates:
+            block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord)
+            if block:
+                INTF.placeBlock(*(block.coordinates.shift(y=1)), 'red_stained_glass')
+        INTF.sendBlocks()
+
+    def visualize_steep_map(self):
+        span = self.steep_factor
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        for i, value in enumerate(self.steep_map):
+            block = self.flat_heightmap_to_plot_block(i)
+            if block:
+                INTF.placeBlock(*block.coordinates, colors[min(int(value // span), 8)] + '_stained_glass')
+        INTF.sendBlocks()
+
+    def visualize_graph(self):
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        for coord in self.graph.nodes():
+            weights = list(map(lambda edge: self.graph[edge[0]][edge[1]]['weight'], self.graph.edges(coord)))
+            if len(weights) == 0:
+                chose_color = 'blue'
+            else:
+                coord_access_value = min(weights)
+                chose_color = 'black'
+                if coord_access_value < 50:
+                    chose_color = colors[0]
+                elif coord_access_value < 110:
+                    continue  # 'default' value, don't show
+                elif coord_access_value < 150:
+                    chose_color = colors[2]
+            INTF.placeBlock(*(coord.shift(y=1)), chose_color + '_stained_glass')
+        INTF.sendBlocks()
+
+
+class BuildPlacementPlot(LogicPlot):
+    def __init__(self, x: int, y: int, z: int, size: Size):
+        super().__init__(x, y, z, size)
 
     def get_subplot(self, building, rotation: int, max_score: int, city_buildings: list = None) -> Plot | None:
         """Return the best coordinates to place a building of a certain size, minimizing its score"""
@@ -597,107 +546,181 @@ class Plot:
 
         return score + score_modif
 
-    def remove_trees(self, surface: BlockList = None) -> None:
-        """Remove all plants at the surface of the current plot"""
-        pattern = ('log', 'bush', 'mushroom', 'bamboo')
 
-        if surface is None:
-            surface = self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES)
+class RoadPlot(LogicPlot):
+    def __init__(self, x: int, y: int, z: int, size: Size):
+        super().__init__(x, y, z, size)
 
-        amount = 0
-        unwanted_blocks = surface.filter(pattern).to_set()
+    def equalize_roads(self):
+        if len(self.all_roads) < 1:
+            return
+        self.roads_y = dict()
 
-        if env.DEBUG:
-            print(f'\n=> Removing trees on plot at {self.start} with size {self.size}')
+        for road in self.all_roads:
+            neighbors_blocks = map(lambda coord: self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(coord),
+                                   filter(lambda r: r.as_2D() in self.all_roads, road.around_2d(5)))
 
-        while unwanted_blocks:
-            block = unwanted_blocks.pop()
-            for coord in self.__yield_until_ground(block.coordinates):
-                INTF.placeBlock(*coord, 'minecraft:air')
-                amount += 1
+            neighbors_y = list(map(lambda block: block.coordinates.y, filter(lambda block: block, neighbors_blocks)))
+
+            # Maybe use median if you implement marching cube like technic for placing stairs
+            # median_y = statistics.median_grouped(neighbors_y)
+            average_y = sum(neighbors_y) / max(len(neighbors_y), 1)
+
+            self.roads_y[road.as_2D()] = average_y
+
+    def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
+        self.equalize_roads()
+
+        roads = []
+
+        # clean above roads
+        for road in self.all_roads:
+            for i in range(1, 20):
+                coordinates = road.with_points(y=int(self.roads_y[road]) + i)
+
+                if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
+                    roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
+                    INTF.placeBlock(*coordinates, 'air')
+
+        self.remove_trees(BlockList(roads))
+
+        # place blocks
+        for key in self.roads_infos.keys():
+            for road in self.roads_infos[key]:
+                if road not in self:
+                    continue
+                # Default : place a block
+                chose_pattern = floor_pattern
+                shift = 0
+
+                # If the average block y is near half :
+                if slab_pattern and 0.5 < self.roads_y[road] - int(self.roads_y[road]):
+                    # place a slab
+                    chose_pattern = slab_pattern
+                    shift = 1
+                    if road.as_2D() in self.construction_coordinates:
+                        continue
+
+                x, y, z = (road.with_points(y=int(self.roads_y[road]) + shift))
+                if road.as_2D() in self.construction_coordinates:
+                    if not self.get_block_at(x, y, z).is_one_of(('air', 'grass', 'snow', 'sand', 'stone')):
+                        continue
+
+                the_blocks = random.choices(list(chose_pattern[key].keys()),
+                                            k=1, weights=list(chose_pattern[key].values()))
+
+                if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
+                                     'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]'):
+                    INTF.placeBlock(x, y-1, z, the_blocks)
+                    INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
+                else:
+                    if Coordinates(x, 0, z) in self.construction_coordinates:
+                        continue
+
+                    if 'note_block' in the_blocks[0]:
+                        INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
+
+                    INTF.placeBlock(x, y, z, the_blocks)
 
         INTF.sendBlocks()
-        if env.DEBUG:
-            print(f'=> Deleted {amount} blocs\n')
-        # self.update()
 
-    def __yield_until_ground(self, coordinates: Coordinates):
-        """Yield the coordinates """
-        current_coord: Coordinates = coordinates
+    def __add_road_block(self, coordinates: Coordinates, placement: str):
 
-        while self.get_block_at(*current_coord).is_one_of(('air', 'leaves', 'log', 'vine', 'bamboo')):
-            yield current_coord
-            current_coord = current_coord.shift(0, -1, 0)
+        road_coord = coordinates.as_2D()
 
-    def build_foundation(self, build_area: Plot) -> None:
-        """Build the foundations under the house"""
-        if not self.water_mode:
-            blocks = ('stone_bricks', 'diorite', 'cobblestone')
-            weights = (75, 15, 10)
+        delete = False
+        for key in self.roads_infos:
+            if key == placement:
+                if road_coord not in self.__recently_added_roads[placement]:
+                    self.roads_infos[key][road_coord] += 1
+                delete = True
+            else:
+                if road_coord in self.roads_infos[key]:
+                    if delete:
+                        self.roads_infos[key].pop(road_coord)
+                    else:
+                        return
 
-            for coord in self.__iterate_over_air(self.start.y):
-                block = random.choices(blocks, weights)
-                INTF.placeBlock(*coord, block)
-        else:
+        self.__recently_added_roads[placement].add(road_coord)
+        self.all_roads.add(road_coord)
+        self.occupied_coordinates.add(road_coord)
 
-            # INSIDE
-            for coord in self.surface():
-                INTF.placeBlock(*coord, "oak_planks")
+    def compute_roads(self, start: Coordinates, end: Coordinates) -> bool:
+        if self.graph is None:
+            self.fill_graph()
 
-            # OUTER FRAME
-            for coord in self.start.shift(x=-3, z=-1).line(self.size.x + 4, Direction.EAST):
-                if coord in build_area:
-                    INTF.placeBlock(*coord, "oak_log[axis=x]")
-                c = coord.shift(z=self.size.z + 1)
-                if c in build_area:
-                    INTF.placeBlock(*c, "oak_log[axis=x]")
-            for coord in self.start.shift(x=-1, z=-3).line(self.size.z + 4, Direction.SOUTH):
-                if coord in build_area:
-                    INTF.placeBlock(*coord, "oak_log[axis=z]")
-                c = coord.shift(x=self.size.x + 1)
-                if c in build_area:
-                    INTF.placeBlock(*c, "oak_log[axis=z]")
+        start = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(start)) else start
+        end = b.coordinates if (b := self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(end)) else end
 
-            # PILLARS
-            for coord in self.start.shift(x=-1, y=2, z=-1).line(50, Direction.DOWN):
-                if coord in build_area:
-                    INTF.placeBlock(*coord, "oak_log[axis=y]")
-                c = coord.shift(x=self.size.x + 1)
-                if c in build_area:
-                    INTF.placeBlock(*c, "oak_log[axis=y]")
-                c = coord.shift(x=self.size.x + 1, z=self.size.z + 1)
-                if c in build_area:
-                    INTF.placeBlock(*c, "oak_log[axis=y]")
-                c = coord.shift(z=self.size.z + 1)
-                if c in build_area:
-                    INTF.placeBlock(*c, "oak_log[axis=y]")
+        try:
+            path = nx.dijkstra_path(self.graph, start, end)
+        except nx.NetworkXException:
+            return False
+
+        self.__recently_added_roads = {'INNER': set(), 'MIDDLE': set(), 'OUTER': set()}
+        for coord in path:
+            # INNER PART
+            self.__add_road_block(coord, 'INNER')
+
+            # MIDDLE PART
+            self.__add_road_block(coord.shift(x=1), 'MIDDLE')
+            self.__add_road_block(coord.shift(x=-1), 'MIDDLE')
+            self.__add_road_block(coord.shift(z=1), 'MIDDLE')
+            self.__add_road_block(coord.shift(z=-1), 'MIDDLE')
+
+            # OUTER PART
+            self.__add_road_block(coord.shift(x=1, z=1), 'OUTER')
+            self.__add_road_block(coord.shift(x=-1, z=1), 'OUTER')
+            self.__add_road_block(coord.shift(x=1, z=-1), 'OUTER')
+            self.__add_road_block(coord.shift(x=-1, z=-1), 'OUTER')
+            self.__add_road_block(coord.shift(x=2), 'OUTER')
+            self.__add_road_block(coord.shift(x=-2), 'OUTER')
+            self.__add_road_block(coord.shift(z=2), 'OUTER')
+            self.__add_road_block(coord.shift(z=-2), 'OUTER')
+
+        # Update weights to use the roads
+        for c1, c2 in zip(path[:-2], path[1:]):
+            if self.graph.has_edge(c1, c2):
+                self.graph[c1][c2]['weight'] = 10
+
+        return True
+
+    def add_roads_signs(self, amount: int, buildings: list):
+        if not self.roads_y:
+            self.equalize_roads()
+
+        max_sign_height = min(5, len(buildings))
+        min_sign_height = 2
+        if len(buildings) <= min_sign_height:
+            return
+        for block in random.sample(self.all_roads, amount):
+            block = block.with_points(y=round(self.roads_y[block]) + 1)
+            for i, build in enumerate(random.sample(buildings, random.randint(min_sign_height, max_sign_height))):
+                if build.entrance is None:
+                    continue
+                distance = block.distance(build.entrance)
+
+                angle = block.angle(build.entrance)
+
+                block.shift(y=i).place_sign(f"<------------  {distance} m           {build.full_name}",
+                                            replace_block=True, rotation=math_utils.radian_to_orientation(angle, shift=math.pi))
+
+    def visualize_roads(self, y_offset: int = 0):
+        colors = ('lime', 'white', 'pink', 'yellow', 'orange', 'red', 'magenta', 'purple', 'black')
+        materials = ('concrete', 'wool', 'stained_glass')
+        self.equalize_roads()
+        for i, key in enumerate(self.roads_infos):
+            for road in self.roads_infos[key]:
+                block = self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(
+                    road)  # to be sure that we are in the plot
+                if block:
+                    INTF.placeBlock(*(road.with_points(y=self.roads_y[road] + y_offset)),
+                                    colors[min(self.roads_infos[key][road], len(colors)) - 1] + '_' + materials[i])
 
         INTF.sendBlocks()
 
-    def __iterate_over_air(self, max_y: int) -> Coordinates:
-        """"""
-        for block in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES):
-            for new_y in range(block.coordinates.y, max_y):
-                yield block.coordinates.with_points(y=new_y)
 
-    def __contains__(self, coordinates: Coordinates) -> bool:
-        """Return true if the current plot contains the given coordinates"""
-        return self.start.x <= coordinates.x < self.end.x and \
-            self.start.y <= coordinates.y <= self.end.y and \
-            self.start.z <= coordinates.z < self.end.z
+class CityPlot(BuildPlacementPlot, RoadPlot):
+    def __init__(self, x: int, y: int, z: int, size: Size):
+        super().__init__(x, y, z, size)
 
-    def surface(self, padding: int = 0) -> Generator[Coordinates]:
-        """Return a generator over the coordinates of the current plot"""
-        for x in range(-padding, self.size.x + padding):
-            for z in range(-padding, self.size.z + padding):
-                yield self.start.shift(x, 0, z)
-
-    def get_steep_map_value(self, coord: Coordinates) -> int:
-        if self.steep_map is None:
-            self.compute_steep_map()
-
-        steep_map_size = self.size.x - self.steep_factor * 2, self.size.z - self.steep_factor * 2
-        i, j = (coord - self.start).xz
-        i = min(max(i - self.steep_factor, 0), steep_map_size[0] - 1)
-        j = min(max(j - self.steep_factor, 0), steep_map_size[1] - 1)
-        return self.steep_map[j + i * steep_map_size[1]]

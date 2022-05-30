@@ -11,7 +11,7 @@ from src.simulation.decisions import DecisionMaking, choose_building
 
 from src import env
 from src.blocks.block import Block
-from src.plots.plot import Plot
+from src.plots.plot import Plot, CityPlot
 from src.simulation.settlement import Settlement
 
 from src.simulation.events.event import get_event
@@ -32,7 +32,7 @@ class Simulation:
         x, y, z = plot.start
 
         # Clamp the city size to 150 by 150
-        plot = Plot(x, y, z, plot.size.min(150))
+        plot = CityPlot(x, y, z, plot.size.min(150))
 
         # TODO add logic for big plots
         self.settlements = [Settlement(plot)]

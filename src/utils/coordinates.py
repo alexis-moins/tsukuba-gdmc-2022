@@ -123,7 +123,7 @@ class Coordinates:
         data += f'Text4:\'{{"text":"{texts[3]}"}}\'' + "}"
         if replace_block:
             interface.placeBlock(self.x, self.y, self.z, f'oak_sign[rotation={rotation}]')
-            interface.sendBlocks()
+        interface.sendBlocks()
         interface.runCommand(f"data merge block {self.x} {self.y} {self.z} {data}")
 
     def angle(self, other: Coordinates):
