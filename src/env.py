@@ -8,7 +8,6 @@ from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
 from src.utils.coordinates import Coordinates
-from src.simulation.buildings.relations import RelationsHandler
 
 # The default build are
 BUILD_AREA = None
@@ -58,16 +57,17 @@ def get_world_slice() -> WorldSlice | None:
     print(f'Error: Could not get a world slice in {retry_amount} try')
 
 
-def get_content(file: str, YAML: bool = True) -> Any:
+def get_content(file: str, *, YAML: bool = True) -> Any:
     """Return the content of the given YAML [file]. The function will search the
     file under the the local 'resouces' directory. Optionally, specifying [YAML]
     to false enables the function to parse txt files"""
     with open(f'resources/{file}', 'r') as content:
-        return yaml.safe_load(content) if YAML else content.read().splitlines()
+        return yaml.safe_load(content) if YAML else \
+            content.read().splitlines()
 
 
 # Mapping of a material and its replacement and keepProperties (tuple)
-# TODO refactoring
+# TODO refactoring with palettes
 BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}
 
 # Mapping of a building name to its data dictionary
@@ -80,5 +80,17 @@ BUILDINGS: dict[str, dict[str, Any]] = get_content('buildings.yaml')
 # file so check this file out for more information
 PALETTE_GROUPS: dict[str, dict[str, Any]] = get_content('palettes.yaml')
 
-# TODO doc
-RELATIONS = RelationsHandler(get_content('relations.yaml'))
+# List of all the different wolf names available during
+# the simulation
+WOLF_NAMES: list[str] = get_content('wolf-names.txt', YAML=False)
+
+# List of all the different villager first names available
+# during the simulation
+FIRST_NAMES: list[str] = get_content('first-names.txt', YAML=False)
+
+# List of all the different villager last names available
+# during the simulation
+LAST_NAMES: list[str] = get_content('last-names.txt', YAML=False)
+
+# TODO
+# RELATIONS = RelationsHandler(get_content('relations.yaml'))

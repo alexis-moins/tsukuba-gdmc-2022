@@ -93,18 +93,17 @@ class Block:
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
         """Rotate the block coordinates and modify its properties to mimic rotation around a given rotation point"""
-        properties = replace(self.properties)
-        if 'facing' in properties:
-            properties['facing'] = properties['facing'].get_rotated_direction(angle)
+        if 'facing' in self.properties:
+            self.properties['facing'] = self.properties['facing'].get_rotated_direction(angle)
 
         # invert axis between x and z
-        if 'axis' in properties and (angle == 90 or angle == 270):
-            if properties['axis'] == 'x':
-                properties['axis'] = 'z'
-            elif properties['axis'] == 'z':
-                properties['axis'] = 'x'
+        if 'axis' in self.properties and (angle == 90 or angle == 270):
+            if self.properties['axis'] == 'x':
+                self.properties['axis'] = 'z'
+            elif self.properties['axis'] == 'z':
+                self.properties['axis'] = 'x'
 
-        return Block(self.name, self.coordinates.rotate(angle, rotation_point), properties)
+        return replace(self, coordinates=self.coordinates.rotate(angle, rotation_point))
 
     def with_name(self, new_name: str, erase_properties: bool = False):
         """Return a block with the same properties and coordinates but different name"""

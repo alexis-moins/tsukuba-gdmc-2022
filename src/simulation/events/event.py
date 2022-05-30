@@ -1,20 +1,22 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from copyreg import constructor
-from pydoc import describe
+"""Manage events used in the simulation. Provides:
+- a get_event function to randomly return an event (with a 1/4 chance)
+- an Event abstract base class you can use to define your own custom events
+- a register decorator to use your custom events"""
 
 import random
-from typing import Any, Callable
+from typing import Any
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 from gdpc import interface
 
 from src import env
 from src.simulation.settlement import Settlement
-from src.simulation.buildings.building import Blueprint, Building
+from src.simulation.buildings.building import Blueprint, WeddingTotem
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True, slots=True)
 class Event(ABC):
     """Represents any generic abstract event"""
     _description: str
@@ -77,7 +79,8 @@ _handlers: dict[str, Event] = dict()
 
 def register(tag: str) -> None:
     """Add the given [tag] to the 'handlers' dictionary as key and map it to
-    the decorated class"""
+    the decorated class. This is the way to go if you want to define new events
+    and use them in the handler field of the events.yaml configuration file"""
     def decorator(constructor: Event) -> None:
         _handlers[tag] = constructor
 
@@ -86,9 +89,9 @@ def register(tag: str) -> None:
 
 
 @register('pillager-attack')
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class PillagerAttack(Event):
-    """"""
+    """Represents a hord of pillagers attacking the settlement"""
 
     def resolve(self, settlement: Settlement) -> str:
         """Resolve this event, producing effects on the given [settlement] and
@@ -99,7 +102,7 @@ class PillagerAttack(Event):
         self._kill_villagers(settlement, victims)
         self.replacements['victims'] = victims
 
-        if 'tower' in self._description:
+        if 'Tower' in self._description:
 
             for _ in range(random.randint(2, 5)):
 
@@ -113,15 +116,12 @@ class PillagerAttack(Event):
                 for _ in range(random.randint(3, 10)):
                     interface.runCommand(f'summon minecraft:iron_golem {x} {y} {z}')
 
-            if 'Tower' not in settlement:
-                self._description += 'Unfortunately, we did not find a place to build it'
-
-
-_wolf_names = env.get_content('wolf-names.txt', YAML=False)
+        if 'Tower' not in settlement:
+            self._description += 'Unfortunately, we did not find a place to build it'
 
 
 @register('wolf-attack')
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class WolfAttack(Event):
     """Represents a pack of wolves attacking the settlement"""
 
@@ -134,16 +134,16 @@ class WolfAttack(Event):
         self._kill_villagers(settlement, victims)
         self.replacements['victims'] = victims
 
-        x, y, z = random.choice(settlement.buildings).entrance
+        x, y, z = random.choice(settlement.chronology).entrance
         y += 1
 
         for i in range(random.randint(5, 20)):
             interface.runCommand(
-                f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(_wolf_names).capitalize()}\\""}}')
+                f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(env.WOLF_NAMES).capitalize()}\\""}}')
 
 
 @register('fire')
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class Fire(Event):
     """Represents a fire starting in the settlement, burning buildings and killing
     villagers"""
@@ -156,7 +156,7 @@ class Fire(Event):
 
         self._kill_villagers(settlement, victims)
 
-        building = random.choice(settlement.buildings)
+        building = random.choice(settlement.chronology)
         self.replacements['victims'] = victims
         self.replacements['building'] = building
 
@@ -167,7 +167,7 @@ class Fire(Event):
 
 
 @register('wedding')
-@dataclass(frozen=True, kw_only=True)
+@dataclass(kw_only=True)
 class Wedding(Event):
     """Represents a wedding between two villagers of the settlement"""
 
@@ -175,7 +175,10 @@ class Wedding(Event):
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are striongly
         encouraged to use the provided _format_description method to to so"""
-        settlement.wedding()
+        if 'Wedding Totem' in settlement:
+            totem: WeddingTotem = settlement['Wedding Totem']
+            # totem.add_wedding()
+            print('IMPLEMENT WEDDING')
 
 
 # List of the different events available in the simulation. Please note that
@@ -188,7 +191,7 @@ def get_event(current_year: int) -> Event | None:
     """Get a randomly selected event from a list of available events, if the
     event's minimal year is <= to the [current year]. There is a 25% chance to
     trigger an event and 75% to get no events at all"""
-    if random.randint(1, 4) == 4:
+    if random.randint(1, 4) == 4 and _events:
         event = random.choice(_events)
 
         if current_year >= event.year:

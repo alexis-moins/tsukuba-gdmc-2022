@@ -9,6 +9,7 @@ from typing import Any, Callable
 from colorama import Fore
 from gdpc import lookup as LOOKUP
 from gdpc import interface as INTERFACE
+from src.simulation.villager import Villager
 
 from src.utils import math_utils
 
@@ -97,8 +98,8 @@ class Blueprint(ABC):
         structure associated with the building as the main building structure abd thus return its size"""
         return self.structures[0].get_size(self.rotation)
 
-    def add_inhabitant(self, villager, year: int) -> None:
-        """"""
+    def add_inhabitant(self, villager: Villager, year: int) -> None:
+        """Add the given [villager] to to this building as a new inhabitant"""
         self.inhabitants.add(villager)
         villager.house = self
 
@@ -229,6 +230,7 @@ class Blueprint(ABC):
 
         # Actually placing the blocks
         for block in blocks:
+            # print(f'BUILD => {block.name} {block.coordinates} {block.properties}\n')
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
     def _place_sign(self):
@@ -282,7 +284,7 @@ class Tower(Building):
         self._place_sign()
         INTERFACE.sendBlocks()
 
-    @ staticmethod
+    @staticmethod
     def deserialize_tower(building: dict[str, Any], parent: Building) -> Building:
         """Return a new building deserialized from the given dictionary"""
         structures = [Structure.deserialize_nbt_file(file) for file in building['path']]

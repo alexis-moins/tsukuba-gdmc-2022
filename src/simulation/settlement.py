@@ -1,73 +1,41 @@
 import math
 import random
 import textwrap
-import time
-from collections import Counter
-from typing import Any
+from collections import Counter, defaultdict
+from typing import Any, DefaultDict, Iterator, MutableMapping
 
 from colorama import Fore
-from gdpc import interface
-from gdpc import lookup
+from gdpc import interface, lookup
+from numpy import greater
 
 from src import env
-from src.blocks.collections.block_list import BlockList
 from src.plots.plot import Plot
-from src.simulation.buildings.building import Building
-from src.simulation.buildings.building import Graveyard
-from src.simulation.buildings.building import WeddingTotem
-from src.simulation.buildings.utils.building_type import BuildingType
 from src.utils.criteria import Criteria
+from src.simulation.villager import Villager
+from src.blocks.collections.block_list import BlockList
+from src.simulation.buildings.building import Building, Graveyard, WeddingTotem
 
 
-with open('resources/first-names.txt', 'r') as file:
-    _first_names = file.read().splitlines()
+class Settlement(MutableMapping):
+    """Represents a settlement, with villagers and buildings. This object behaves like
+        a dictionary (keys, valyes, etc...) while also providing a chronology of the buildings
+        added to the settlement"""
 
-with open('resources/last-names.txt', 'r') as file:
-    _last_names = file.read().splitlines()
-
-
-class Villager:
-    """"""
-
-    def __init__(self, birth_year: int = 0) -> None:
-        """"""
-        self.name = f'{random.choice(_first_names)} {random.choice(_last_names)}'
-        self.productivity = 1
-        self.house: Building = None
-        self.work_place: Building = None
-        self.birth_year = birth_year
-
-    def die(self, year: int, cause: str):
-        if self.work_place:
-            self.work_place.workers.remove(self)
-            self.work_place.history.append(f'{self.name} died at {year} of {cause}')
-        if self.house:
-            self.house.inhabitants.remove(self)
-            self.house.history.append(f'{self.name} died at {year} of {cause}')
-
-
-class Settlement:
-    """Represents a settlement, with villagers and buildings"""
-
-    def __init__(self, plot: Plot):
+    def __init__(self, plot: Plot, *, population: int = 5, food: int = 5):
         """Creates a new settlement on the given [plot]. The settlement starts with a
-        default population of 5 and a default food stock of 5."""
+        default [population] of 5 and a default [food] stock of 5"""
         self.plot = plot
 
-        # TODO change into a dict str, Building
-        self.buildings: list[Building] = []
+        self.chronology: list[Building] = []
+        self.__buildings: DefaultDict[str, list[Building]] = defaultdict(list)
 
-        self.deserialized_buildings = {}
+        self.__deserialized_buildings = {}
 
-        # TODO get rid of this
-        self.graveyard: Graveyard | None = None
-        self.wedding_totem: WeddingTotem | None = None
+        self.__counter = Counter()
 
-        self.counter = Counter()
+        self.inhabitants = [Villager() for _ in range(population)]
 
-        self.inhabitants = [Villager() for _ in range(5)]
-
-        self.food_available = 5
+        self.food_available = food
 
         self.possible_light_blocks = ('minecraft:shroomlight', 'minecraft:sea_lantern',
                                       'minecraft:glowstone')
@@ -92,22 +60,23 @@ class Settlement:
     @property
     def number_of_beds(self) -> int:
         """Return the total number of beds in the city"""
-        return sum(building.properties.number_of_beds for building in self.buildings)
+        return sum(building.properties.number_of_beds for building in self.chronology)
 
     @property
     def worker_number(self) -> int:
         """Return the total number of workers in the settlement, that is to say
         of villagers with a job"""
-        return sum(len(building.workers) for building in self.buildings)
+        return sum(len(building.workers) for building in self.chronology)
 
     @property
     def total_worker_slots(self) -> int:
         """Return the maximum number of workers that can work in the settlement"""
-        return sum(building.properties.workers for building in self.buildings)
+        return sum(building.properties.workers for building in self.chronology)
 
     @property
     def food_production(self):
-        return sum(building.properties.food_production for building in self.buildings)
+        """Return the number of food produced in the settlement this year"""
+        return sum(building.properties.food_production for building in self.chronology)
 
     def get_constructible_buildings(self) -> list[Building]:
         """Return the available buildings of the year in the form of a list of Building objects
@@ -123,7 +92,7 @@ class Settlement:
         """Return true if the building is constructible, false if it is not. The building is formed
         by the given [name] associated with the given [data]"""
         return data.get('cost', 0) <= self.worker_number and data['type'] != 'DECORATION' \
-            and self.counter[name] < data.get('maximum', 1)
+            and self.__counter[name] < data.get('maximum', 1)
 
     def add_building(self, building: Building, max_score: int = None) -> bool:
         """Add the given [building] to this settlement. If no available plot is found, the function
@@ -131,13 +100,13 @@ class Settlement:
         building. Additionally, a [max score] parameter may tell the inner logic after what score it
         should give the current plot up when looking for a decent spot on the map"""
         plot = self.plot.get_subplot(building, building.rotation,
-                                     max_score, city_buildings=self.buildings)
+                                     max_score, city_buildings=self.chronology)
 
         if plot is None:
             return False
 
         self.build(building, plot)
-        self.counter[building.name] += 1
+        self.__counter[building.name] += 1
         return True
 
     def build(self, building: Building, plot: Plot) -> None:
@@ -154,31 +123,32 @@ class Settlement:
                      filter(lambda coord: coord in self.plot, plot.surface(building.properties.padding)))))
 
         plot.remove_trees(area_with_padding)
-        time.sleep(2)
 
         plot.build_foundation(self.plot)
 
         print(f'{building} added to the settlement')
 
         building.build(plot, self.plot)
-        self.buildings.append(building)
 
-        if len(self.buildings) > 1 and not self.buildings[-1].properties.is_extension:
+        self.chronology.append(building)
+        self.__buildings[building.name].append(building)
+
+        if len(self.__buildings) > 1 and not self.chronology[-1].properties.is_extension:
             if env.DEBUG:
-                print(f'building road from {self.buildings[0]} to {self.buildings[1]}')
+                print(f'building road from {self.chronology[0]} to {self.chronology[1]}')
 
             road_done = False
             i = 0
-            max_i = len(self.buildings) - 1
+            max_i = len(self.__buildings) - 1
             while not road_done and i < max_i:
-                end = self.buildings[i].entrance
-                start = self.buildings[-1].entrance
+                end = self.chronology[i].entrance
+                start = self.chronology[-1].entrance
 
                 road_done = self.plot.compute_roads(start, end)
                 i += 1
 
     def update(self, year: int) -> None:
-        """Update the city's indicators"""
+        """Update the settlement's indicators"""
         self.food_available += self.food_production
 
         # Increase population if enough food
@@ -193,7 +163,7 @@ class Settlement:
                 food_for_children = self.food_available - self.population
                 k = max(0, min(food_for_children, max_children_amount))
 
-                print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) born this year')
+                print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) are born')
                 self.inhabitants.extend([Villager(year) for _ in range(k)])
 
         # Decrease population else
@@ -206,9 +176,13 @@ class Settlement:
             # reset food
             self.food_available = 0
 
-        # Attributing villagers to buildings
-        # First, give every homeless villager a house (if possible)
-        available_houses = [building for building in self.buildings if building.has_empty_beds]
+        self.__fill_houses(year)
+        self.__fill_work_places(year)
+
+    def __fill_houses(self, year: int) -> None:
+        """Attribute homeless villagers to available houses"""
+        available_houses = [building for building in self.chronology
+                            if building.has_empty_beds]
 
         for villager in self.homeless_villagers:
             if not available_houses:
@@ -220,8 +194,10 @@ class Settlement:
             if house.has_empty_beds:
                 available_houses.append(house)
 
+    def __fill_work_places(self, year) -> None:
         # Then, give every inactive villager a place to work at (if possible)
-        available_work_places = [building for building in self.buildings if building.can_offer_work]
+        available_work_places = [building for building in self.chronology
+                                 if building.can_offer_work]
 
         for villager in self.inactive_villagers:
             if not available_work_places:
@@ -235,8 +211,8 @@ class Settlement:
 
     def grow_old(self) -> None:
         """"""
-        amount = 0.3 * len(self.buildings)
-        for building in random.sample(self.buildings, k=math.ceil(amount)):
+        amount = 0.3 * len(self.chronology)
+        for building in random.sample(self.chronology, k=math.ceil(amount)):
             building.grow_old(random.randint(65, 80))
 
     def display(self) -> None:
@@ -247,28 +223,30 @@ class Settlement:
         print(f'   Food: {Fore.GREEN}{self.food_available}{Fore.WHITE} ({Fore.GREEN}{self.food_production}{Fore.WHITE} per year)')
         print(f'   Work: {Fore.GREEN}{self.worker_number}/{self.total_worker_slots}{Fore.WHITE}')
 
-        print(f'\n   Buildings {Fore.GREEN}[{len(self.buildings)}]{Fore.WHITE}\n')
+        print(f'\n   Buildings {Fore.GREEN}[{len(self.__buildings)}]{Fore.WHITE}\n')
 
         buildings = "\n      ".join(textwrap.wrap(
-            ", ".join([f"{building.name}: {Fore.GREEN}{self.counter[building.name]}/{building.properties.maximum}{Fore.WHITE}" for building in self.buildings])))
+            ", ".join([f"{building.name}: {Fore.GREEN}{self.__counter[building.name]}/{building.properties.maximum}{Fore.WHITE}" for building in self.chronology])))
         print(f'\n      {buildings}')
 
-    def wedding(self):
-        if self.wedding_totem:
-            self.wedding_totem.add_wedding()
-
     def villager_die(self, villager: Villager, year: int, cause: str):
-        if self.graveyard:
-            self.graveyard.add_tomb(villager, year, cause)
+        """"""
+        if 'Graveyard' in self.__buildings:
+            graveyard: Graveyard = self['Graveyard']
+            # graveyard.add_tomb(villager, year, cause)
+            # TODO
+            print('IMPLEMENT GRAVEYARD')
 
         villager.die(year, cause)
         self.inhabitants.remove(villager)
 
     def spawn_villagers_and_guards(self):
         """"""
-        x, y, z = self.buildings[0].entrance
+        x, y, z = self.chronology[0].entrance
+
         for villager in self.inhabitants:
             interface.runCommand(f'summon villager {x} {y + 1} {z} {{CustomName:"\\"{villager.name}\\""}}')
+
         for i in range(random.randint(5, 15)):
             interface.runCommand(f'summon iron_golem {x} {y + 1} {z} {{CustomName:"\\"Town Guard\\""}}')
 
@@ -294,4 +272,25 @@ class Settlement:
         self.spawn_villagers_and_guards()
 
         # Add roads signs
-        self.plot.add_roads_signs(10, self.buildings)
+        self.plot.add_roads_signs(10, self.chronology)
+
+    def __getitem__(self, key: str) -> Building | list[Building]:
+        """"""
+        value = self.__buildings.__getitem__(key)
+        return value[0] if len(value) == 1 else value
+
+    def __setitem__(self, key: str, value: Building) -> None:
+        """"""
+        self.__buildings.__setitem__(key, value)
+
+    def __delitem__(self, key: Building) -> None:
+        """"""
+        self.__buildings.__delitem__(key)
+
+    def __iter__(self) -> Iterator[str]:
+        """"""
+        return self.__buildings.__iter__()
+
+    def __len__(self) -> int:
+        """Return the number of properties"""
+        return len(self.__buildings)

@@ -50,3 +50,7 @@ class BlockProperties(MutableMapping):
     def __len__(self) -> int:
         """Return the number of properties"""
         return len(self.__properties)
+
+    def __str__(self) -> str:
+        """"""
+        return f'BlockProperties({{{self.__properties}}})'
