@@ -79,7 +79,8 @@ class Block:
 
     def shift_position_to(self, coordinates: Coordinates) -> Block:
         """Return a new block with the same name and properties but whose coordinates were shifted"""
-        return Block(self.name, self.coordinates.shift(*coordinates), properties=self.properties)
+        new_coordinates = self.coordinates.shift(*coordinates)
+        return replace(self, coordinates=new_coordinates)
 
     def is_one_of(self, pattern: str | Tuple[str, ...]) -> bool:
         """Return true if the current item's name matches the given pattern"""
@@ -92,19 +93,12 @@ class Block:
         return False
 
     def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
-        """Rotate the block coordinates and modify its properties to mimic rotation around a given rotation point"""
-        if 'facing' in self.properties:
-            # print(self.properties)
-            self.properties['facing'] = self.properties['facing'].get_rotated_direction(angle)
-            # input(self.properties)
-        # invert axis between x and z
-        if 'axis' in self.properties and (angle == 90 or angle == 270):
-            if self.properties['axis'] == 'x':
-                self.properties['axis'] = 'z'
-            elif self.properties['axis'] == 'z':
-                self.properties['axis'] = 'x'
+        """Rotate the block coordinates and modify its properties to mimic rotation around a given
+        [rotation point]. """
+        coordinates = self.coordinates.rotate(angle, rotation_point)
+        properties = self.properties.rotate(angle)
 
-        return replace(self, coordinates=self.coordinates.rotate(angle, rotation_point))
+        return replace(self, coordinates=coordinates, properties=properties)
 
     def with_name(self, new_name: str, erase_properties: bool = False):
         """Return a block with the same properties and coordinates but different name"""

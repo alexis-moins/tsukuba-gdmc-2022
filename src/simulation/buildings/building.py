@@ -1,5 +1,5 @@
 from __future__ import annotations
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 
 import math
 import random
@@ -11,6 +11,7 @@ from gdpc import lookup as LOOKUP
 from gdpc import interface as INTERFACE
 from src.simulation.villager import Villager
 
+from src import env
 from src.utils import math_utils
 
 from src.plots.plot import Plot
@@ -28,11 +29,6 @@ from src.simulation.buildings.utils.building_type import BuildingType
 from src.simulation.buildings.utils.building_properties import BuildingProperties
 
 
-# Tuple of available adjectives for building names
-_adjectives = ('beautiful', 'breakable', 'bright', 'busy', 'calm', 'charming', 'comfortable', 'creepy', 'cute', 'dangerous', 'dark', 'enchanting', 'evil',
-               'fancy', 'fantastic', 'fragile', 'friendly', 'lazy', 'kind', 'long', 'lovely', 'magnificent', 'muddy', 'mysterious', 'open', 'plain', 'pleasant', 'quaint')
-
-
 class Blueprint(ABC):
     """Represents an abstract building plan regrouping usefull common methods"""
 
@@ -40,13 +36,12 @@ class Blueprint(ABC):
         """Creates a new building with the given [name], [properties], basic [structures] and [palettes]
         that may dynamically change the blocks used in the different structures"""
         self.name = name
-        self.properties = replace(properties)
+        self.properties = properties
         self.structures = structures
         self.palettes = palettes
 
-        # self.rotation = random.choice([0, 90, 180, 270])
-        self.rotation = 0
-        self.adjective = random.choice(_adjectives)
+        self.rotation = random.choice([0, 90, 180, 270])
+        self.adjective = random.choice(env.ADJECTIVES)
 
         self.workers = set()
         self.inhabitants = set()
@@ -55,7 +50,7 @@ class Blueprint(ABC):
         self.entrance: Coordinates = None
         self.blocks: dict[Structure, BlockList] = {}
 
-    @abstractclassmethod
+    @abstractmethod
     def build(self, plot: Plot, settlement: Plot) -> None:
         """Build the building onto the given [plot], using data from the [settlement]"""
         pass
@@ -221,7 +216,6 @@ class Blueprint(ABC):
                          rotation=None):
         """Build the given [structure] at the given [start] coordinates, optionally using the
         given block [palettes] instead of the palettes from this building"""
-
         if rotation is None:
             rotation = self.rotation
 
@@ -236,7 +230,6 @@ class Blueprint(ABC):
 
         # Actually placing the blocks
         for block in blocks:
-            # print(f'BUILD => {block.name} {block.coordinates} {block.properties}\n')
             INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
     def _place_sign(self):

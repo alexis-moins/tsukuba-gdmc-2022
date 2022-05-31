@@ -95,5 +95,9 @@ FIRST_NAMES: list[str] = get_content('first-names.txt', YAML=False)
 # during the simulation
 LAST_NAMES: list[str] = get_content('last-names.txt', YAML=False)
 
+# List of all the different building adjectives available
+# during the simulation
+ADJECTIVES: list[str] = get_content('building-adjectives.txt', YAML=False)
+
 # TODO
 # RELATIONS = RelationsHandler(get_content('relations.yaml'))
