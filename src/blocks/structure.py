@@ -55,7 +55,7 @@ class Structure:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
 
-    def get_blocks(self, start: Coordinates, rotation: int, apply_block_variation: bool = True) -> BlockList:
+    def get_blocks(self, start: Coordinates, rotation: int, *, apply_block_variation: bool = True) -> BlockList:
         """Return the blocks of the structure, once their coordinates have been prepared for the given plot. It means
         that coordinates will all be shifted in order to be relative to the new origin [start]. The structure also
         applies the given [rotation] to all the blocks."""
