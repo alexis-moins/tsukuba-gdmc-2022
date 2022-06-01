@@ -39,7 +39,7 @@ class Plot:
         self.surface_blocks: dict[Criteria, BlockList] = {}
         self.water_mode = 'water' in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).most_common
 
-    async def remove_lava(self):
+    def remove_lava(self):
         checked = set()
         lava_blocks = list(self.get_blocks(criteria=Criteria.MOTION_BLOCKING_NO_TREES).filter('lava'))
 
@@ -55,8 +55,6 @@ class Plot:
                 neighbor = self.get_block_at(*coord_neighbor)
                 if neighbor and 'lava' in neighbor.name and neighbor not in checked and coord_neighbor in self:
                     lava_blocks.append(neighbor)
-
-        await server.send_buffers()
 
     @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:

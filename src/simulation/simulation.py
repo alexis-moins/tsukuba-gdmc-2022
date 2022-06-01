@@ -48,7 +48,7 @@ class Simulation:
     async def __start(self) -> None:
         """Start the simulation and generate the (possibly many) settlement(s). The
         simulation will stop if it reaches the year of the simulation end"""
-        await self.__plot.remove_lava()
+        self.__plot.remove_lava()
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
