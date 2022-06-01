@@ -7,6 +7,7 @@ from colorama import Fore
 from gdpc import interface as INTERFACE
 
 from src import env
+from src.utils import server
 from src.blocks.block import Block
 from src.plots.plot import Plot
 from src.simulation.simulation import Simulation
@@ -48,7 +49,6 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bo
     INTERFACE.runCommand(f'gamerule doTileDrops {str(drops).lower()}')
     INTERFACE.runCommand(f'gamerule randomTickSpeed {tick_speed}')
 
-
     if env.PROFILE_TIME:
         import cProfile
         import pstats
@@ -85,8 +85,6 @@ def start_simulation(years: int) -> None:
     simulation = Simulation(build_area, years)
     simulation.start()
 
-    INTERFACE.sendBlocks()
-
     INTERFACE.runCommand('gamerule randomTickSpeed 3')
     INTERFACE.runCommand('gamerule doEntityDrops true')
 
@@ -122,3 +120,5 @@ if __name__ == '__main__':
         prepare_environment()
     except KeyboardInterrupt:
         print("Pressed Ctrl-C to kill program.")
+
+    server.send_buffer(force=True)

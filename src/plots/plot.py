@@ -8,6 +8,8 @@ import time as time
 from functools import lru_cache
 from typing import Generator
 
+from src.utils import server
+
 import networkx as nx
 import numpy as np
 from gdpc import interface as INTF
@@ -128,7 +130,6 @@ class Plot:
 
         return heightmap
 
-
     def remove_trees(self, surface: BlockList = None) -> None:
         """Remove all plants at the surface of the current plot"""
         pattern = ('log', 'bush', 'mushroom', 'bamboo')
@@ -168,8 +169,10 @@ class Plot:
             weights = (75, 15, 10)
 
             for coord in self.__iterate_over_air(self.start.y):
-                block = random.choices(blocks, weights)
-                INTF.placeBlock(*coord, block)
+                name = random.choices(blocks, weights)
+                block = Block(name, coord)
+
+                server.add_to_buffer(block)
         else:
 
             # INSIDE
@@ -204,7 +207,7 @@ class Plot:
                 if c in build_area:
                     INTF.placeBlock(*c, "oak_log[axis=y]")
 
-        INTF.sendBlocks()
+        # INTF.sendBlocks()
 
     def __iterate_over_air(self, max_y: int) -> Coordinates:
         """"""
@@ -398,7 +401,8 @@ class BuildPlacementPlot(LogicPlot):
                 self.visualize_steep_map()
 
         # Take 10 % of the best coordinates + a % of the rest, randomly
-        blocks_to_check = self.priority_blocks.random_elements(min(max(1, int(len(self.priority_blocks) * 1/10)), batch_size)) + blocks_to_check
+        blocks_to_check = self.priority_blocks.random_elements(
+            min(max(1, int(len(self.priority_blocks) * 1/10)), batch_size)) + blocks_to_check
         if env.DEBUG:
             print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
 
@@ -588,14 +592,15 @@ class RoadPlot(LogicPlot):
 
         # clean above roads
         for road in self.all_roads:
-            for i in range(1, 20):
+            for i in range(1, 8):
                 coordinates = road.with_points(y=int(self.roads_y[road]) + i)
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
-                    INTF.placeBlock(*coordinates, 'air')
+                    server.add_raw_to_buffer('air', coordinates)
+                    # INTF.placeBlock(*coordinates, 'air')
 
-        self.remove_trees(BlockList(roads))
+        # self.remove_trees(BlockList(roads))
 
         # place blocks
         for key in self.roads_infos.keys():
@@ -623,19 +628,23 @@ class RoadPlot(LogicPlot):
                                             k=1, weights=list(chose_pattern[key].values()))
 
                 if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
-                                     'minecraft:glowstone', 'minecraft:redstone_lamp[lit=true]'):
-                    INTF.placeBlock(x, y-1, z, the_blocks)
-                    INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
+                                     'minecraft:glowstone'):
+
+                    server.add_raw_to_buffer(the_blocks[0], Coordinates(x, y-1, z))
+                    # INTF.placeBlock(x, y-1, z, the_blocks)
+
+                    server.add_raw_to_buffer('minecraft:white_stained_glass', Coordinates(x, y, z))
+                    # INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
                 else:
                     if Coordinates(x, 0, z) in self.construction_coordinates:
                         continue
 
                     if 'note_block' in the_blocks[0]:
-                        INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
+                        server.add_raw_to_buffer(random.choice(
+                            list(slab_pattern['OUTER'].keys())), Coordinates(x, y+1, z))
+                        # INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
 
-                    INTF.placeBlock(x, y, z, the_blocks)
-
-        INTF.sendBlocks()
+                    server.add_raw_to_buffer(the_blocks[0], Coordinates(x, y, z))
 
     def __add_road_block(self, coordinates: Coordinates, placement: str):
 
@@ -741,4 +750,3 @@ class RoadPlot(LogicPlot):
 class CityPlot(BuildPlacementPlot, RoadPlot):
     def __init__(self, x: int, y: int, z: int, size: Size):
         super().__init__(x, y, z, size)
-

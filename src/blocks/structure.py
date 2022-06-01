@@ -1,42 +1,39 @@
 from __future__ import annotations
+""""""
 
 from colorama import Fore
-from nbt.nbt import NBTFile
-from nbt.nbt import TAG_List
+from dataclasses import dataclass, field
+from nbt.nbt import NBTFile, TAG_List
 
 from src import env
 from src.blocks.block import Block
+from src.utils.coordinates import Coordinates, Size
 from src.blocks.collections.block_list import BlockList
-from src.utils.coordinates import Coordinates
-from src.utils.coordinates import Size
 
 
 #
-_structures: dict[str, Structure] = dict()
+__structures: dict[str, Structure] = dict()
 
 
 def get_structure(file: str) -> Structure:
     """Return the Structure found in the given NBT [file]. Parse the file if the structure
     has not already been pased, otherwise simply return the corresponding structure"""
-    if file in _structures:
-        return _structures[file]
+    if file in __structures:
+        return __structures[file]
 
     structure = Structure.deserialize_nbt_file(file)
-    _structures[file] = structure
+    __structures[file] = structure
+
     return structure
 
 
+@dataclass(slots=True)
 class Structure:
     """Class representing the minecraft construction of a structure block"""
-    __slots__ = ['name', 'size', 'blocks', 'entrance', 'variations']
-
-    def __init__(self, name: str, size: Size, blocks: BlockList) -> None:
-        """Parameterized constructor creating a new minecraft structure"""
-        self.name = name
-        self.size = size
-
-        self.blocks: BlockList = blocks
-        self.variations: dict[str, BlockList] = dict()
+    name: str
+    size: Size
+    blocks: BlockList
+    _variations: dict[str, BlockList] = field(init=False, default_factory=dict)
 
     @staticmethod
     def deserialize_nbt_file(file_name: str, ) -> Structure:
@@ -45,13 +42,13 @@ class Structure:
         dimensions = [int(i.valuestr()) for i in file['size']]
 
         palette = file['palette']
-        blocks = Structure.__parse_blocks(file['blocks'], palette)
+        blocks = Structure._parse_blocks(file['blocks'], palette)
 
         print(f'parsed structure {Fore.RED}<{file_name}>{Fore.WHITE}')
         return Structure(name=file_name, size=Size(dimensions[0], dimensions[2]), blocks=blocks)
 
     @staticmethod
-    def __parse_blocks(blocks: TAG_List, palette: TAG_List) -> BlockList:
+    def _parse_blocks(blocks: TAG_List, palette: TAG_List) -> BlockList:
         """Return a list of blocks parsed from the given blocks and palette"""
         return BlockList([Block.parse_nbt(block, palette) for block in blocks])
 
@@ -60,7 +57,7 @@ class Structure:
         that coordinates will all be shifted in order to be relative to the new origin [start]. The structure also
         applies the given [rotation] to all the blocks."""
         if apply_block_variation:
-            blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
+            blocks = self._get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
 
         shift_due_to_rotation = Coordinates(0, 0, 0)
         if rotation == 90:
@@ -73,17 +70,21 @@ class Structure:
         iterable = [block.rotate(rotation).shift_position_to(start + shift_due_to_rotation) for block in blocks]
         return BlockList(iterable)
 
-    def __get_variation(self, materials: dict[str, str]) -> BlockList:
+    def _get_variation(self, materials: dict[str, str]) -> BlockList:
         """Return the variation of the structure with the given materials"""
         variation = ', '.join([f'{k}: {v[0]}' for k, v in materials.items()])
-        if variation in self.variations.keys():
-            return self.variations[variation]
+        if variation in self._variations.keys():
+            return self._variations[variation]
 
         blocks = [block.replace_first(materials) for block in self.blocks]
-        self.variations[variation] = blocks
+        self._variations[variation] = blocks
         return BlockList(blocks)
 
     def get_size(self, rotation: int) -> Size:
         """Return the size of the structure after the given rotation"""
         return Size(self.size.z, self.size.x) if rotation == 90 or \
             rotation == 270 else Size(self.size.x, self.size.z)
+
+    def __hash__(self) -> int:
+        """"""
+        return hash(self.name)

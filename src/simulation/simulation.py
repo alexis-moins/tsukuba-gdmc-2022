@@ -1,20 +1,15 @@
-import math
-import random
-
 from colorama import Fore
 from gdpc import interface
 
-from gdpc import toolbox
-from src.simulation.buildings.building import Building
-
-from src.simulation.decisions import DecisionMaking, choose_building
 
 from src import env
-from src.blocks.block import Block
+from src.utils import server
+from src.events import get_event
 from src.plots.plot import Plot, CityPlot
-from src.simulation.settlement import Settlement
 
-from src.simulation.events.event import get_event
+from src.simulation.settlement import Settlement
+from src.simulation.buildings.building import Building
+from src.simulation.decisions import DecisionMaking, choose_building
 
 
 class Simulation:
@@ -24,7 +19,8 @@ class Simulation:
         """Creates a new simulation on the given [plot]. The simulation will end at year
         [simulation end]. Finally, the logic of selecting buildings will be handled by
         the optional [building selection] function (see module src.decisions)"""
-        self.__plot = plot
+
+        self.__plot = plot  # TODO Usefull ?
         self.current_year = 0
         self.simulation_end = simulation_end
 
@@ -133,6 +129,8 @@ class Simulation:
 
         interface.setBuffering(True)
         interface.sendBlocks()
+
+        server.send_buffer(force=True)
 
     def run_on(self, settlement: Settlement) -> None:
         """Run the simulation for 1 year on the given [settlement]. The simulation will try to add

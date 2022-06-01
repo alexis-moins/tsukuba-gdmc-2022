@@ -28,9 +28,9 @@ cycler==0.11.0 ; python_version >= "3.7" and python_version < "4" \
 distlib==0.3.4 ; python_version >= "3.7" \
     --hash=sha256:6564fe0a8f51e734df6333d08b8b94d4ea8ee6b99b5ed50613f731fd4089f34b \
     --hash=sha256:e4b58818180336dc9c529bfb9a0b58728ffc09ad92027a3f30b7cd91e3458579
-filelock==3.7.0 ; python_version >= "3.7" \
-    --hash=sha256:c7b5fdb219b398a5b28c8e4c1893ef5f98ece6a38c6ab2c22e26ec161556fed6 \
-    --hash=sha256:b795f1b42a61bbf8ec7113c341dad679d772567b936fbd1bf43c9a238e673e20
+filelock==3.7.1 ; python_version >= "3.7" \
+    --hash=sha256:37def7b658813cda163b56fc564cdc75e86d338246458c4c28ae84cabefa2404 \
+    --hash=sha256:3a0fd85166ad9dbab54c9aec96737b744106dc5f15c0b09a6744a445299fcf04
 fonttools==4.33.3 ; python_version >= "3.7" and python_version < "4" \
     --hash=sha256:f829c579a8678fa939a1d9e9894d01941db869de44390adb49ce67055a06cc2a \
     --hash=sha256:c0fdcfa8ceebd7c1b2021240bd46ef77aa8e7408cf10434be55df52384865f8e

@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 
 import math
 import random
-from dataclasses import replace
 from typing import Any, Callable
 
 from colorama import Fore
@@ -12,7 +11,7 @@ from gdpc import interface as INTERFACE
 from src.simulation.villager import Villager
 
 from src import env
-from src.utils import math_utils
+from src.utils import math_utils, server
 
 from src.plots.plot import Plot
 from src.blocks.block import Block
@@ -111,7 +110,6 @@ class Blueprint(ABC):
     def grow_old(self, amount: int) -> None:
         """Make a building grow old"""
         # TODO
-        pass
         # # ensure it stays between 0 and 100
         # amount = abs(amount) % 100
         # sample: list[Block] = random.sample(self.blocks.without(('air', 'water')),
@@ -153,10 +151,10 @@ class Blueprint(ABC):
         #     INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
 
         # INTERFACE.sendBlocks()
+        pass
 
     def set_on_fire(self, amount: int) -> None:
         """"""
-        pass
         # TODO
         # # ensure it stays between 0 and 100
         # amount = abs(amount) % 100
@@ -187,6 +185,7 @@ class Blueprint(ABC):
         #     INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
 
         # INTERFACE.sendBlocks()
+        pass
 
     def get_entrance_with_rotation(self, rotation: int) -> Coordinates:
         """"""
@@ -216,10 +215,7 @@ class Blueprint(ABC):
                          rotation=None):
         """Build the given [structure] at the given [start] coordinates, optionally using the
         given block [palettes] instead of the palettes from this building"""
-        if rotation is None:
-            rotation = self.rotation
-
-        blocks = structure.get_blocks(start, rotation)
+        blocks = structure.get_blocks(start, rotation if rotation is not None else self.rotation)
 
         # Use the blocks from the palettes
         blocks = blocks.apply_palettes(palettes if palettes else self.palettes)
@@ -230,7 +226,8 @@ class Blueprint(ABC):
 
         # Actually placing the blocks
         for block in blocks:
-            INTERFACE.placeBlock(*block.coordinates, block.full_name)
+            server.add_to_buffer(block)
+            # INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
@@ -256,7 +253,6 @@ class Building(Blueprint):
             self._build_structure(structure, plot.start)
 
         self._place_sign()
-        INTERFACE.sendBlocks()
 
 
 class Tower(Building):
@@ -279,7 +275,9 @@ class Tower(Building):
         self._build_structure(self.structures[2], current, palettes=dict_palette)
         self.entrance = self.blocks.filter('emerald')
         self._place_sign()
-        INTERFACE.sendBlocks()
+
+        server.send_buffer()
+        # INTERFACE.sendBlocks()
 
     @staticmethod
     def deserialize_tower(building: dict[str, Any], parent: Building) -> Building:
@@ -314,7 +312,10 @@ class Graveyard(BuildingWithSlots):
     def add_tomb(self, villager, year: int, cause: str):
         slot = super().get_free_slot()
         if slot:
-            INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
+            # INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
+
+            server.place_block(('stone_brick', *slot.coordinates))
+
             if self.entrance and self.entrance[0]:
                 sign_angle = slot.coordinates.angle(self.entrance[0].coordinates)
                 slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
@@ -369,23 +370,11 @@ class Farm(Building):
 
                 farm_field.add(block.coordinates)
                 block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
-                INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
+
+                server.add_raw_to_buffer(f'minecraft:{block_name}', block.coordinates)
 
                 if 'farmland' in block_name:
-                    INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(LOOKUP.CROPS))
-
-        INTERFACE.sendBlocks()
-
-        for coordinates in farm_field:
-            block = plot.get_block_at(*coordinates)
-            # print(block.name)
-            if block.is_one_of('lapis'):
-                for c in block.neighbouring_coordinates(
-                        (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
-                    if settlement.get_block_at(*c).name in LOOKUP.AIR + LOOKUP.PLANTS + ('minecraft:snow',):
-                        INTERFACE.placeBlock(*block.coordinates, 'redstone_lamp[lit=true]')
-                    else:
-                        INTERFACE.placeBlock(*block.coordinates, 'water')
+                    server.add_raw_to_buffer(random.choice(LOOKUP.CROPS), block.coordinates.shift(y=1))
 
 
 class Mine(Building):
@@ -448,7 +437,6 @@ class Mine(Building):
             return start.shift(x=4, y=2, z=-1)
 
         return start.shift(x=4, y=2, z=4)
-
 
     # Default dictionary mapping building type to their Building object
 BUILDING_CLASSES: dict[BuildingType, Callable[..., Building]] = {
