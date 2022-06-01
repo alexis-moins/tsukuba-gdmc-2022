@@ -1,47 +1,46 @@
-import time
 import requests
-import threading
-from typing import Deque, Iterable
 from collections import deque
+from dataclasses import dataclass
+from typing import Deque, Iterable
+from multiprocessing import Process, Lock
 
 from src.blocks.block import Block
 from src.utils.coordinates import Coordinates
 
 
+@dataclass
 class Buffer:
-    """"""
-
-    def __init__(self) -> None:
-        """"""
-        self.__buffer = deque()
-        self.__lock = threading.Lock()
+    """Represents a buffer of blocks, shared between processes, that shall at
+    some point be sent to the minecraft server"""
+    _mutex = Lock()
+    _buffer: Deque = deque()
 
     def get(self) -> Block:
         """Return a single block from the buffer"""
-        with self.__lock:
-            return self.__buffer.popleft()
+        with self._mutex:
+            return self._buffer.popleft()
 
     def add(self, block: Block) -> None:
         """Add the given [block] to the buffer"""
-        with self.__lock:
-            self.__buffer.append(block)
+        with self._mutex:
+            self._buffer.append(block)
 
     def extend(self, blocks: Iterable[Block]) -> None:
         """Add all the blocks in the given iterable to the buffer"""
-        with self.__lock:
-            self.__buffer.extend(blocks)
+        for block in blocks:
+            self.add(block)
 
     def exhaust(self) -> Deque[Block]:
         """Return the blocks in the buffer then empty the buffer"""
-        with self.__lock:
-            buffer = self.__buffer.copy()
-            self.__buffer.clear()
+        with self._mutex:
+            buffer = self._buffer.copy()
+            self._buffer.clear()
             return buffer
 
     def __len__(self) -> int:
         """Return the number of blocks in the buffer"""
-        with self.__lock:
-            return len(self.__buffer)
+        with self._mutex:
+            return len(self._buffer)
 
 
 # The size of the buffer. Once the buffer has reached this number of blocks, the
@@ -56,13 +55,13 @@ __buffer = Buffer()
 flags: str = '0100011'
 
 
-def add_to_buffer(block: Block | Iterable[Block]) -> None:
+def add_block_to_buffer(block: Block | Iterable[Block]) -> None:
     """Add the given [block] to the block buffer. Block may be either be a Block or
     any iterable of blocks"""
     __buffer.add(block) if type(block) is Block else __buffer.extend(block)
 
 
-def add_raw_to_buffer(block_name: str, coordinates: Coordinates) -> None:
+def add_string_to_buffer(block_name: str, coordinates: Coordinates) -> None:
     """Add the given [block_name] to the block buffer, specifying the [coordinates] on
     which the block should be placed"""
     block = Block(block_name, coordinates)
@@ -89,9 +88,10 @@ def __buffer_handler() -> None:
         send_buffer()
 
 
-# Create a thread to handle and place blocks taken from the __buffer. This thread runs
-# as a daemon, which means it will automatically be deleted upon success or exit
-threading.Thread(target=__buffer_handler, daemon=True).start()
+def start_process() -> None:
+    """Create a process to handle and place blocks taken from the buffer. This process
+    runs as a daemon, which means it will automatically be deleted upon success or exit"""
+    Process(target=__buffer_handler, daemon=True).start()
 
 
 def format_block(block: Block) -> None:

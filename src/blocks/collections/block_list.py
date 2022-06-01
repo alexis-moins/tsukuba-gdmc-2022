@@ -3,7 +3,7 @@ from typing import Generator, Iterable, SupportsIndex
 
 import random
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import MutableSequence
 
 from src.blocks.block import Block
 from src.blocks.utils.palette import Palette
@@ -12,7 +12,7 @@ from src.blocks.collections.block_set import BlockSet
 from src.utils.coordinates import Coordinates
 
 
-class BlockList(Sequence):
+class BlockList(MutableSequence):
     """Class representing an immutable list of blocks, implements the abstract Sequence"""
 
     def __init__(self, iterable: Iterable[Block] = None):
@@ -33,7 +33,7 @@ class BlockList(Sequence):
         return occurences[0][0] if occurences else None
 
     def insert(self, index: SupportsIndex, block: Block) -> None:
-        """Insert the given block before the given index"""
+        """Insert the given [block] before the given [index]"""
         self.__blocks.insert(index, block)
 
     def filter(self, pattern: str | Iterable[str]) -> BlockList:
@@ -91,6 +91,15 @@ class BlockList(Sequence):
     def __getitem__(self, *arguments) -> Block:
         """Return the block at the given index"""
         return self.__blocks.__getitem__(*arguments)
+
+    def __setitem__(self, *parameters) -> Block:
+        """Set self[key] to value"""
+
+        self.__blocks.__setitem__(*parameters)
+
+    def __delitem__(self, key: SupportsIndex | slice) -> Block:
+        """Delete self[key]"""
+        self.__blocks.__delitem__(key)
 
     def __str__(self) -> str:
         """Return the string representation of the current list"""

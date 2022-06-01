@@ -1,4 +1,5 @@
 from __future__ import annotations
+import multiprocessing
 
 import time
 
@@ -116,6 +117,9 @@ def find_building_materials(build_area: Plot):
 
 
 if __name__ == '__main__':
+
+    server.start_process()
+
     try:
         prepare_environment()
     except KeyboardInterrupt:

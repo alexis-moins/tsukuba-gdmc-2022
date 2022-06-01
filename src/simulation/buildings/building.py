@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import math
 import random
@@ -226,7 +227,7 @@ class Blueprint(ABC):
 
         # Actually placing the blocks
         for block in blocks:
-            server.add_to_buffer(block)
+            server.add_block_to_buffer(block)
             # INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
     def _place_sign(self):
@@ -371,10 +372,10 @@ class Farm(Building):
                 farm_field.add(block.coordinates)
                 block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
 
-                server.add_raw_to_buffer(f'minecraft:{block_name}', block.coordinates)
+                server.add_string_to_buffer(f'minecraft:{block_name}', block.coordinates)
 
                 if 'farmland' in block_name:
-                    server.add_raw_to_buffer(random.choice(LOOKUP.CROPS), block.coordinates.shift(y=1))
+                    server.add_string_to_buffer(random.choice(LOOKUP.CROPS), block.coordinates.shift(y=1))
 
 
 class Mine(Building):
@@ -438,7 +439,8 @@ class Mine(Building):
 
         return start.shift(x=4, y=2, z=4)
 
-    # Default dictionary mapping building type to their Building object
+
+# Default dictionary mapping building type to their Building object
 BUILDING_CLASSES: dict[BuildingType, Callable[..., Building]] = {
     BuildingType.FARM: Farm,
     BuildingType.MINING: Mine

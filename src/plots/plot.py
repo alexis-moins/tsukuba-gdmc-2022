@@ -45,7 +45,9 @@ class Plot:
         while lava_blocks:
             block = lava_blocks.pop()
             checked.add(block)
-            INTF.placeBlock(*block.coordinates, 'obsidian')  # water to cancel the lava
+
+            server.add_string_to_buffer('minecraft:obsidian', block.coordinates)
+            # INTF.placeBlock(*block.coordinates, 'obsidian')  # water to cancel the lava
 
             # Check for neighbors
             for coord_neighbor in block.neighbouring_coordinates():
@@ -53,9 +55,7 @@ class Plot:
                 if neighbor and 'lava' in neighbor.name and neighbor not in checked and coord_neighbor in self:
                     lava_blocks.append(neighbor)
 
-        INTF.sendBlocks()
-
-    @ staticmethod
+    @staticmethod
     def from_coordinates(start: Coordinates, end: Coordinates) -> Plot:
         """Return a new plot created from the given start and end coordinates"""
         return Plot(*start, Size.from_coordinates(start, end))
@@ -172,7 +172,7 @@ class Plot:
                 name = random.choices(blocks, weights)
                 block = Block(name, coord)
 
-                server.add_to_buffer(block)
+                server.add_block_to_buffer(block)
         else:
 
             # INSIDE
@@ -597,7 +597,7 @@ class RoadPlot(LogicPlot):
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
-                    server.add_raw_to_buffer('air', coordinates)
+                    server.add_string_to_buffer('air', coordinates)
                     # INTF.placeBlock(*coordinates, 'air')
 
         # self.remove_trees(BlockList(roads))
@@ -630,21 +630,21 @@ class RoadPlot(LogicPlot):
                 if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
                                      'minecraft:glowstone'):
 
-                    server.add_raw_to_buffer(the_blocks[0], Coordinates(x, y-1, z))
+                    server.add_string_to_buffer(the_blocks[0], Coordinates(x, y-1, z))
                     # INTF.placeBlock(x, y-1, z, the_blocks)
 
-                    server.add_raw_to_buffer('minecraft:white_stained_glass', Coordinates(x, y, z))
+                    server.add_string_to_buffer('minecraft:white_stained_glass', Coordinates(x, y, z))
                     # INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
                 else:
                     if Coordinates(x, 0, z) in self.construction_coordinates:
                         continue
 
                     if 'note_block' in the_blocks[0]:
-                        server.add_raw_to_buffer(random.choice(
+                        server.add_string_to_buffer(random.choice(
                             list(slab_pattern['OUTER'].keys())), Coordinates(x, y+1, z))
                         # INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
 
-                    server.add_raw_to_buffer(the_blocks[0], Coordinates(x, y, z))
+                    server.add_string_to_buffer(the_blocks[0], Coordinates(x, y, z))
 
     def __add_road_block(self, coordinates: Coordinates, placement: str):
 
