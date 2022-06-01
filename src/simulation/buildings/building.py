@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import functools
 from abc import ABC, abstractmethod
 
 import math
@@ -9,17 +11,18 @@ from typing import Any, Callable
 from colorama import Fore
 from gdpc import lookup as LOOKUP
 from gdpc import interface as INTERFACE
+
+from src.simulation.quests import quests
 from src.simulation.villager import Villager
 
 from src import env
 from src.utils import math_utils
 
-from src.plots.plot import Plot
+from src.plots.plot import Plot, CityPlot
 from src.blocks.block import Block
 from src.blocks.structure import Structure, get_structure
 from src.blocks.collections.block_list import BlockList
-from src.blocks.utils.palette import OneBlockPalette, Palette
-
+from src.blocks.utils.palette import OneBlockPalette, Palette, ColorPalette
 
 from src.utils.criteria import Criteria
 from src.utils.direction import Direction
@@ -65,10 +68,14 @@ class Blueprint(ABC):
         structures = [get_structure(path) for path in data.pop('path')]
         palettes = data.pop('palettes', [])
 
+        building_class = 'default'
+        if 'class' in data:
+            building_class = data.pop('class')
+
         properties = BuildingProperties.deserialize(data, data.pop('resource'), data.pop('type'))
 
         # Getting the class constructor
-        constructor = BUILDING_CLASSES[properties.type] if properties.type in BUILDING_CLASSES else Building
+        constructor = BUILDING_CLASSES[building_class]
         return constructor(name, properties, structures, Palette.parse_groups(palettes))
 
     @property
@@ -190,22 +197,13 @@ class Blueprint(ABC):
 
     def get_entrance_with_rotation(self, rotation: int) -> Coordinates:
         """"""
-        entrances = self.structures[0].get_blocks(Coordinates(0, 0, 0), rotation).filter('emerald')
-        if not entrances or len(entrances) < 1:
-            return Coordinates(0, 0, 0)
-        return entrances[0].coordinates
-
-        # TODO
-        # entrances = self.structures[0].blocks.filter('emerald')
-
-        # if not entrances:
-        #     return Coordinates(0, 0, 0)
-
-        # return entrances[0].coordinates.rotate(rotation)
+        entrances = self.structures[0].blocks.filter('emerald')
+        if not entrances:
+            return Coordinates(0, 0, 0)  # plot start
+        return entrances[0].coordinates.rotate(rotation, compense_shift_size=self.get_size())
 
     def _find_entrance(self, start: Coordinates) -> Coordinates | None:
         """"""
-        # TODO do it better
         if self.structures[0] in self.blocks:
             entrances = self.blocks[self.structures[0]].filter('emerald')
             return entrances[0].coordinates if entrances else start
@@ -235,7 +233,7 @@ class Blueprint(ABC):
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
         first_structure = self.structures[0]
-        signs = self.blocks[first_structure].filter('sign')
+        signs = self.blocks[first_structure].filter(('oak_wall_sign', 'oak_sign'))
 
         if not signs:
             return
@@ -260,44 +258,35 @@ class Building(Blueprint):
 
 
 class Tower(Building):
-    def __init__(self, parent, structures):
-        super().__init__(parent)
-        self.structures = structures
 
-    def build(self, plot: Plot, rotation: int, city: Plot):
-        self.plot = plot
-        self.rotation = rotation
-        dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in LOOKUP.COLORS])}
-        self._build_structure(self.structures[0], plot, palettes=dict_palette)
+    def build(self, plot: Plot, city: Plot):
+        dict_palette = {'white_terracotta': ColorPalette({})}
 
-        current = plot.start.shift(y=4)
+        current = plot.start
+        self._build_structure(self.structures[0], current, palettes=dict_palette)
 
-        for i in range(random.randint(10, min(30, 255 - self.plot.start.y))):
+        current = current.shift(y=4)
+
+        for i in range(random.randint(10, min(30, 255 - plot.start.y))):
             self._build_structure(self.structures[1], current, palettes=dict_palette)
             current = current.shift(y=1)
 
         self._build_structure(self.structures[2], current, palettes=dict_palette)
-        self.entrance = self.blocks.filter('emerald')
         self._place_sign()
         INTERFACE.sendBlocks()
 
-    @staticmethod
-    def deserialize_tower(building: dict[str, Any], parent: Building) -> Building:
-        """Return a new building deserialized from the given dictionary"""
-        structures = [Structure.deserialize_nbt_file(file) for file in building['path']]
-        return Tower(parent, structures)
-
 
 class BuildingWithSlots(Building):
-    def __init__(self, parent: Building, slot_pattern: str):
-        super().__init__(parent)
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette],
+                 slot_pattern: str):
+        super().__init__(name, properties, structures, palettes)
         self.free_slots: list[Block] = []
         self.occupied_slots: list[Block] = []
         self.slot_block = slot_pattern
 
-    def build(self, plot: Plot, rotation: int, city: Plot):
-        self.free_slots = list(self.structures.get_blocks(plot.start, rotation).filter(self.slot_block))
-        super().build(plot, rotation, city)
+    def build(self, plot: Plot, city: Plot):
+        self.free_slots = list(functools.reduce(lambda a, b: a + b, [struct.get_blocks(plot.start, self.rotation).filter(self.slot_block) for struct in self.structures]))
+        super().build(plot, city)
 
     def get_free_slot(self):
         if not self.free_slots:
@@ -308,8 +297,8 @@ class BuildingWithSlots(Building):
 
 
 class Graveyard(BuildingWithSlots):
-    def __init__(self, parent: Building):
-        super().__init__(parent, 'diamond_block')
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
+        super().__init__(name, properties, structures, palettes, 'diamond_block')
 
     def add_tomb(self, villager, year: int, cause: str):
         slot = super().get_free_slot()
@@ -332,8 +321,8 @@ class Graveyard(BuildingWithSlots):
 
 
 class WeddingTotem(BuildingWithSlots):
-    def __init__(self, parent: Building):
-        super().__init__(parent, 'cornflower')
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
+        super().__init__(name, properties, structures, palettes, 'cornflower')
 
     def add_wedding(self):
         slot = super().get_free_slot()
@@ -350,7 +339,7 @@ class Farm(Building):
         structure when generating on a plot"""
         super().__init__(name, properties, structures, palettes)
 
-    def build(self, plot: Plot, settlement: Plot) -> None:
+    def build(self, plot: Plot, settlement: CityPlot) -> None:
         """"""
         super().build(plot, settlement)
 
@@ -450,8 +439,26 @@ class Mine(Building):
         return start.shift(x=4, y=2, z=4)
 
 
+class TownHall(BuildingWithSlots):
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
+        super().__init__(name, properties, structures, palettes, 'acacia_wall_sign')
+
+    def fill_board(self):
+        quest_amount = min(6, len(self.free_slots))
+        blocks = random.sample(self.free_slots, quest_amount)
+        print(type(blocks))
+        for slot, quest in zip(blocks, quests.get_quests(quest_amount)):
+            print(type(slot))
+            slot.coordinates.place_sign(quest.__str__())
+
     # Default dictionary mapping building type to their Building object
-BUILDING_CLASSES: dict[BuildingType, Callable[..., Building]] = {
-    BuildingType.FARM: Farm,
-    BuildingType.MINING: Mine
+BUILDING_CLASSES: dict[str, Callable[..., Building]] = {
+    'default': Building,
+    'TownHall': TownHall,
+    'Farm': Farm,
+    'Mine': Mine,
+    'Graveyard': Graveyard,
+    'WeddingTotem': WeddingTotem,
+    'Tower': Tower,
+
 }

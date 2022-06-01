@@ -62,13 +62,7 @@ class Structure:
         if apply_block_variation:
             blocks = self.__get_variation(env.BUILDING_MATERIALS) if env.BUILDING_MATERIALS else self.blocks
 
-        shift_due_to_rotation = Coordinates(0, 0, 0)
-        if rotation == 90:
-            shift_due_to_rotation = Coordinates(self.size.z - 1, 0, 0)
-        elif rotation == 180:
-            shift_due_to_rotation = Coordinates(self.size.x - 1, 0, self.size.z - 1)
-        elif rotation == 270:
-            shift_due_to_rotation = Coordinates(0, 0, self.size.x - 1)
+        shift_due_to_rotation = self.size.get_rotation_shift(rotation)
 
         iterable = [block.rotate(rotation).shift_position_to(start + shift_due_to_rotation) for block in blocks]
         return BlockList(iterable)

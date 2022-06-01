@@ -32,6 +32,16 @@ class Size:
         distance = abs(start - end)
         return Size(distance.x, distance.z)
 
+    def get_rotation_shift(self, rotation: int):
+        shift_due_to_rotation = Coordinates(0, 0, 0)
+        if rotation == 90:
+            shift_due_to_rotation = Coordinates(self.z - 1, 0, 0)
+        elif rotation == 180:
+            shift_due_to_rotation = Coordinates(self.x - 1, 0, self.z - 1)
+        elif rotation == 270:
+            shift_due_to_rotation = Coordinates(0, 0, self.x - 1)
+        return shift_due_to_rotation
+
     def __add__(self, other):
         if isinstance(other, Size):
             return Size(self.x + other.x, self.z + other.z)
@@ -95,13 +105,18 @@ class Coordinates:
         """Return a new coordinates with y = 0"""
         return Coordinates(self.x, 0, self.z)
 
-    def rotate(self, angle: float, rotation_point: Coordinates = None) -> Coordinates:
+    def rotate(self, angle: int, rotation_point: Coordinates = None, compense_shift_size: Size = None) -> Coordinates:
         if not rotation_point:
             rotation_point = Coordinates(0, 0, 0)
 
         rotated_x, rotated_z = R(np.deg2rad(angle)) @ (self - rotation_point).xz
         rotated_x, rotated_z = round(rotated_x), round(rotated_z)
-        return Coordinates(rotated_x, self.y, rotated_z) + rotation_point
+
+        new_point = Coordinates(rotated_x, self.y, rotated_z) + rotation_point
+        if compense_shift_size:
+            new_point = new_point + compense_shift_size.get_rotation_shift(angle)
+
+        return new_point
 
     def around_2d(self, radius, y=None):
         if y is None:
