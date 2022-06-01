@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import multiprocessing
 
 import time
@@ -73,7 +74,7 @@ def start_simulation(years: int) -> None:
     """Launch the simulation"""
     start, end = env.BUILD_AREA
     build_area = Plot.from_coordinates(start, end)
-    build_area.remove_lava()
+
     env.WORLD = env.get_world_slice()
 
     if env.TP:
@@ -117,12 +118,9 @@ def find_building_materials(build_area: Plot):
 
 
 if __name__ == '__main__':
-
-    server.start_process()
-
     try:
         prepare_environment()
     except KeyboardInterrupt:
         print("Pressed Ctrl-C to kill program.")
 
-    server.send_buffer(force=True)
+    server.schedule_buffer_sending(force=True)

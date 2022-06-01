@@ -1,3 +1,4 @@
+import asyncio
 from colorama import Fore
 from gdpc import interface
 
@@ -42,6 +43,13 @@ class Simulation:
     def start(self) -> None:
         """Start the simulation and generate the (possibly many) settlement(s). The
         simulation will stop if it reaches the year of the simulation end"""
+        asyncio.run(self.__start())
+
+    async def __start(self) -> None:
+        """Start the simulation and generate the (possibly many) settlement(s). The
+        simulation will stop if it reaches the year of the simulation end"""
+        await self.__plot.remove_lava()
+
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
         town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Town Hall'])
@@ -50,7 +58,7 @@ class Simulation:
 
         if not success:
             town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Small Town Hall'])
-            self.settlements[0].add_building(town_hall)
+            await self.settlements[0].add_building(town_hall)
 
         while self.current_year < self.simulation_end:
             print(f'\n\n\n=> Start of year {Fore.RED}[{self.current_year}]{Fore.WHITE}')
@@ -92,9 +100,6 @@ class Simulation:
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{self.current_year}/{self.simulation_end}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 
-        interface.sendBlocks()
-        interface.setBuffering(False)
-
         # # History of buildings
         # for building in self.settlements.buildings[1:]:
         #     colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
@@ -127,19 +132,14 @@ class Simulation:
         #     lectern: Block = lectern_list[0]
         #     toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
-        interface.setBuffering(True)
-        interface.sendBlocks()
-
-        server.send_buffer(force=True)
+        # Simultaneously send the previously scheduled buffer sendings to the minecraft server
+        await server.send_buffers()
 
     def run_on(self, settlement: Settlement) -> None:
         """Run the simulation for 1 year on the given [settlement]. The simulation will try to add
         a new building, randomly generate an event and update the settlement's indicators"""
         settlement.update(self.current_year)
         buildings = settlement.get_constructible_buildings()
-
-        # formatted = textwrap.fill(", ".join(str(building) for building in buildings), width=80)
-        # print(f'Available buildings: [{formatted}]')
 
         chosen_building = self.choose_building(settlement, buildings)
 
@@ -149,8 +149,8 @@ class Simulation:
         event = get_event(self.current_year)
 
         if event is not None:
-            # TODO do something with the history
-            self.history.append(event.resolve(settlement))
+            chronicle = event.resolve(settlement)
+            self.history.append(chronicle)
 
         settlement.update(self.current_year)
         settlement.display()

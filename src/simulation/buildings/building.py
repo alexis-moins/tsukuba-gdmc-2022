@@ -265,6 +265,7 @@ class Tower(Building):
         self.plot = plot
         self.rotation = rotation
         dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in LOOKUP.COLORS])}
+
         self._build_structure(self.structures[0], plot, palettes=dict_palette)
 
         current = plot.start.shift(y=4)
@@ -274,11 +275,9 @@ class Tower(Building):
             current = current.shift(y=1)
 
         self._build_structure(self.structures[2], current, palettes=dict_palette)
+
         self.entrance = self.blocks.filter('emerald')
         self._place_sign()
-
-        server.send_buffer()
-        # INTERFACE.sendBlocks()
 
     @staticmethod
     def deserialize_tower(building: dict[str, Any], parent: Building) -> Building:

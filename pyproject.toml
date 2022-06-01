@@ -9,6 +9,7 @@ python = "^3.10"
 gdpc = "^5.0.2"
 colorama = "^0.4.4"
 networkx = "^2.8"
+aiohttp = "^3.8.1"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.6.0"
