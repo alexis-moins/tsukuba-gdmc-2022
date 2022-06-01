@@ -48,8 +48,9 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bo
     INTERFACE.setBuffering(not no_buffering)
     INTERFACE.placeBlockFlags(doBlockUpdates=True, customFlags='0100011')
 
-    INTERFACE.runCommand(f'gamerule doTileDrops {str(drops).lower()}')
-    INTERFACE.runCommand(f'gamerule randomTickSpeed {tick_speed}')
+    INTERFACE.runCommand('gamerule randomTickSpeed 0')
+    INTERFACE.runCommand(f'gamerule doTileDrops false')
+    # INTERFACE.runCommand(f'gamerule randomTickSpeed {tick_speed}')
 
     if env.PROFILE_TIME:
         import cProfile

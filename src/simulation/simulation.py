@@ -41,9 +41,10 @@ class Simulation:
         self.history: list[str] = []
 
     def start(self) -> None:
-        """Start the simulation and generate the (possibly many) settlement(s). The
-        simulation will stop if it reaches the year of the simulation end"""
-        asyncio.run(self.__start())
+        """Start the simulation asynchronously and generate the (possibly many)
+        settlement(s). The simulation will stop if it reaches the year of the simulation end"""
+        coroutine = self.__start()
+        asyncio.run(coroutine)
 
     async def __start(self) -> None:
         """Start the simulation and generate the (possibly many) settlement(s). The

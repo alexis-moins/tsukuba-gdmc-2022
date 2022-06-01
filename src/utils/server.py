@@ -1,24 +1,32 @@
 import asyncio
-from asyncio import Task, tasks
-import requests
+from asyncio import Task, Semaphore
+
 import aiohttp
+
+from aiohttp import ClientSession, ClientConnectionError
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, Iterable
+from typing import Coroutine, Deque, Iterable
 
 from src.blocks.block import Block
 from src.utils.coordinates import Coordinates
 
 
-URL = f'http://localhost:9000/blocks?x=0&y=0&z=0&customFlags=0100011&doBlockUpdate=True'
+#
+__URL = 'http://localhost:9000/blocks?x=0&y=0&z=0&customFlags=0110010&doBlockUpdate=False'
 
-# List of
-_requests: list[str] = []
 
+# List of http PUT request body
+__requests: list[str] = []
 
 # The size of the buffer. Once the buffer has reached this number of blocks, the
-# __buffer_handler will send all the blocks to the minecraft server at once.
+# blocks inside of the buffer will be scheduled to be sent to the minecraft server
 buffer_size: int = 10_000
+
+# The maximum number of requests that are sent to the minecraft server at the same
+# time. Changing this number as well as the buffer_size might either improve or worsen
+# the time the simulation takes to complete
+concurrent_request_number: int = 4
 
 
 @dataclass
@@ -30,9 +38,7 @@ class Buffer:
     def add(self, block: Block) -> None:
         """Add the given [block] to the buffer"""
         self._buffer.append(block)
-
-        if len(self) >= buffer_size:
-            schedule_buffer_sending(force=True)
+        schedule_buffer_sending()
 
     def extend(self, blocks: Iterable[Block]) -> None:
         """Add all the blocks in the given iterable to the buffer"""
@@ -50,40 +56,58 @@ class Buffer:
         return len(self._buffer)
 
 
+# The block buffer. Contains all the blocks that will be sent to the minecraft server
+# and placed in the world by schedule_buffer_sending once its size exceeds the buffer_size
+__buffer = Buffer()
+
+
 def schedule_buffer_sending(*, force: bool = False) -> None:
     """Send the whole buffer to the minecraft server. If [force] is set to true, send
     the buffer even if it has not reached the [buffer_size] limit yet"""
-    if not force and len(_buffer) < buffer_size:
+    if not force and len(__buffer) < buffer_size:
         return None
 
-    print(f'SCHEDULING SENDING of {len(_buffer)} blocks')
-    blocks = _buffer.exhaust()
+    print(f'SCHEDULING SENDING of {len(__buffer)} blocks')
+    blocks = __buffer.exhaust()
 
     request_body = get_request_body(blocks)
-    _requests.append(request_body)
-
-
-# The block buffer. Contains all the blocks that will be sent to the minecraftserver
-# and placed in the world by the __buffer_handler once its size exceeds the buffer_size
-_buffer = Buffer()
+    __requests.append(request_body)
 
 
 def add_block_to_buffer(block: Block | Iterable[Block]) -> None:
     """Add the given [block] to the block buffer. Block may be either be a Block or
     any iterable of blocks"""
-    _buffer.add(block) if type(block) is Block else _buffer.extend(block)
+    __buffer.add(block) if type(block) is Block else __buffer.extend(block)
 
 
 def add_string_to_buffer(block_name: str, coordinates: Coordinates) -> None:
     """Add the given [block_name] to the block buffer, specifying the [coordinates] on
     which the block should be placed"""
     block = Block(block_name, coordinates)
-    _buffer.add(block)
+    __buffer.add(block)
 
 
-def get_tasks(session: aiohttp.ClientSession) -> list[Task]:
+async def __send_request(session, i, request_body: str, semaphore: Semaphore):
     """"""
-    return [session.put(URL, data=request_body) for request_body in _requests]
+    async with semaphore:
+        try:
+            print(semaphore._value)
+            print(f'Starting request {i}')
+            await session.put(__URL, data=request_body)
+            print(f'Ending request {i}')
+        except ClientConnectionError:
+
+            await __send_request(session, i, request_body, semaphore)
+
+
+def get_corountines(session: ClientSession) -> list[Coroutine]:
+    """Return the list of coroutines that shall be gathered to send the different http
+    PUT requests to the minecraft server concurrently by providing an asynchronous
+    http [session]"""
+    semaphore = Semaphore(value=concurrent_request_number)
+
+    return [__send_request(session, i, request_body, semaphore)
+            for i, request_body in enumerate(__requests)]
 
 
 async def send_buffers(*, empty_buffer: bool = True) -> None:
@@ -93,13 +117,13 @@ async def send_buffers(*, empty_buffer: bool = True) -> None:
     if empty_buffer:
         schedule_buffer_sending(force=True)
 
-    if not _requests:
+    if not __requests:
         # No tasks to create
         return None
 
     async with aiohttp.ClientSession() as session:
-        tasks = get_tasks(session)
-        await asyncio.gather(*tasks)
+        coroutines = get_corountines(session)
+        await asyncio.gather(*coroutines)
 
 
 def format_block(block: Block) -> str:
@@ -135,7 +159,7 @@ async def place_block(block: Block | tuple[str, Coordinates]) -> None:
     body = '{} {} {} {}'.format(coordinates, name)
 
     async with aiohttp.ClientSession() as session:
-        await session.put(URL, data=body)
+        await session.put(__URL, data=body)
 
 
 # async def send_blocks(blocks: Iterable[Block], *, retries: int = 5, update_neighbours: bool = True, flags: str = None):
