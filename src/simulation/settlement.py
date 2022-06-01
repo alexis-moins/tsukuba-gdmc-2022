@@ -274,6 +274,9 @@ class Settlement(MutableMapping):
         # Add roads signs
         self.plot.add_roads_signs(10, self.chronology)
 
+        if self['Town Hall']:
+            self['Town Hall'].fill_board()
+
     def __getitem__(self, key: str) -> Building | list[Building]:
         """"""
         value = self.__buildings.__getitem__(key)

@@ -1,0 +1,23 @@
+Zombies
+Skeletons
+Slimes
+Wolves
+Endermen
+Foxes
+Cows
+Blazes
+Turtles
+Creepers
+Endermites
+Spiders
+Polar Bears
+Sheeps
+Shulkers
+Zoglins
+Pufferfishs
+Witchs
+Squids
+Silverfishs
+Salmons
+Ocelots
+Parrots

@@ -36,6 +36,7 @@ Small Town Hall:
   number-of-beds: 5
   food-production: 5
   maximum: 1
+  class: TownHall
 
 
 Little House:

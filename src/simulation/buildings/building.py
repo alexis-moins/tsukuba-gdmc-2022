@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import functools
 from abc import ABC, abstractmethod
 
 import math
@@ -9,6 +11,8 @@ from typing import Any, Callable
 from colorama import Fore
 from gdpc import lookup as LOOKUP
 from gdpc import interface as INTERFACE
+
+from src.simulation.quests import quests
 from src.simulation.villager import Villager
 
 from src import env
@@ -229,7 +233,7 @@ class Blueprint(ABC):
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
         first_structure = self.structures[0]
-        signs = self.blocks[first_structure].filter('sign')
+        signs = self.blocks[first_structure].filter(('oak_wall_sign', 'oak_sign'))
 
         if not signs:
             return
@@ -281,7 +285,7 @@ class BuildingWithSlots(Building):
         self.slot_block = slot_pattern
 
     def build(self, plot: Plot, city: Plot):
-        self.free_slots = [block for block in [struct.get_blocks(plot.start, self.rotation) for struct in self.structures]]
+        self.free_slots = list(functools.reduce(lambda a, b: a + b, [struct.get_blocks(plot.start, self.rotation).filter(self.slot_block) for struct in self.structures]))
         super().build(plot, city)
 
     def get_free_slot(self):
@@ -435,9 +439,17 @@ class Mine(Building):
         return start.shift(x=4, y=2, z=4)
 
 
-class TownHall(Building):
+class TownHall(BuildingWithSlots):
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
+        super().__init__(name, properties, structures, palettes, 'acacia_wall_sign')
 
-    pass
+    def fill_board(self):
+        quest_amount = min(6, len(self.free_slots))
+        blocks = random.sample(self.free_slots, quest_amount)
+        print(type(blocks))
+        for slot, quest in zip(blocks, quests.get_quests(quest_amount)):
+            print(type(slot))
+            slot.coordinates.place_sign(quest.__str__())
 
     # Default dictionary mapping building type to their Building object
 BUILDING_CLASSES: dict[str, Callable[..., Building]] = {
