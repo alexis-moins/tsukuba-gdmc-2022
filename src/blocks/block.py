@@ -92,7 +92,7 @@ class Block:
                 return True
         return False
 
-    def rotate(self, angle: float, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
+    def rotate(self, angle: int, rotation_point: Coordinates = Coordinates(0, 0, 0)) -> Block:
         """Rotate the block coordinates and modify its properties to mimic rotation around a given
         [rotation point]. """
         coordinates = self.coordinates.rotate(angle, rotation_point)
