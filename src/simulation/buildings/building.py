@@ -12,11 +12,12 @@ from colorama import Fore
 from gdpc import lookup as LOOKUP
 from gdpc import interface as INTERFACE
 
+from src.simulation.buildings.utils.building_type import BuildingType
 from src.simulation.quests import quests
 from src.simulation.villager import Villager
 
 from src import env
-from src.utils import math_utils
+from src.utils import math_utils, loot_table
 
 from src.plots.plot import Plot, CityPlot
 from src.blocks.block import Block
@@ -28,7 +29,6 @@ from src.utils.criteria import Criteria
 from src.utils.direction import Direction
 from src.utils.coordinates import Coordinates, Size
 
-from src.simulation.buildings.utils.building_type import BuildingType
 from src.simulation.buildings.utils.building_properties import BuildingProperties
 
 
@@ -240,6 +240,22 @@ class Blueprint(ABC):
 
         signs[0].coordinates.place_sign(self.full_name)
 
+    def fill_chests(self):
+        if self.properties.type in loot_table.Building_type_loot_table:
+            table = loot_table.Building_type_loot_table[self.properties.type]
+        else:
+            table = loot_table.Building_type_loot_table[BuildingType.NONE]
+
+        # this bad boy will collect all chest in all structure and fill them
+        for chest in list(functools.reduce(lambda a, b: a + b, [blocks.filter(('chest', 'shulker')) for blocks in self.blocks.values()])):
+            item_amount = random.randint(5, 20)
+            slots = random.sample(range(27), k=item_amount)
+            item_data = [item.to_minecraft_data(slot) for slot, item in zip(slots, list(table.get_items(item_amount)))]
+
+            chest_data = f'{{Items:[{",".join(item_data)}]}}'
+            x, y, z = chest.coordinates
+            INTERFACE.runCommand(f'data merge block {x} {y} {z} {chest_data}')
+
     def __str__(self) -> str:
         """Return the string representation of the building"""
         return f'{Fore.MAGENTA}{self.name}{Fore.WHITE}'
@@ -446,12 +462,11 @@ class TownHall(BuildingWithSlots):
     def fill_board(self):
         quest_amount = min(6, len(self.free_slots))
         blocks = random.sample(self.free_slots, quest_amount)
-        print(type(blocks))
         for slot, quest in zip(blocks, quests.get_quests(quest_amount)):
-            print(type(slot))
             slot.coordinates.place_sign(quest.__str__())
 
-    # Default dictionary mapping building type to their Building object
+
+# Default dictionary mapping building type to their Building object
 BUILDING_CLASSES: dict[str, Callable[..., Building]] = {
     'default': Building,
     'TownHall': TownHall,
