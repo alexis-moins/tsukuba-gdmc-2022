@@ -277,6 +277,11 @@ class Settlement(MutableMapping):
         if self['Town Hall']:
             self['Town Hall'].fill_board()
 
+        # Fill the buildings chests
+        for type_of_building in self.__buildings.values():
+            for building in type_of_building:
+                building.fill_chests()
+
     def __getitem__(self, key: str) -> Building | list[Building]:
         """"""
         value = self.__buildings.__getitem__(key)

@@ -1,0 +1,236 @@
+NONE:
+  - item: cobweb
+    chance: .5
+    max_amount: 3
+    repetition: 10
+
+HABITATION:
+  -   item: apple
+      chance: .1
+      max_amount: 15
+      repetition: 2
+
+  -   item: bread
+      chance: .1
+      max_amount: 15
+      repetition: 2
+
+  -   item: cookie
+      chance: .1
+      max_amount: 15
+      repetition: 2
+
+  -   item: cooked_beef
+      chance: .1
+      max_amount: 15
+      repetition: 2
+
+  -   item: melon_slice
+      chance: .1
+      max_amount: 15
+      repetition: 2
+
+  -   item: cake
+      chance: .1
+      max_amount: 2
+      repetition: 2
+
+  -   item: torch
+      chance: .3
+      max_amount: 20
+      repetition: 1
+
+  -   item: totem_of_undying
+      chance: .05
+      max_amount: 1
+      repetition: 1
+
+FARM:
+  -   item: wheat_seeds
+      chance: .5
+      max_amount: 64
+      repetition: 3
+
+  -   item: wheat
+      chance: .5
+      max_amount: 64
+      repetition: 3
+
+  -   item: melon_seeds
+      chance: .2
+      max_amount: 64
+      repetition: 3
+
+  -   item: melon
+      chance: .2
+      max_amount: 64
+      repetition: 3
+
+  -   item: beetroot_seeds
+      chance: .2
+      max_amount: 64
+      repetition: 3
+
+  -   item: potato
+      chance: .2
+      max_amount: 64
+      repetition: 3
+
+  -   item: carrot
+      chance: .2
+      max_amount: 64
+      repetition: 3
+
+  -   item: iron_hoe
+      chance: .5
+      max_amount: 1
+      repetition: 2
+
+  -   item: water_bucket
+      chance: .5
+      max_amount: 1
+      repetition: 2
+
+WOODCUTTING:
+  -   item: iron_axe
+      chance: .5
+      max_amount: 1
+      repetition: 2
+
+  -   item: oak_sapling
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: dark_oak_sapling
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: spruce_sapling
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: birch_sapling
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: jungle_sapling
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: acacia_sapling
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: oak_log
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: dark_oak_log
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: spruce_log
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: birch_log
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: jungle_log
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+  -   item: acacia_log
+      chance: .1
+      max_amount: 10
+      repetition: 2
+
+FORGING:
+  -   item: iron_sword
+      chance: .3
+      max_amount: 1
+      repetition: 2
+
+  -   item: iron_helmet
+      chance: .3
+      max_amount: 1
+      repetition: 2
+
+  -   item: iron_chestplate
+      chance: .3
+      max_amount: 1
+      repetition: 2
+
+  -   item: iron_leggings
+      chance: .3
+      max_amount: 1
+      repetition: 2
+
+  -   item: iron_boots
+      chance: .3
+      max_amount: 1
+      repetition: 2
+
+  -   item: shield
+      chance: .3
+      max_amount: 1
+      repetition: 2
+
+MINING:
+
+  -   item: cobblestone
+      chance: .8
+      max_amount: 64
+      repetition: 3
+
+  -   item: andesite
+      chance: .5
+      max_amount: 64
+      repetition: 3
+
+  -   item: diorite
+      chance: .4
+      max_amount: 64
+      repetition: 2
+
+  -   item: iron_ore
+      chance: .3
+      max_amount: 30
+      repetition: 2
+
+  -   item: coal
+      chance: .3
+      max_amount: 30
+      repetition: 2
+
+  -   item: gold_ore
+      chance: .15
+      max_amount: 15
+      repetition: 2
+
+  -   item: redstone
+      chance: .15
+      max_amount: 30
+      repetition: 2
+
+  -   item: lapis_lazuli
+      chance: .1
+      max_amount: 30
+      repetition: 2
+
+  -   item: diamond
+      chance: .05
+      max_amount: 5
+      repetition: 2
