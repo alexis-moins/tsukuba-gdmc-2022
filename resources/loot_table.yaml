@@ -234,3 +234,34 @@ MINING:
       chance: .05
       max_amount: 5
       repetition: 2
+
+TREASURE:
+  -   item: diamond
+      chance: .5
+      max_amount: 5
+      repetition: 6
+
+  -   item: netherite_ingot
+      chance: .5
+      max_amount: 3
+      repetition: 4
+
+  -   item: iron_ingot
+      chance: .8
+      max_amount: 30
+      repetition: 4
+
+  -   item: gold_ingot
+      chance: .8
+      max_amount: 30
+      repetition: 4
+
+  -   item: ender_pearl
+      chance: .3
+      max_amount: 5
+      repetition: 4
+
+  -   item: blaze_rod
+      chance: .3
+      max_amount: 5
+      repetition: 4
