@@ -1,6 +1,6 @@
 # Files
 .DS_Store
-.profiler.prof
+profiler.prof
 
 # Directories
 .idea/
