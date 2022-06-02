@@ -1,4 +1,6 @@
 import asyncio
+from typing import Callable
+import aiohttp
 from colorama import Fore
 from gdpc import interface
 
@@ -43,7 +45,7 @@ class Simulation:
     def start(self) -> None:
         """Start the simulation asynchronously and generate the (possibly many)
         settlement(s). The simulation will stop if it reaches the year of the simulation end"""
-        coroutine = self.__start()
+        coroutine = wrap_simulation(self.__start)
         asyncio.run(coroutine)
 
     async def __start(self) -> None:
@@ -134,7 +136,7 @@ class Simulation:
         #     toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         # Simultaneously send the previously scheduled buffer sendings to the minecraft server
-        await server.send_buffers()
+        await server.wait()
 
     def run_on(self, settlement: Settlement) -> None:
         """Run the simulation for 1 year on the given [settlement]. The simulation will try to add
@@ -155,3 +157,10 @@ class Simulation:
 
         settlement.update(self.current_year)
         settlement.display()
+
+
+async def wrap_simulation(start_function: Callable[[], None]) -> None:
+    """"""
+    async with aiohttp.ClientSession() as session:
+        server._session = session
+        await start_function()
