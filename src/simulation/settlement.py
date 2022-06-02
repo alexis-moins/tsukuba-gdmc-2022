@@ -29,7 +29,7 @@ class Settlement(MutableMapping):
         self.chronology: list[Building] = []
         self.__buildings: DefaultDict[str, list[Building]] = defaultdict(list)
 
-        self.__deserialized_buildings = {}
+        self._buildings_cache = {}
 
         self.__counter = Counter()
 
@@ -85,8 +85,17 @@ class Settlement(MutableMapping):
         - its cost (in production points) is <= to the current production points of the city
         - its type is not one of DECORATION
         - the city has not reached the maximum number for this buildings"""
-        return [Building.deserialize(name, data) for name, data in env.BUILDINGS.items()
-                if self.is_building_constructible(name, data)]
+        buildings = []
+        for name, data in env.BUILDINGS.items():
+            if self.is_building_constructible(name, data):
+                building = self._buildings_cache.pop(name, None)
+
+                if not building:
+                    building = Building.deserialize(name, data)
+
+                buildings.append(building)
+
+        return buildings
 
     def is_building_constructible(self, name: str, data: dict[str, Any]) -> bool:
         """Return true if the building is constructible, false if it is not. The building is formed
