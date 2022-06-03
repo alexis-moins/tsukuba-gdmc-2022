@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -20,7 +22,6 @@ from src.blocks.structure import Structure, get_structure
 from src.blocks.collections.block_list import BlockList
 from src.blocks.utils.palette import OneBlockPalette, Palette
 
-
 from src.utils.criteria import Criteria
 from src.utils.direction import Direction
 from src.utils.coordinates import Coordinates, Size
@@ -32,7 +33,8 @@ from src.simulation.buildings.utils.building_properties import BuildingPropertie
 class Blueprint(ABC):
     """Represents an abstract building plan regrouping usefull common methods"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette]):
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure],
+                 palettes: dict[str, Palette]):
         """Creates a new building with the given [name], [properties], basic [structures] and [palettes]
         that may dynamically change the blocks used in the different structures"""
         self.name = name
@@ -212,8 +214,9 @@ class Blueprint(ABC):
 
         return None
 
-    def _build_structure(self, structure: Structure, start: Coordinates, palettes: dict[str, Palette] | None = None,
-                         rotation=None):
+    async def _build_structure(self, structure: Structure, start: Coordinates,
+                               palettes: dict[str, Palette] | None = None,
+                               rotation=None):
         """Build the given [structure] at the given [start] coordinates, optionally using the
         given block [palettes] instead of the palettes from this building"""
         blocks = structure.get_blocks(start, rotation if rotation is not None else self.rotation)
@@ -227,7 +230,7 @@ class Blueprint(ABC):
 
         # Actually placing the blocks
         for block in blocks:
-            server.add_block_to_buffer(block)
+            await server.add_block_to_buffer(block)
             # INTERFACE.placeBlock(*block.coordinates, block.full_name)
 
     def _place_sign(self):
@@ -248,10 +251,10 @@ class Blueprint(ABC):
 class Building(Blueprint):
     """Represents a generic building"""
 
-    def build(self, plot: Plot, settlement: Plot):
+    async def build(self, plot: Plot, settlement: Plot):
         """Build the building onto the given [plot], using data from the [settlement]"""
         for structure in self.structures:
-            self._build_structure(structure, plot.start)
+            await self._build_structure(structure, plot.start)
 
         self._place_sign()
 
@@ -261,20 +264,20 @@ class Tower(Building):
         super().__init__(parent)
         self.structures = structures
 
-    def build(self, plot: Plot, rotation: int, city: Plot):
+    async def build(self, plot: Plot, rotation: int, city: Plot):
         self.plot = plot
         self.rotation = rotation
         dict_palette = {'white_terracotta': OneBlockPalette([color + '_terracotta' for color in LOOKUP.COLORS])}
 
-        self._build_structure(self.structures[0], plot, palettes=dict_palette)
+        await self._build_structure(self.structures[0], plot, palettes=dict_palette)
 
         current = plot.start.shift(y=4)
 
         for i in range(random.randint(10, min(30, 255 - self.plot.start.y))):
-            self._build_structure(self.structures[1], current, palettes=dict_palette)
+            await self._build_structure(self.structures[1], current, palettes=dict_palette)
             current = current.shift(y=1)
 
-        self._build_structure(self.structures[2], current, palettes=dict_palette)
+        await self._build_structure(self.structures[2], current, palettes=dict_palette)
 
         self.entrance = self.blocks.filter('emerald')
         self._place_sign()
@@ -293,9 +296,9 @@ class BuildingWithSlots(Building):
         self.occupied_slots: list[Block] = []
         self.slot_block = slot_pattern
 
-    def build(self, plot: Plot, rotation: int, city: Plot):
+    async def build(self, plot: Plot, rotation: int, city: Plot):
         self.free_slots = list(self.structures.get_blocks(plot.start, rotation).filter(self.slot_block))
-        super().build(plot, rotation, city)
+        await super().build(plot, rotation, city)
 
     def get_free_slot(self):
         if not self.free_slots:
@@ -345,15 +348,16 @@ class WeddingTotem(BuildingWithSlots):
 class Farm(Building):
     """"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: list[str] = None):
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure],
+                 palettes: list[str] = None):
         """Creates a new building with the given [name], [properties] and basic [structure].
         Optionally, a [palette] can may be specified to dynamically change the blocks of the
         structure when generating on a plot"""
         super().__init__(name, properties, structures, palettes)
 
-    def build(self, plot: Plot, settlement: Plot) -> None:
+    async def build(self, plot: Plot, settlement: Plot) -> None:
         """"""
-        super().build(plot, settlement)
+        await super().build(plot, settlement)
 
         surface = settlement.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES)
 
@@ -365,29 +369,31 @@ class Farm(Building):
                     continue
 
                 if block.name not in (
-                        'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt', 'minecraft:podzol'):
+                        'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt',
+                        'minecraft:podzol'):
                     continue
 
                 farm_field.add(block.coordinates)
                 block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
 
-                server.add_string_to_buffer(f'minecraft:{block_name}', block.coordinates)
+                await server.add_string_to_buffer(f'minecraft:{block_name}', block.coordinates)
 
                 if 'farmland' in block_name:
-                    server.add_string_to_buffer(random.choice(LOOKUP.CROPS), block.coordinates.shift(y=1))
+                    await server.add_string_to_buffer(random.choice(LOOKUP.CROPS), block.coordinates.shift(y=1))
 
 
 class Mine(Building):
     """"""
 
-    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure], palettes: dict[str, Palette] | None = None):
+    def __init__(self, name: str, properties: BuildingProperties, structures: list[Structure],
+                 palettes: dict[str, Palette] | None = None):
         """Creates a new building with the given [name], [properties] and basic [structure].
         Optionally, a [palette] can may be specified to dynamically change the blocks of the
         structure when generating on a plot"""
         super().__init__(name, properties, structures, palettes)
         self.floor_number: int = random.randint(2, 10)
 
-    def build(self, plot: Plot, settlement: Plot):
+    async def build(self, plot: Plot, settlement: Plot):
         """"""
         # set as starting rotation | need a 180 rotation between the 2 modules
         rotations = (270, 180, 90, 0)
@@ -399,30 +405,30 @@ class Mine(Building):
             rotation_index = (rotation_index + 1) % 4
             stairs_start = stairs_start.shift(y=-5)
 
-            self._build_structure(self.structures[1], stairs_start, rotation=rotations[rotation_index])
+            await self._build_structure(self.structures[1], stairs_start, rotation=rotations[rotation_index])
 
-        self._build_structure(self.structures[0], plot.start)
+        await self._build_structure(self.structures[0], plot.start)
 
         # 1/2 chances of building a crane
         if random.randint(0, 1):
-            self._build_crane(plot.start)
+            await self._build_crane(plot.start)
 
-        self._place_sign()
+        # self._place_sign()
         INTERFACE.sendBlocks()
 
-    def _build_crane(self, start: Coordinates) -> None:
+    async def _build_crane(self, start: Coordinates) -> None:
         """Build a crane on top of the mine, """
         crane_coordinates = self.__get_crane_coordinates(start)
-        self._build_structure(self.structures[2], crane_coordinates)
+        await self._build_structure(self.structures[2], crane_coordinates)
 
         center = start.shift(x=4, y=4, z=4)
         rope_length = random.randint(1, self.floor_number * 5 - 6)
 
         for _ in range(rope_length):
-            self._build_structure(self.structures[3], center)
+            await self._build_structure(self.structures[3], center)
             center = center.shift(y=-1)
 
-        self._build_structure(self.structures[4], center.shift(y=-1))
+        await self._build_structure(self.structures[4], center.shift(y=-1))
 
     def __get_crane_coordinates(self, start: Coordinates) -> Coordinates:
         """Return the starting position of the crane on the form of coordinates, relatively

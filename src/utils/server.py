@@ -26,7 +26,7 @@ _session: ClientSession | None = None
 
 # The size of the buffer. Once the buffer has reached this number of blocks, the
 # blocks inside of the buffer will be scheduled to be sent to the minecraft server
-buffer_size: int = 10_000
+buffer_size: int = 1_000
 
 # The maximum number of requests that are sent to the minecraft server at the same
 # time. Changing this number as well as the buffer_size might either improve or worsen
@@ -92,11 +92,11 @@ async def send_buffer(*, force: bool = False) -> None:
     blocks = __buffer.exhaust()
 
     request_body = get_request_body(blocks)
-    coroutine = put(request_body)
+    await put(request_body)
 
-    asyncio.create_task(coroutine)
+    # asyncio.create_task(coroutine)
 
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
 
     print('\n'.join([task.get_name() for task in asyncio.tasks.all_tasks()]))
 
@@ -115,10 +115,10 @@ async def put(request_body: str):
             await put(request_body)
 
 
-def wait() -> None:
+async def wait() -> None:
     """"""
     pending = asyncio.tasks.all_tasks()
-    asyncio.gather(*pending)
+    await asyncio.gather(*pending)
 
 
 def format_block(block: Block) -> str:

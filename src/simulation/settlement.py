@@ -94,7 +94,7 @@ class Settlement(MutableMapping):
         return data.get('cost', 0) <= self.worker_number and data['type'] != 'DECORATION' \
             and self.__counter[name] < data.get('maximum', 1)
 
-    def add_building(self, building: Building, max_score: int = None) -> bool:
+    async def add_building(self, building: Building, max_score: int = None) -> bool:
         """Add the given [building] to this settlement. If no available plot is found, the function
         returns false and the building is not built. Return true upon successful construction of the
         building. Additionally, a [max score] parameter may tell the inner logic after what score it
@@ -105,11 +105,11 @@ class Settlement(MutableMapping):
         if plot is None:
             return False
 
-        self.build(building, plot)
+        await self.build(building, plot)
         self.__counter[building.name] += 1
         return True
 
-    def build(self, building: Building, plot: Plot) -> None:
+    async def build(self, building: Building, plot: Plot) -> None:
         """Build the given [building] on a [plot]. If you don't have a plot for your building yet,
         consider calling the add_building method instead"""
 
@@ -124,11 +124,11 @@ class Settlement(MutableMapping):
 
         plot.remove_trees(area_with_padding)
 
-        plot.build_foundation(self.plot)
+        await plot.build_foundation(self.plot)
 
         print(f'{building} added to the settlement')
 
-        building.build(plot, self.plot)
+        await building.build(plot, self.plot)
 
         self.chronology.append(building)
         self.__buildings[building.name].append(building)
@@ -250,7 +250,7 @@ class Settlement(MutableMapping):
         for i in range(random.randint(5, 15)):
             interface.runCommand(f'summon iron_golem {x} {y + 1} {z} {{CustomName:"\\"Town Guard\\""}}')
 
-    def end_simulation(self):
+    async def end_simulation(self):
         # Build roads
         road_pattern = {
             'INNER': {self.road_light: 100},
@@ -266,7 +266,7 @@ class Settlement(MutableMapping):
                 0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
             'OUTER': {leave + '[persistent=true]': 20 for leave in lookup.LEAVES}
         }
-        self.plot.build_roads(road_pattern, slab_pattern)
+        await self.plot.build_roads(road_pattern, slab_pattern)
 
         # Spawn villagers
         self.spawn_villagers_and_guards()

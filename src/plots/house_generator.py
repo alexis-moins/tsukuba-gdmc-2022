@@ -81,7 +81,7 @@ class HouseGenerator:
             wall_sq = self.get_wall_sequence(length_needed)
             sides = [(size[0], wall_sq), (size[1], wall_sq)]
 
-        construction_plot.build_foundation(construction_plot.build_start.y)
+        # construction_plot.build_foundation(construction_plot.build_start.y)
 
         print(f'wall sequence : {sides[0][1]}')
 

@@ -39,7 +39,7 @@ class Plot:
         self.surface_blocks: dict[Criteria, BlockList] = {}
         self.water_mode = 'water' in self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).most_common
 
-    def remove_lava(self):
+    async def remove_lava(self):
         checked = set()
         lava_blocks = list(self.get_blocks(criteria=Criteria.MOTION_BLOCKING_NO_TREES).filter('lava'))
 
@@ -47,7 +47,7 @@ class Plot:
             block = lava_blocks.pop()
             checked.add(block)
 
-            server.add_string_to_buffer('minecraft:obsidian', block.coordinates)
+            await server.add_string_to_buffer('minecraft:obsidian', block.coordinates)
             # INTF.placeBlock(*block.coordinates, 'obsidian')  # water to cancel the lava
 
             # Check for neighbors
@@ -163,7 +163,7 @@ class Plot:
             yield current_coord
             current_coord = current_coord.shift(0, -1, 0)
 
-    def build_foundation(self, build_area: Plot) -> None:
+    async def build_foundation(self, build_area: Plot) -> None:
         """Build the foundations under the house"""
         if not self.water_mode:
             blocks = ('stone_bricks', 'diorite', 'cobblestone')
@@ -173,7 +173,7 @@ class Plot:
                 name = random.choices(blocks, weights)
                 block = Block(name, coord)
 
-                server.add_block_to_buffer(block)
+                await server.add_block_to_buffer(block)
         else:
 
             # INSIDE
@@ -586,7 +586,7 @@ class RoadPlot(LogicPlot):
 
             self.roads_y[road.as_2D()] = average_y
 
-    def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
+    async def build_roads(self, floor_pattern: dict[str, dict[str, float]], slab_pattern=None):
         self.equalize_roads()
 
         roads = []
@@ -598,7 +598,7 @@ class RoadPlot(LogicPlot):
 
                 if coordinates in self and coordinates.as_2D() not in self.construction_coordinates:
                     roads.append(self.get_blocks(Criteria.MOTION_BLOCKING_NO_LEAVES).find(coordinates))
-                    server.add_string_to_buffer('air', coordinates)
+                    await server.add_string_to_buffer('air', coordinates)
                     # INTF.placeBlock(*coordinates, 'air')
 
         # self.remove_trees(BlockList(roads))
@@ -631,21 +631,21 @@ class RoadPlot(LogicPlot):
                 if the_blocks[0] in ('minecraft:shroomlight', 'minecraft:sea_lantern',
                                      'minecraft:glowstone'):
 
-                    server.add_string_to_buffer(the_blocks[0], Coordinates(x, y-1, z))
+                    await server.add_string_to_buffer(the_blocks[0], Coordinates(x, y-1, z))
                     # INTF.placeBlock(x, y-1, z, the_blocks)
 
-                    server.add_string_to_buffer('minecraft:white_stained_glass', Coordinates(x, y, z))
+                    await server.add_string_to_buffer('minecraft:white_stained_glass', Coordinates(x, y, z))
                     # INTF.placeBlock(x, y, z, 'minecraft:white_stained_glass')
                 else:
                     if Coordinates(x, 0, z) in self.construction_coordinates:
                         continue
 
                     if 'note_block' in the_blocks[0]:
-                        server.add_string_to_buffer(random.choice(
+                        await server.add_string_to_buffer(random.choice(
                             list(slab_pattern['OUTER'].keys())), Coordinates(x, y+1, z))
                         # INTF.placeBlock(x, y+1, z, random.choice(list(slab_pattern['OUTER'].keys())))
 
-                    server.add_string_to_buffer(the_blocks[0], Coordinates(x, y, z))
+                    await server.add_string_to_buffer(the_blocks[0], Coordinates(x, y, z))
 
     def __add_road_block(self, coordinates: Coordinates, placement: str):
 

@@ -47,17 +47,18 @@ class Simulation:
         settlement(s). The simulation will stop if it reaches the year of the simulation end"""
         coroutine = wrap_simulation(self.__start)
         asyncio.run(coroutine)
+        # asyncio.run(self.__start())
 
     async def __start(self) -> None:
         """Start the simulation and generate the (possibly many) settlement(s). The
         simulation will stop if it reaches the year of the simulation end"""
-        self.__plot.remove_lava()
+        await self.__plot.remove_lava()
 
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
         town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Town Hall'])
 
-        success = self.settlements[0].add_building(town_hall, max_score=100_000)
+        success = await self.settlements[0].add_building(town_hall, max_score=100_000)
 
         if not success:
             town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Small Town Hall'])
@@ -67,12 +68,12 @@ class Simulation:
             print(f'\n\n\n=> Start of year {Fore.RED}[{self.current_year}]{Fore.WHITE}')
 
             for settlement in self.settlements:
-                self.run_on(settlement)
+                await self.run_on(settlement)
 
             self.current_year += 1
 
         for settlement in self.settlements:
-            settlement.end_simulation()
+            await settlement.end_simulation()
             settlement.grow_old()
 
         # TODO move in decoration logic in settlement ?
@@ -136,9 +137,10 @@ class Simulation:
         #     toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
 
         # Simultaneously send the previously scheduled buffer sendings to the minecraft server
-        await server.wait()
+        # await server.wait()
+        await server.send_buffer(force=True)
 
-    def run_on(self, settlement: Settlement) -> None:
+    async def run_on(self, settlement: Settlement) -> None:
         """Run the simulation for 1 year on the given [settlement]. The simulation will try to add
         a new building, randomly generate an event and update the settlement's indicators"""
         settlement.update(self.current_year)
@@ -147,7 +149,7 @@ class Simulation:
         chosen_building = self.choose_building(settlement, buildings)
 
         if chosen_building is not None:
-            settlement.add_building(chosen_building)
+            await settlement.add_building(chosen_building)
 
         event = get_event(self.current_year)
 
