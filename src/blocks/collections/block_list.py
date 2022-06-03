@@ -41,12 +41,11 @@ class BlockList(Sequence):
         pattern = [pattern] if type(pattern) is str else pattern
         return BlockList([block for block in self if block.is_one_of(pattern)])
 
-    def without(self, pattern: str | tuple[str, ...]) -> BlockList:
-        """Return a sublist of blocks not containing the given pattern in their name"""
+    def get_valid_build_block_list(self, pattern: str | tuple[str, ...], coordinates: set[Coordinates]) -> list[Block]:
         if type(pattern) == str:
-            pattern = (pattern, )
-
-        return BlockList([block for block in self.__blocks if not block.is_one_of(pattern)])
+            pattern = (pattern,)
+        iterable = [block for block in self.__blocks if block.coordinates.as_2D() not in coordinates]
+        return [block for block in iterable if not block.is_one_of(pattern)]
 
     def apply_palettes(self, palettes: dict[str, Palette]) -> BlockList:
         """Return a modified version of the current BlockList. Modification are made according
@@ -56,10 +55,6 @@ class BlockList(Sequence):
 
         return BlockList(new_blocks)
 
-    def not_inside(self, coordinates: set[Coordinates]) -> BlockList:
-        """Return a sublist of blocks that are not inside of any of the given plots"""
-        iterable = [block for block in self.__blocks if block.coordinates.as_2D() not in coordinates]
-        return BlockList(iterable)
 
     def find(self, coordinates: Coordinates) -> Block | None:
         """Return the block at the given 2D coordinates"""
