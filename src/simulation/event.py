@@ -113,7 +113,7 @@ class PillagerAttack(Event):
                 position = tower.entrance
 
                 for _ in range(random.randint(3, 10)):
-                    env.summon('minecraft:iron_golem', position.shift(y=10))
+                    env.summon('minecraft:iron_golem', position.shift(y=10), name='Watcher Guard')
 
         if 'Watch tower' not in settlement:
             self._description += 'Unfortunately, we did not find a place to build it'

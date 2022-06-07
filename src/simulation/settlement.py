@@ -4,11 +4,13 @@ from collections import Counter, defaultdict
 from typing import Any, DefaultDict, Iterator, MutableMapping
 
 from colorama import Fore
-from gdpc import interface, lookup
+from gdpc import interface, lookup, toolbox
 
 from src import env
+from src.blocks.block import Block
 from src.plots.plot import Plot, CityPlot
 from src.utils import chest, loot_table
+from src.utils.book_maker import BookMaker
 from src.utils.criteria import Criteria
 from src.simulation.villager import Villager
 from src.blocks.collections.block_list import BlockList
@@ -44,6 +46,8 @@ class Settlement(MutableMapping):
                                       'minecraft:glowstone')
 
         self.road_light = random.choice(self.possible_light_blocks)
+
+        self.city_history: list[str] = ['Town History']
 
     @property
     def population(self) -> int:
@@ -266,8 +270,6 @@ class Settlement(MutableMapping):
         if 'Graveyard' in self._buildings:
             graveyard: Graveyard = self['Graveyard']
             # graveyard.add_tomb(villager, year, cause)
-            # TODO
-            print('IMPLEMENT GRAVEYARD')
 
         villager.die(year, cause)
         self.inhabitants.remove(villager)
@@ -332,6 +334,55 @@ class Settlement(MutableMapping):
         interface.sendBlocks()
         interface.runCommand(f'data merge block {coord.x} {coord.y} {coord.z} {chest_data}')
         return coord
+
+    def generate_history(self, year):
+        interface.setBuffering(False)
+        # History of buildings
+        for building in self.chronology[1:]:
+            colors = ('§6', '§7', '§9', '§a', '§b', '§c', '§d')
+            color = random.choice(colors)
+
+            general_data = f'{color}{building.name}§0\n{"=" * 18}\n'
+            general_data += f'Workers: {color}{len(building.workers)}/{building.properties.workers}§0\n'
+            general_data += f'Beds: {color}{len(building.inhabitants)}/{building.properties.number_of_beds}§0\n'
+            general_data += f'Food: {color}+{building.properties.food_production}§0'
+            book_data = BookMaker(f'{general_data}\n\n' + '\n\n'.join(building.history),
+                                  title=f'Year {year}\'s report',
+                                  author='Settlement Construction Community (SCC)').write_book()
+            print(f'{building.name} : {building.history}')
+            # input(book_data)
+            lectern_list = building.blocks[building.structures[0]].filter('lectern')
+
+            interface.sendBlocks()
+
+            if len(lectern_list):
+                lectern: Block = lectern_list[0]
+                interface.placeBlock(*lectern.coordinates, 'air')
+                toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
+
+        # make a book
+        text = '\n\n'.join(self.city_history)
+        print(f'text = {text}')
+        book_data = BookMaker(text, title='City history', author='The Mayor').write_book()
+        lectern_list = self._buildings['Town Hall'][0].blocks[self._buildings['Town Hall'][0].structures[0]].filter('lectern')
+        if len(lectern_list):
+            lectern: Block = lectern_list[0]
+            toolbox.placeLectern(*lectern.coordinates, book_data, facing=lectern.properties['facing'])
+
+        interface.setBuffering(True)
+        interface.sendBlocks()
+
+    def add_flowers(self):
+        coords = set([coord.as_2D() for coord in self.plot.surface()]) - self.plot.occupied_coordinates
+        surface = self.plot.get_blocks(Criteria.WORLD_SURFACE)
+        #
+        chosen_coords = random.sample(coords, k=math.ceil(0.30 * len(coords)))
+
+        for coord, flower in zip(chosen_coords,
+                                 random.choices(lookup.SHORTFLOWERS + ('minecraft:lantern',), k=len(chosen_coords))):
+            if (real_block := surface.find(coord)).is_one_of('grass_block'):
+                interface.placeBlock(*real_block.coordinates.shift(y=1), flower)
+
 
     def __getitem__(self, key: str) -> Building | list[Building]:
         """"""
