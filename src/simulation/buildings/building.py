@@ -24,7 +24,7 @@ from src.plots.plot import Plot, CityPlot
 from src.blocks.block import Block
 from src.blocks.structure import Structure, get_structure
 from src.blocks.collections.block_list import BlockList
-from src.blocks.utils.palette import OneBlockPalette, Palette, ColorPalette
+from src.blocks.utils.palette import Palette, ColorPalette
 from src.utils.chest import get_filled_chest_data
 
 from src.utils.criteria import Criteria
@@ -145,7 +145,8 @@ class Blueprint(ABC):
                     facing = random.choice(['north', 'east', 'south', 'west'])
                     half = random.choice(['top', 'bottom'])
                     shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
-                    replacement = replace(replacement, properties=BlockProperties({'facing': facing, 'half': half, 'shape': shape}))
+                    replacement = replace(replacement, properties=BlockProperties(
+                        {'facing': facing, 'half': half, 'shape': shape}))
 
             else:
                 population = (block.name, 'oak_leaves', 'cobweb')

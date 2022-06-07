@@ -222,9 +222,10 @@ class Settlement(MutableMapping):
                 # add extra value if you don't want to go out of food immediately
                 food_for_children = self.food_available - self.population
                 k = max(0, min(food_for_children, max_children_amount))
-
-                print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) are born')
                 self.inhabitants.extend([Villager(year) for _ in range(k)])
+
+                if k:
+                    print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) are born')
 
         self.__fill_houses(year)
         self.__fill_work_places(year)
@@ -300,8 +301,8 @@ class Settlement(MutableMapping):
         # Add roads signs
         self.plot.add_roads_signs(10, self.chronology)
 
-        if self['Town Hall']:
-            self['Town Hall'].fill_board()
+        if 'Town hall' in self._buildings:
+            self._buildings['Town Hall'][0].fill_board()
 
         treasure_coords = self.generate_treasure()
         phrase = 'The treasure is located at'

@@ -122,6 +122,8 @@ class PillagerAttack(Event):
         if 'Watch tower' not in settlement:
             self._description += 'Unfortunately, we did not find a place to build it'
 
+        return self.description
+
 
 @register('wolf-attack')
 @dataclass(kw_only=True)
@@ -139,9 +141,11 @@ class WolfAttack(Event):
 
         position = random.choice(settlement.chronology).entrance
 
-        for i in range(random.randint(5, 20)):
+        for _ in range(random.randint(5, 20)):
             env.summon('minecraft:wolf', position.shift(y=1),
                        name=random.choice(env.WOLF_NAMES). capitalize())
+
+        return self.description
 
 
 @register('fire')
@@ -159,6 +163,9 @@ class Fire(Event):
         self._kill_villagers(settlement, victims, year, 'a fire')
 
         building = random.choice(settlement.chronology)
+        building.history.append(
+            f'Year {year}\nThis building caught fire unexpectedly, killing {victims} villagers that were here at the moment!')
+
         self.replacements['building'] = building.name.lower()
         self.replacements['victims'] = victims
 
@@ -173,7 +180,7 @@ class Fire(Event):
 class Wedding(Event):
     """Represents a wedding between two villagers of the settlement"""
 
-    def resolve(self, settlement: Settlement, _: int) -> str:
+    def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are striongly
         encouraged to use the provided _format_description method to to so"""
@@ -181,6 +188,14 @@ class Wedding(Event):
             totem: WeddingTotem = settlement['Wedding totem'][0]
             # TODO pass the year and add thing to history
             totem.add_wedding()
+
+            husband, wife = random.sample(settlement.inhabitants, 2)
+            self.replacements['husband'] = husband
+            self.replacements['wife'] = wife
+
+            totem.history.append(f'Year {year}\nCongratulations to {husband} and {wife} for their wonderfull wedding!')
+
+        return self.description
 
 
 # List of the different events available in the simulation. Please note that

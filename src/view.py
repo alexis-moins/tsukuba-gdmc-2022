@@ -27,5 +27,7 @@ def display_settlement(settlement: Settlement) -> None:
     print(f'\n   Buildings {Fore.GREEN}[{len(settlement._buildings)}]{Fore.WHITE}')
 
     buildings = textwrap.fill(
-        ", ".join([f"{building.name}: {Fore.GREEN}{settlement._counter[building.name]}/{building.properties.maximum}{Fore.WHITE}" for building in settlement.chronology]), subsequent_indent=' ' * 6)
+        ", ".join([f"{name}: {Fore.GREEN}{settlement._counter[name]}/{buildings[0].properties.maximum}{Fore.WHITE}" for name,
+                  buildings in settlement._buildings.items()]),
+        subsequent_indent=' ' * 6)
     print(f'\n      {buildings}')
