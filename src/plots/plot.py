@@ -224,6 +224,13 @@ class Plot:
             for z in range(-padding, self.size.z + padding):
                 yield self.start.shift(x, 0, z)
 
+    def random_coord_3d(self):
+        start_x, start_y, start_z = self.start
+        end_x, end_y, end_z = self.end
+        x, y, z = random.randint(start_x, end_x), random.randint(start_y, end_y), random.randint(start_z, end_z)
+        y = min(max(y, 10), self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(Coordinates(x, 0, z)).coordinates.y - 5)
+        return Coordinates(x, y, z)
+
 
 class LogicPlot(Plot):
     def __init__(self, x: int, y: int, z: int, size: Size):
@@ -383,43 +390,49 @@ class BuildPlacementPlot(LogicPlot):
         excluded = ('water', 'lava')
         if self.water_mode:
             excluded = ('lava',)
-        surface = surface.without(excluded).not_inside(self.occupied_coordinates)
+        surface = BlockList(surface.get_valid_build_block_list(excluded, self.occupied_coordinates))
 
+        batch_amount = 5
         batch_size = 100
 
-        random_blocks = min(int(len(surface) * (20 / 100)), batch_size)  # more than 8000 should be overkill, our
+        random_blocks = min(int(len(surface) * (20 / 100)), batch_size * batch_amount)  # more than 8000 should be overkill, our
         # average plot area should like 60k blocks
-
-        blocks_to_check = surface.random_elements(random_blocks)
 
         if self.priority_blocks is None:
             self.compute_steep_map()
             if env.DEBUG:
                 self.visualize_steep_map()
 
-        # Take 10 % of the best coordinates + a % of the rest, randomly
-        blocks_to_check = self.priority_blocks.random_elements(min(max(1, int(len(self.priority_blocks) * 1/10)), batch_size)) + blocks_to_check
-        if env.DEBUG:
-            print(f'Checking : {len(blocks_to_check)} blocks ({len(self.priority_blocks)} from prio)')
-
-        # >Get the minimal score in the coordinate list
         min_score = max_score
-        amount_of_block_checked = 0
-        for block in blocks_to_check:
-            block_score = self.__get_score(coordinates=block.coordinates, surface=surface, max_score=max_score,
-                                           best_current_score=min_score, building=building, size=size, shift=shift,
-                                           city_buildings=city_buildings)
+        while batch_amount:
+            blocks_to_check = random.sample(surface, k=random_blocks)
+            # Take 10 % of the best coordinates + a % of the rest, randomly
+            blocks_to_check = self.priority_blocks.random_elements(
+                min(max(1, int(len(self.priority_blocks) * 1 / 10)), batch_size)) + blocks_to_check
+            # generate new batch
+        # >Get the minimal score in the coordinate list
 
-            if block_score < min_score:
-                best_coordinates = block.coordinates
-                min_score = block_score
+            amount_of_block_checked = 0
+            for block in blocks_to_check:
+                block_score = self.__get_score(coordinates=block.coordinates, surface=surface, max_score=max_score,
+                                               best_current_score=min_score, building=building, size=size, shift=shift,
+                                               city_buildings=city_buildings)
 
-            if block_score < accepted_score:
+                if block_score < min_score:
+                    best_coordinates = block.coordinates
+                    min_score = block_score
+
+                if block_score < accepted_score:
+                    break
+                amount_of_block_checked += 1
+
+            if env.DEBUG:
+                print(f'Best score : {min_score}')
+
+            if min_score < max_score:
                 break
-            amount_of_block_checked += 1
 
-        if env.DEBUG:
-            print(f'Best score : {min_score}')
+            batch_amount -= 1
 
         if min_score >= max_score:
             return None

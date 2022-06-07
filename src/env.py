@@ -7,7 +7,7 @@ from gdpc import interface
 from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
-from src.utils.coordinates import Coordinates
+from src.utils.coordinates import Coordinates, Size
 
 # The default build are
 BUILD_AREA = None
@@ -41,11 +41,23 @@ class BuildArea:
         for coordinates in (self.start, self.end):
             yield coordinates
 
+    def max_size(self, length: int):
+        size = Size.from_coordinates(self.start, self.end)
+        if size.x > length or size.z > length:
+            extra_x = (size.x - length) // 2
+            extra_z = (size.z - length) // 2
+            new_start = self.start.shift(x=extra_x, z=extra_z)
+            new_end = self.end.shift(x=-extra_x, z=-extra_z)
+            return BuildArea(new_start, new_end)
+
+        else:
+            return self
+
 
 def get_build_area(auto_build_area: bool = False) -> BuildArea:
     """Get the BUILD_AREA"""
-    x1, y1, z1, x2, y2, z2 = interface.requestPlayerArea(250, 250) if auto_build_area else interface.requestBuildArea()
-    return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
+    x1, y1, z1, x2, y2, z2 = INTERFACE.requestPlayerArea(250, 250) if auto_build_area else INTERFACE.requestBuildArea()
+    return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2)).max_size(250)  # Prevent from huge size input
 
 
 def get_world_slice() -> WorldSlice | None:

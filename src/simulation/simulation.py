@@ -31,8 +31,8 @@ class Simulation:
         # If you have multiple cities, just give a subplot here
         x, y, z = plot.start
 
-        # Clamp the city size to 150 by 150
-        plot = CityPlot(x, y, z, plot.size.min(250))
+        # Clamp the city size to 250 by 250
+        plot = CityPlot(x, y, z, plot.size.max_size(250))
 
         # TODO add logic for big plots
         self.settlements = [Settlement(plot)]

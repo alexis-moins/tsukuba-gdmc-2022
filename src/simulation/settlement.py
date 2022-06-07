@@ -8,10 +8,12 @@ from gdpc import interface, lookup
 
 from src import env
 from src.plots.plot import Plot, CityPlot
+from src.utils import chest, loot_table
 from src.utils.criteria import Criteria
 from src.simulation.villager import Villager
 from src.blocks.collections.block_list import BlockList
 from src.simulation.buildings.building import Building, Graveyard, WeddingTotem
+from src.utils.loot_table import MinecraftItem
 
 
 class Settlement(MutableMapping):
@@ -308,10 +310,28 @@ class Settlement(MutableMapping):
         if self['Town Hall']:
             self['Town Hall'].fill_board()
 
+        treasure_coords = self.generate_treasure()
+        phrase = 'The treasure is located at'
+        x_indicator = MinecraftItem('paper', f'display:{{Name:\'{{"text":"{phrase} X={treasure_coords.x}"}}\'}}')
+        y_indicator = MinecraftItem('paper', f'display:{{Name:\'{{"text":"{phrase} Y={treasure_coords.y}"}}\'}}')
+        z_indicator = MinecraftItem('paper', f'display:{{Name:\'{{"text":"{phrase} Z={treasure_coords.z}"}}\'}}')
+
+        treasure_finders = [x_indicator, y_indicator, z_indicator]
+
         # Fill the buildings chests
         for type_of_building in self._buildings.values():
             for building in type_of_building:
-                building.fill_chests()
+                building.fill_chests(treasure_finders)
+
+    def generate_treasure(self):
+        coord = self.plot.random_coord_3d()
+        chest_data = chest.get_filled_chest_data([], loot_table.LOOT_TABLES['TREASURE'], fill_amount=5)
+        interface.placeBlock(*coord, f'chest')
+        print(f'Chest data : {chest_data}')
+        print(f'Chest at {coord}')
+        interface.sendBlocks()
+        interface.runCommand(f'data merge block {chest_data}')
+        return coord
 
     def __getitem__(self, key: str) -> Building | list[Building]:
         """"""

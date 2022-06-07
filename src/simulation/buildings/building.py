@@ -23,13 +23,15 @@ from src.plots.plot import Plot, CityPlot
 from src.blocks.block import Block
 from src.blocks.structure import Structure, get_structure
 from src.blocks.collections.block_list import BlockList
-from src.blocks.utils.palette import Palette, ColorPalette
+from src.blocks.utils.palette import OneBlockPalette, Palette, ColorPalette
+from src.utils.chest import get_filled_chest_data
 
 from src.utils.criteria import Criteria
 from src.utils.direction import Direction
 from src.utils.coordinates import Coordinates, Size
 
 from src.simulation.buildings.utils.building_properties import BuildingProperties
+from src.utils.loot_table import MinecraftItem
 
 
 class Blueprint(ABC):
@@ -236,21 +238,18 @@ class Blueprint(ABC):
 
         signs[0].coordinates.place_sign(self.full_name)
 
-    def fill_chests(self):
-        if self.properties.type in loot_table.Building_type_loot_table:
-            table = loot_table.Building_type_loot_table[self.properties.type]
+    def fill_chests(self, prio_items: list[MinecraftItem]):
+        if self.properties.type.name in loot_table.LOOT_TABLES:
+            table = loot_table.LOOT_TABLES[self.properties.type.name]
         else:
-            table = loot_table.Building_type_loot_table[BuildingType.NONE]
+            table = loot_table.LOOT_TABLES[BuildingType.NONE.name]
 
         # this bad boy will collect all chest in all structure and fill them
         for chest in list(functools.reduce(lambda a, b: a + b, [blocks.filter(('chest', 'shulker')) for blocks in self.blocks.values()])):
-            item_amount = random.randint(5, 20)
-            slots = random.sample(range(27), k=item_amount)
-            item_data = [item.to_minecraft_data(slot) for slot, item in zip(slots, list(table.get_items(item_amount)))]
-
-            chest_data = f'{{Items:[{",".join(item_data)}]}}'
+            chest_data = get_filled_chest_data(prio_items, table)
             x, y, z = chest.coordinates
-            INTERFACE.runCommand(f'data merge block {x} {y} {z} {chest_data}')
+            cmd = f'data merge block {x} {y} {z} {chest_data}'
+            INTERFACE.runCommand(cmd)
 
     def __str__(self) -> str:
         """Return the string representation of the building"""

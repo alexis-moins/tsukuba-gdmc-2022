@@ -54,9 +54,13 @@ class Size:
         else:
             return Size(self.x - other, self.z - other)
 
-    def min(self, value: int):
+    def max_size(self, value: int):
         """Return a new size of minimal size between the given value and the current size"""
         return Size(min(self.x, value), min(self.z, value))
+
+    @property
+    def center(self):
+        return Coordinates(self.x // 2, 0, self.z // 2)
 
 
 @dataclass(frozen=True)
