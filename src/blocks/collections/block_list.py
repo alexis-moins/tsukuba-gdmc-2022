@@ -36,6 +36,13 @@ class BlockList(Sequence):
         """Insert the given block before the given index"""
         self.__blocks.insert(index, block)
 
+    def without(self, pattern: str | tuple[str, ...]) -> BlockList:
+        """Return a sublist of blocks not containing the given pattern in their name"""
+        if type(pattern) == str:
+            pattern = (pattern, )
+
+        return BlockList([block for block in self.__blocks if not block.is_one_of(pattern)])
+
     def filter(self, pattern: str | Iterable[str]) -> BlockList:
         """Return a sublist of blocks containing the given [pattern] in their name"""
         pattern = [pattern] if type(pattern) is str else pattern
