@@ -303,12 +303,12 @@ class Settlement(MutableMapping):
 
     def generate_treasure(self):
         coord = self.plot.random_coord_3d()
-        chest_data = chest.get_filled_chest_data([], loot_table.LOOT_TABLES['TREASURE'], fill_amount=5)
-        interface.placeBlock(*coord, f'chest')
-        print(f'Chest data : {chest_data}')
+        chest_data = chest.get_filled_chest_data([], loot_table.LOOT_TABLES['TREASURE'], fill_amount=20)
+        chest_string = f'minecraft:chest'
+        interface.placeBlock(*coord, chest_string)
         print(f'Chest at {coord}')
         interface.sendBlocks()
-        interface.runCommand(f'data merge block {chest_data}')
+        interface.runCommand(f'data merge block {coord.x} {coord.y} {coord.z} {chest_data}')
         return coord
 
     def __getitem__(self, key: str) -> Building | list[Building]:

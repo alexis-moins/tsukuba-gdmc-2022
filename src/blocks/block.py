@@ -70,7 +70,7 @@ class Block:
                 name = self.name.replace(material, replacement[0])
 
                 if Block.exists(name):
-                    return Block(name, self.coordinates, properties=self.properties if replacement[1] else {})
+                    return Block(name, self.coordinates, properties=self.properties if replacement[1] else BlockProperties())
         return self
 
     def neighbouring_coordinates(self, directions: tuple[Direction] = None) -> List[Coordinates]:
