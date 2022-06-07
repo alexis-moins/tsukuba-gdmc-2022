@@ -12,6 +12,7 @@ from colorama import Fore
 from gdpc import lookup as LOOKUP
 from gdpc import interface as INTERFACE
 
+from src.blocks.utils.block_properties import BlockProperties
 from src.simulation.buildings.utils.building_type import BuildingType
 from src.simulation.quests import quests
 from src.simulation.villager import Villager
@@ -144,7 +145,7 @@ class Blueprint(ABC):
                     facing = random.choice(['north', 'east', 'south', 'west'])
                     half = random.choice(['top', 'bottom'])
                     shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
-                    replacement = replace(replacement, properties={'facing': facing, 'half': half, 'shape': shape})
+                    replacement = replace(replacement, properties=BlockProperties({'facing': facing, 'half': half, 'shape': shape}))
 
             else:
                 population = (block.name, 'oak_leaves', 'cobweb')
@@ -155,8 +156,8 @@ class Blueprint(ABC):
                 if name == block.name:
                     continue
 
-                replacement = Block(name[0], block.coordinates, properties={
-                    'persistent': 'true'} if name[0] == 'oak_leaves' else {})
+                replacement = Block(name[0], block.coordinates, properties=BlockProperties({
+                    'persistent': 'true'} if name[0] == 'oak_leaves' else {}))
 
             INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
         INTERFACE.sendBlocks()
@@ -189,7 +190,7 @@ class Blueprint(ABC):
                 shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
                 properties = {'facing': facing, 'half': half, 'shape': shape}
 
-            replacement = replace(block, name=name, properties=properties)
+            replacement = replace(block, name=name, properties=BlockProperties(properties))
 
             INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
 
