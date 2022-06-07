@@ -1,12 +1,10 @@
 import math
 import random
-import textwrap
 from collections import Counter, defaultdict
 from typing import Any, DefaultDict, Iterator, MutableMapping
 
 from colorama import Fore
 from gdpc import interface, lookup
-from numpy import greater
 
 from src import env
 from src.plots.plot import Plot, CityPlot
@@ -26,12 +24,15 @@ class Settlement(MutableMapping):
         default [population] of 5 and a default [food] stock of 5"""
         self.plot = plot
 
+        self.is_running = True
+        self._consecutive_years_without_build = 0
+
         self.chronology: list[Building] = []
-        self.__buildings: DefaultDict[str, list[Building]] = defaultdict(list)
+        self._buildings: DefaultDict[str, list[Building]] = defaultdict(list)
 
         self._buildings_cache = {}
 
-        self.__counter = Counter()
+        self._counter = Counter()
 
         self.inhabitants = [Villager() for _ in range(population)]
 
@@ -86,36 +87,80 @@ class Settlement(MutableMapping):
         - its type is not one of DECORATION
         - the city has not reached the maximum number for this buildings"""
         buildings = []
-        for name, data in env.BUILDINGS.items():
-            if self.is_building_constructible(name, data):
-                building = self._buildings_cache.pop(name, None)
+        for data in env.BUILDINGS.values():
+            if self.is_building_constructible(data):
+                building = self._buildings_cache.pop(data['name'], None)
 
                 if not building:
-                    building = Building.deserialize(name, data)
+                    building = Building.deserialize(data)
+                    self._buildings_cache[building.name] = building
 
                 buildings.append(building)
 
         return buildings
 
-    def is_building_constructible(self, name: str, data: dict[str, Any]) -> bool:
+    def is_building_constructible(self, data: dict[str, Any]) -> bool:
         """Return true if the building is constructible, false if it is not. The building is formed
         by the given [name] associated with the given [data]"""
         return data.get('cost', 0) <= self.worker_number and data['type'] != 'DECORATION' \
-            and self.__counter[name] < data.get('maximum', 1)
+            and self._counter[data['name']] < data.get('maximum', 1)
 
-    def add_building(self, building: Building, max_score: int = None) -> bool:
+    def __add_no_build(self) -> None:
+        """TODO write documentation"""
+        self._consecutive_years_without_build += 1
+        self.is_running = (self._consecutive_years_without_build < 5)
+
+    def add_building(self, building: Building | None, *, max_score: int = None) -> None:
         """Add the given [building] to this settlement. If no available plot is found, the function
         returns false and the building is not built. Return true upon successful construction of the
         building. Additionally, a [max score] parameter may tell the inner logic after what score it
         should give the current plot up when looking for a decent spot on the map"""
+        if building is not None:
+            return self.__add_building(building, max_score=max_score)
+
+        self.__add_no_build()
+
+    def deserialize_and_add_building(self, building: str, *, queue: list[str] = None, max_score: int = None) -> bool:
+        """Deserialize the given [building] and try to add it to the settlement. If no available plot is
+        found, deserialize the next building in the given [queue] until a building can be constructed in
+        the settlement. Additionally, a [max score] parameter may tell the inner logic after what score
+        it should give up the current plot when looking for a decent spot on the map. If no buildings have
+        been placed at all (even from the queue), this function will return false. If one building has been
+        placed, return true"""
+        choice = Building.deserialize(env.BUILDINGS[building])
+        done = self.__add_building(choice, max_score=max_score)
+
+        while not done and queue:
+            building = queue.pop(0)
+            choice = Building.deserialize(env.BUILDINGS[building])
+            done = self.__add_building(choice, max_score=max_score)
+
+        return done
+
+    def __add_building(self, building: Building, *, max_score: int = None) -> bool:
+        """Add the given [building] to this settlement. If no available plot is found, the function
+        returns false and the building is not built. Return true upon successful construction of the
+        building. Additionally, a [max score] parameter may tell the inner logic after what score it
+        should give the current plot up when looking for a decent spot on the map. Note that this
+        method should not be called directly. You should use the wrapper method add_building instead."""
+        if not self.is_running:
+            return False
+
         plot = self.plot.get_subplot(building, building.rotation,
                                      max_score, city_buildings=self.chronology)
 
         if plot is None:
+            self.__add_no_build()
             return False
 
+        if building.name in self._buildings_cache:
+            del self._buildings_cache[building.name]
+
         self.build(building, plot)
-        self.__counter[building.name] += 1
+
+        self._counter[building.name] += 1
+        self._consecutive_years_without_build = 0
+
         return True
 
     def build(self, building: Building, plot: Plot) -> None:
@@ -140,15 +185,15 @@ class Settlement(MutableMapping):
         building.build(plot, self.plot)
 
         self.chronology.append(building)
-        self.__buildings[building.name].append(building)
+        self._buildings[building.name].append(building)
 
-        if len(self.__buildings) > 1 and not self.chronology[-1].properties.is_extension:
+        if len(self._buildings) > 1 and not self.chronology[-1].properties.is_extension:
             if env.DEBUG:
                 print(f'building road from {self.chronology[0]} to {self.chronology[1]}')
 
             road_done = False
             i = 0
-            max_i = len(self.__buildings) - 1
+            max_i = len(self._buildings) - 1
             while not road_done and i < max_i:
                 end = self.chronology[i].entrance
                 start = self.chronology[-1].entrance
@@ -174,16 +219,6 @@ class Settlement(MutableMapping):
 
                 print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) are born')
                 self.inhabitants.extend([Villager(year) for _ in range(k)])
-
-        # Decrease population else
-        else:
-            # Feed with the remaining food and compute the missing food
-            self.food_available -= self.population
-            # Remove extra population
-            print(f'======= Check wether the population is decreased or notm it should ======')
-            self.inhabitants.extend([Villager(year) for _ in range(self.food_available)])
-            # reset food
-            self.food_available = 0
 
         self.__fill_houses(year)
         self.__fill_work_places(year)
@@ -218,29 +253,15 @@ class Settlement(MutableMapping):
             if work_place.can_offer_work:
                 available_work_places.append(work_place)
 
-    def grow_old(self) -> None:
+    def grow_old(self, *, amount: float = 0.3) -> None:
         """"""
-        amount = 0.3 * len(self.chronology)
-        for building in random.sample(self.chronology, k=math.ceil(amount)):
+        k = amount * len(self.chronology)
+        for building in random.sample(self.chronology, math.ceil(k)):
             building.grow_old(random.randint(65, 80))
-
-    def display(self) -> None:
-        """Display a summary of the city at the end of the current year"""
-        print('==== Summary ====')
-        print(
-            f'\n   Population: {Fore.GREEN}{self.population}/{self.number_of_beds}{Fore.WHITE} ({Fore.GREEN}{len(self.inactive_villagers)}{Fore.WHITE} inactive)')
-        print(f'   Food: {Fore.GREEN}{self.food_available}{Fore.WHITE} ({Fore.GREEN}{self.food_production}{Fore.WHITE} per year)')
-        print(f'   Work: {Fore.GREEN}{self.worker_number}/{self.total_worker_slots}{Fore.WHITE}')
-
-        print(f'\n   Buildings {Fore.GREEN}[{len(self.__buildings)}]{Fore.WHITE}\n')
-
-        buildings = "\n      ".join(textwrap.wrap(
-            ", ".join([f"{building.name}: {Fore.GREEN}{self.__counter[building.name]}/{building.properties.maximum}{Fore.WHITE}" for building in self.chronology])))
-        print(f'\n      {buildings}')
 
     def villager_die(self, villager: Villager, year: int, cause: str):
         """"""
-        if 'Graveyard' in self.__buildings:
+        if 'Graveyard' in self._buildings:
             graveyard: Graveyard = self['Graveyard']
             # graveyard.add_tomb(villager, year, cause)
             # TODO
@@ -259,7 +280,7 @@ class Settlement(MutableMapping):
         for i in range(random.randint(5, 15)):
             interface.runCommand(f'summon iron_golem {x} {y + 1} {z} {{CustomName:"\\"Town Guard\\""}}')
 
-    def end_simulation(self):
+    def build_roads(self):
         # Build roads
         road_pattern = {
             'INNER': {self.road_light: 100},
@@ -275,6 +296,7 @@ class Settlement(MutableMapping):
                 0] if 'oak' in env.BUILDING_MATERIALS else 'oak'): 100},
             'OUTER': {leave + '[persistent=true]': 20 for leave in lookup.LEAVES}
         }
+
         self.plot.build_roads(road_pattern, slab_pattern)
 
         # Spawn villagers
@@ -287,27 +309,27 @@ class Settlement(MutableMapping):
             self['Town Hall'].fill_board()
 
         # Fill the buildings chests
-        for type_of_building in self.__buildings.values():
+        for type_of_building in self._buildings.values():
             for building in type_of_building:
                 building.fill_chests()
 
     def __getitem__(self, key: str) -> Building | list[Building]:
         """"""
-        value = self.__buildings.__getitem__(key)
+        value = self._buildings.__getitem__(key)
         return value[0] if len(value) == 1 else value
 
     def __setitem__(self, key: str, value: Building) -> None:
         """"""
-        self.__buildings.__setitem__(key, value)
+        self._buildings.__setitem__(key, value)
 
     def __delitem__(self, key: Building) -> None:
         """"""
-        self.__buildings.__delitem__(key)
+        self._buildings.__delitem__(key)
 
     def __iter__(self) -> Iterator[str]:
         """"""
-        return self.__buildings.__iter__()
+        return self._buildings.__iter__()
 
     def __len__(self) -> int:
         """Return the number of properties"""
-        return len(self.__buildings)
+        return len(self._buildings)

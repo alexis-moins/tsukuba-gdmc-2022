@@ -1,32 +1,32 @@
-import math
-import random
-
+from typing import Literal
 from colorama import Fore
 from gdpc import interface
 
-from gdpc import toolbox
-from src.simulation.buildings.building import Building
-
-from src.simulation.decisions import DecisionMaking, choose_building
-
-from src import env
-from src.blocks.block import Block
+from src import view
 from src.plots.plot import Plot, CityPlot
-from src.simulation.settlement import Settlement
+from src.simulation.event import get_event
 
-from src.simulation.events.event import get_event
+from src.simulation.settlement import Settlement
+from src.simulation.decisions import DecisionMaking, choose_building
 
 
 class Simulation:
     """Simulates the generation of a human settlement"""
 
-    def __init__(self, plot: Plot, simulation_end: int, building_selection: DecisionMaking | None = None):
+    def __init__(self, plot: Plot, simulation_end: int | Literal['auto'], *, building_selection: DecisionMaking = None):
         """Creates a new simulation on the given [plot]. The simulation will end at year
-        [simulation end]. Finally, the logic of selecting buildings will be handled by
-        the optional [building selection] function (see module src.decisions)"""
-        self.__plot = plot
+        [simulation end]. Alternatively, specifying [simulation end] to 'auto' will override
+        the [simulation end] parameter and end the simulation once no buildings have been
+        added for 5 consecutive years. Finally, the logic of selecting buildings will be
+        handled by the optional [building selection] function (see module src.decisions)"""
         self.current_year = 0
         self.simulation_end = simulation_end
+
+        # Wether the simulation should automatically stop or not
+        self.auto = (simulation_end == 'auto' or simulation_end <= 0)
+
+        # Use default logic if no one was given to the simulation
+        self.choose_building = building_selection if building_selection else choose_building
 
         # If you have multiple cities, just give a subplot here
         x, y, z = plot.start
@@ -37,35 +37,39 @@ class Simulation:
         # TODO add logic for big plots
         self.settlements = [Settlement(plot)]
 
-        # Use default logic if no one was given to the simulation
-        self.choose_building = building_selection if building_selection else choose_building
-
         # TODO maybe a History class
         self.history: list[str] = []
+
+    def _get_settlements(self) -> list[Settlement]:
+        """Return a list of valid settlement for the current year. This method takes the 'auto'
+        attribute into account, meanning that if the simulation end is set to 'auto', only running
+        settlements will be returned here"""
+        return self.settlements if not self.auto else \
+            [settlement for settlement in self.settlements if settlement.is_running]
 
     def start(self) -> None:
         """Start the simulation and generate the (possibly many) settlement(s). The
         simulation will stop if it reaches the year of the simulation end"""
         print(f'{Fore.YELLOW}***{Fore.WHITE} Starting simulation {Fore.YELLOW}***{Fore.WHITE}')
 
-        town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Town Hall'])
+        main_settlement = self.settlements[0]
+        main_settlement.deserialize_and_add_building(
+            'town-hall', queue=['small-town-hall'], max_score=100_000)
 
-        success = self.settlements[0].add_building(town_hall, max_score=100_000)
-
-        if not success:
-            town_hall = Building.deserialize('Town Hall', env.BUILDINGS['Small Town Hall'])
-            self.settlements[0].add_building(town_hall)
-
-        while self.current_year < self.simulation_end:
+        while self.auto or self.current_year < self.simulation_end:
             print(f'\n\n\n=> Start of year {Fore.RED}[{self.current_year}]{Fore.WHITE}')
 
-            for settlement in self.settlements:
+            settlements = self._get_settlements()
+            if not settlements:
+                break
+
+            for settlement in settlements:
                 self.run_on(settlement)
 
             self.current_year += 1
 
         for settlement in self.settlements:
-            settlement.end_simulation()
+            settlement.build_roads()
             settlement.grow_old()
 
         # TODO move in decoration logic in settlement ?
@@ -140,19 +144,16 @@ class Simulation:
         settlement.update(self.current_year)
         buildings = settlement.get_constructible_buildings()
 
-        # formatted = textwrap.fill(", ".join(str(building) for building in buildings), width=80)
-        # print(f'Available buildings: [{formatted}]')
+        view.display_constructible_buildings(buildings)
 
         chosen_building = self.choose_building(settlement, buildings)
-
-        if chosen_building is not None:
-            settlement.add_building(chosen_building)
+        settlement.add_building(chosen_building)
 
         event = get_event(self.current_year)
 
-        if event is not None:
-            # TODO do something with the history
-            self.history.append(event.resolve(settlement))
+        if event is not None:  # TODO do something with the history
+            chronicle = event.resolve(settlement)
+            self.history.append(chronicle)
 
         settlement.update(self.current_year)
-        settlement.display()
+        view.display_settlement(settlement)

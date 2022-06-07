@@ -3,7 +3,7 @@ import time
 from typing import Any, Iterator
 from dataclasses import dataclass
 
-import gdpc.interface as INTERFACE
+from gdpc import interface
 from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
@@ -44,7 +44,7 @@ class BuildArea:
 
 def get_build_area(auto_build_area: bool = False) -> BuildArea:
     """Get the BUILD_AREA"""
-    x1, y1, z1, x2, y2, z2 = INTERFACE.requestPlayerArea(250, 250) if auto_build_area else INTERFACE.requestBuildArea()
+    x1, y1, z1, x2, y2, z2 = interface.requestPlayerArea(250, 250) if auto_build_area else interface.requestBuildArea()
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2))
 
 
@@ -67,6 +67,13 @@ def get_content(file: str, *, YAML: bool = True) -> Any:
     with open(f'resources/{file}', 'r') as content:
         return yaml.safe_load(content) if YAML else \
             content.read().splitlines()
+
+
+def summon(entity: str, coordinates: Coordinates, *, name: str = '') -> None:
+    """"""
+    x, y, z = coordinates
+    command = f'summon {entity} {x} {y} {z} {{CustomName:"\\"{name}\\""}}'
+    interface.runCommand(command)
 
 
 # Mapping of a material and its replacement and keepProperties (tuple)
@@ -98,6 +105,3 @@ LAST_NAMES: list[str] = get_content('last-names.txt', YAML=False)
 # List of all the different building adjectives available
 # during the simulation
 ADJECTIVES: list[str] = get_content('building-adjectives.txt', YAML=False)
-
-# TODO
-# RELATIONS = RelationsHandler(get_content('relations.yaml'))
