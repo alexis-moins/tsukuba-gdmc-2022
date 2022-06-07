@@ -10,6 +10,7 @@ from src import env
 from src.blocks.block import Block
 from src.plots.plot import Plot
 from src.simulation.simulation import Simulation
+from src.utils.coordinates import Size
 from src.utils.criteria import Criteria
 
 
