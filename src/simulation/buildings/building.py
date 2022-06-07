@@ -61,11 +61,11 @@ class Blueprint(ABC):
         pass
 
     @staticmethod
-    def deserialize(name: str, data: dict[str, Any]) -> Building:
-        """Return a new building deserialized from the given [name] and [data]. The returned
-        object might be any subclass of Blueprint as well, one of Mine, Graveyard, Wedding
-        Totem and Tower"""
+    def deserialize(data: dict[str, Any]) -> Building:
+        """Return a new building deserialized [data]. The returned object might be any
+        subclass of Blueprint as well, one of Mine, Graveyard, Wedding Totem and Tower"""
         data = dict(data)
+        name = data.pop('name')
 
         structures = [get_structure(path) for path in data.pop('path')]
         palettes = data.pop('palettes', [])
@@ -119,83 +119,79 @@ class Blueprint(ABC):
 
     def grow_old(self, amount: int) -> None:
         """Make a building grow old"""
-        # TODO
-        pass
-        # # ensure it stays between 0 and 100
-        # amount = abs(amount) % 100
-        # sample: list[Block] = random.sample(self.blocks.without(('air', 'water')),
-        #                                     amount * len(self.blocks.without(('air', 'water'))) // 100)
+        # ensure it stays between 0 and 100
+        amount = abs(amount) % 100
 
-        # for block in sample:
+        valid_blocks = self.blocks[self.structures[0]].without(('air', 'water'))
+        sample: list[Block] = random.sample(valid_blocks, amount * len(valid_blocks) // 100)
 
-        #     if block.is_one_of(('lectern', 'rail', 'sign')):
-        #         continue
+        for block in sample:
 
-        #     materials = {
-        #         'cobblestone': ('mossy_cobblestone', True),
-        #         'mossy_stone': ('cracked_stone', True),
-        #         'stone': ('mossy_stone', True),
-        #         'planks': ('stairs', False)
-        #     }
+            if block.is_one_of(('lectern', 'rail', 'sign')):
+                continue
 
-        #     replacement = block.replace_first(materials)
+            materials = {
+                'cobblestone': ('mossy_cobblestone', True),
+                'mossy_stone': ('cracked_stone', True),
+                'stone': ('mossy_stone', True),
+                'planks': ('stairs', False)
+            }
 
-        #     if replacement is not block and Block.exists(replacement.name):
-        #         if 'stairs' in replacement.name:
-        #             facing = random.choice(['north', 'east', 'south', 'west'])
-        #             half = random.choice(['top', 'bottom'])
-        #             shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
-        #             replacement = replace(replacement, properties={'facing': facing, 'half': half, 'shape': shape})
+            replacement = block.replace_first(materials)
 
-        #     else:
-        #         population = (block.name, 'oak_leaves', 'cobweb')
-        #         weights = (60, 30, 10)
+            if replacement is not block and Block.exists(replacement.name):
+                if 'stairs' in replacement.name:
+                    facing = random.choice(['north', 'east', 'south', 'west'])
+                    half = random.choice(['top', 'bottom'])
+                    shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
+                    replacement = replace(replacement, properties={'facing': facing, 'half': half, 'shape': shape})
 
-        #         name = random.choices(population, weights, k=1)
+            else:
+                population = (block.name, 'oak_leaves', 'cobweb')
+                weights = (60, 30, 10)
 
-        #         if name == block.name:
-        #             continue
+                name = random.choices(population, weights, k=1)
 
-        #         replacement = Block(name[0], block.coordinates, properties={
-        #             'persistent': 'true'} if name[0] == 'oak_leaves' else {})
+                if name == block.name:
+                    continue
 
-        #     INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
+                replacement = Block(name[0], block.coordinates, properties={
+                    'persistent': 'true'} if name[0] == 'oak_leaves' else {})
 
-        # INTERFACE.sendBlocks()
+            INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
+        INTERFACE.sendBlocks()
 
     def set_on_fire(self, amount: int) -> None:
         """"""
-        pass
-        # TODO
-        # # ensure it stays between 0 and 100
-        # amount = abs(amount) % 100
-        # sample: list[Block] = random.sample(self.blocks.without(('air', 'water')),
-        #                                     amount * len(self.blocks.without(('air', 'water'))) // 100)
+        # ensure it stays between 0 and 100
+        amount = abs(amount) % 100
 
-        # for block in sample:
+        valid_blocks = self.blocks[self.structures[0]].without(('air', 'water'))
+        sample: list[Block] = random.sample(valid_blocks, amount * len(valid_blocks) // 100)
 
-        #     if block.is_one_of(('lectern', 'rail', 'sign')):
-        #         continue
+        for block in sample:
 
-        #     population = (block.name, 'basalt', 'magma_block', 'soul_sand', 'blackstone_stairs', 'air')
-        #     weights = (5, 27, 25, 20, 20, 3)
+            if block.is_one_of(('lectern', 'sign')):
+                continue
 
-        #     name = random.choices(population, weights, k=1)
+            population = (block.name, 'basalt', 'magma_block', 'soul_sand', 'blackstone_stairs', 'air')
+            weights = (5, 27, 25, 20, 20, 3)
 
-        #     if name == block.name:
-        #         continue
+            name = random.choices(population, weights, k=1)[0]
 
-        #     if 'stairs' in name:
-        #         facing = random.choice(['north', 'east', 'south', 'west'])
-        #         half = random.choice(['top', 'bottom'])
-        #         shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
-        #         replacement = replace(block, properties={'facing': facing, 'half': half, 'shape': shape})
-        #     else:
-        #         replacement = replace(block, name=name[0], properties={})
+            if name == block.name:
+                continue
 
-        #     INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
+            properties = {}
+            if 'stairs' in name:
+                facing = random.choice(['north', 'east', 'south', 'west'])
+                half = random.choice(['top', 'bottom'])
+                shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
+                properties = {'facing': facing, 'half': half, 'shape': shape}
 
-        # INTERFACE.sendBlocks()
+            replacement = replace(block, name=name, properties=properties)
+
+            INTERFACE.placeBlock(*replacement.coordinates, replacement.full_name)
 
     def get_entrance_with_rotation(self, rotation: int) -> Coordinates:
         """"""
@@ -300,7 +296,8 @@ class BuildingWithSlots(Building):
         self.slot_block = slot_pattern
 
     def build(self, plot: Plot, city: Plot):
-        self.free_slots = list(functools.reduce(lambda a, b: a + b, [struct.get_blocks(plot.start, self.rotation).filter(self.slot_block) for struct in self.structures]))
+        self.free_slots = list(functools.reduce(
+            lambda a, b: a + b, [struct.get_blocks(plot.start, self.rotation).filter(self.slot_block) for struct in self.structures]))
         super().build(plot, city)
 
     def get_free_slot(self):
