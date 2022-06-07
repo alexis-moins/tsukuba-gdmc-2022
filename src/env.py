@@ -3,7 +3,7 @@ import time
 from typing import Any, Iterator
 from dataclasses import dataclass
 
-import gdpc.interface as INTERFACE
+from gdpc import interface
 from gdpc.worldLoader import WorldSlice
 from nbt.nbt import MalformedFileError
 
@@ -81,6 +81,13 @@ def get_content(file: str, *, YAML: bool = True) -> Any:
             content.read().splitlines()
 
 
+def summon(entity: str, coordinates: Coordinates, *, name: str = '') -> None:
+    """"""
+    x, y, z = coordinates
+    command = f'summon {entity} {x} {y} {z} {{CustomName:"\\"{name}\\""}}'
+    interface.runCommand(command)
+
+
 # Mapping of a material and its replacement and keepProperties (tuple)
 # TODO refactoring with palettes
 BUILDING_MATERIALS: dict[str, tuple[str, bool]] = {}
@@ -110,6 +117,3 @@ LAST_NAMES: list[str] = get_content('last-names.txt', YAML=False)
 # List of all the different building adjectives available
 # during the simulation
 ADJECTIVES: list[str] = get_content('building-adjectives.txt', YAML=False)
-
-# TODO
-# RELATIONS = RelationsHandler(get_content('relations.yaml'))

@@ -49,7 +49,6 @@ def prepare_environment(debug: bool, tick_speed: int, no_buffering: bool, tp: bo
     INTERFACE.runCommand(f'gamerule doTileDrops {str(drops).lower()}')
     INTERFACE.runCommand(f'gamerule randomTickSpeed {tick_speed}')
 
-
     if env.PROFILE_TIME:
         import cProfile
         import pstats
@@ -83,7 +82,7 @@ def start_simulation(years: int) -> None:
 
     find_building_materials(build_area)
 
-    simulation = Simulation(build_area, years)
+    simulation = Simulation(build_area, 'auto')
     simulation.start()
 
     INTERFACE.sendBlocks()

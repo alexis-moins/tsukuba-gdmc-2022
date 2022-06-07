@@ -13,7 +13,8 @@
 # - number-of-beds: number of inhabitants the building can host           default: 0
 # - food-production: how many food the building can produce in a year     default: 0
 
-Town Hall:
+town-hall:
+  name: Town Hall
   path: [town_hall.nbt]
   palettes:
     - cobblestone_var
@@ -27,7 +28,8 @@ Town Hall:
   food-production: 5
   class: TownHall
 
-Small Town Hall:
+small-town-hall:
+  name: Town hall
   path: [small_town_hall.nbt]
   resource: BED
   type: HABITATION
@@ -39,7 +41,8 @@ Small Town Hall:
   class: TownHall
 
 
-Little House:
+little-house:
+  name: Little house
   path: [house_little.nbt]
   palettes: [housing]
   resource: BED
@@ -48,7 +51,8 @@ Little House:
   maximum: 5
   number-of-beds: 3
 
-Farm:
+farm:
+  name: Farm
   path: [farm.nbt]
   palettes: [housing]
   resource: FOOD
@@ -59,7 +63,8 @@ Farm:
   maximum: 7
   class: Farm
 
-Sawmill:
+sawmill:
+  name: Sawmill
   path: [sawmill.nbt]
   palettes: [default_colors]
   resource: WORK
@@ -68,7 +73,8 @@ Sawmill:
   workers: 2
   maximum: 4
 
-Mine:
+mine:
+  name: Mine
   path:
     - mine_top.nbt
     - mine_stairs.nbt
@@ -83,7 +89,8 @@ Mine:
   maximum: 5
   class: Mine
 
-Forge:
+forge:
+  name: Forge
   path: [forge.nbt]
   palettes: [forge]
   resource: WORK
@@ -92,7 +99,8 @@ Forge:
   maximum: 3
   workers: 2
 
-Brickyard:
+brickyard:
+  name: Brickyard
   path: [brickyard.nbt]
   palettes: [brickyard]
   resource: WORK
@@ -101,7 +109,8 @@ Brickyard:
   maximum: 6
   workers: 1
 
-Bakery:
+bakery:
+  name: Bakery
   path: [bakery.nbt]
   palettes: [bakery]
   cost: 12
@@ -110,7 +119,8 @@ Bakery:
   resource: FOOD
   type: BAKERY
 
-Big House:
+big-house:
+  name: Big house
   path: [big_house.nbt]
   palettes: [housing]
   type: HABITATION
@@ -119,7 +129,8 @@ Big House:
   maximum: 10
   number-of-beds: 5
 
-Wheat Pack 1:
+wheat-pack-1:
+  name: Wheat pack 1
   path: [extensions/wheat_pack_1.nbt]
   resource: FOOD
   type: FARM
@@ -127,7 +138,8 @@ Wheat Pack 1:
   is-extension: true
   food-production: 5
 
-Wheat Pack 2:
+wheat-pack-2:
+  name: Wheat pack 2
   path: [extensions/wheat_pack_2.nbt]
   resource: FOOD
   type: FARM
@@ -135,7 +147,8 @@ Wheat Pack 2:
   is-extension: true
   food-production: 5
 
-Silo tier 1:
+silo-tier-1:
+  name: Silo tier 1
   path: [extensions/silo_t1.nbt]
   palettes: [default_colors]
   resource: FOOD
@@ -143,7 +156,8 @@ Silo tier 1:
   cost: 7
   food-production: 5
 
-Silo tier 2:
+silo-tier-2:
+  name: Silo tier 2
   path: [extensions/silo_t2.nbt]
   palettes: [default_colors]
   type: FARM
@@ -151,7 +165,8 @@ Silo tier 2:
   cost: 12
   food-production: 5
 
-Ore Pack:
+pre-pack:
+  name: Ore pack
   path: [extensions/ore_pack.nbt]
   resource: WORK
   type: FORGING
@@ -159,7 +174,8 @@ Ore Pack:
   workers: 1
   is-extension: true
 
-Wood Stack:
+wood-stack:
+  name: Wood stack
   path: [extensions/wood_stack.nbt]
   cost: 25
   workers: 1
@@ -167,7 +183,8 @@ Wood Stack:
   resource: WORK
   type: WOODCUTTING
 
-Graveyard:
+graveyard:
+  name: Graveyard
   path: [graveyard.nbt]
   palettes: [graveyard]
   cost: 10
@@ -177,7 +194,8 @@ Graveyard:
   type: GRAVEYARD
   class: Graveyard
 
-Wedding Totem:
+wedding-totem:
+  name: Wedding totem
   path: [wedding_totem.nbt]
   cost: 10
   workers: 1
@@ -187,7 +205,8 @@ Wedding Totem:
   palettes: [wedding]
   class: WeddingTotem
 
-Tower:
+tower:
+  name: Tower
   path:
     - tower_base.nbt
     - tower_slice.nbt
@@ -200,7 +219,8 @@ Tower:
   palettes: [housing]
   class: Tower
 
-Watch Tower:
+watch-tower:
+  name: Watch tower
   path: [watch_tower.nbt]
   cost: 10
   workers: 1

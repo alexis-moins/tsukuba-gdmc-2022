@@ -102,21 +102,20 @@ class PillagerAttack(Event):
         self._kill_villagers(settlement, victims)
         self.replacements['victims'] = victims
 
-        if 'Tower' in self._description:
+        if 'tower' in self._description:
 
+            data = env.BUILDINGS['watch-tower']
             for _ in range(random.randint(2, 5)):
 
-                tower = Blueprint.deserialize('Tower', env.BUILDINGS['Tower'])
-
+                tower = Blueprint.deserialize(data)
                 settlement.add_building(tower)
 
-                x, y, z = tower.entrance
-                y += 10
+                position = tower.entrance
 
                 for _ in range(random.randint(3, 10)):
-                    interface.runCommand(f'summon minecraft:iron_golem {x} {y} {z}')
+                    env.summon('minecraft:iron_golem', position.shift(y=10))
 
-        if 'Tower' not in settlement:
+        if 'Watch tower' not in settlement:
             self._description += 'Unfortunately, we did not find a place to build it'
 
 
@@ -134,12 +133,11 @@ class WolfAttack(Event):
         self._kill_villagers(settlement, victims)
         self.replacements['victims'] = victims
 
-        x, y, z = random.choice(settlement.chronology).entrance
-        y += 1
+        position = random.choice(settlement.chronology).entrance
 
         for i in range(random.randint(5, 20)):
-            interface.runCommand(
-                f'summon minecraft:wolf {x} {y} {z} {{CustomName:"\\"{random.choice(env.WOLF_NAMES).capitalize()}\\""}}')
+            env.summon('minecraft:wolf', position.shift(y=1),
+                       name=random.choice(env.WOLF_NAMES))
 
 
 @register('fire')
@@ -157,8 +155,8 @@ class Fire(Event):
         self._kill_villagers(settlement, victims)
 
         building = random.choice(settlement.chronology)
+        self.replacements['building'] = building.name.lower()
         self.replacements['victims'] = victims
-        self.replacements['building'] = building
 
         amount = random.randint(65, 80)
         building.set_on_fire(amount)
