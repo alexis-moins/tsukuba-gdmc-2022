@@ -32,7 +32,7 @@ class Settlement(MutableMapping):
         self._consecutive_years_without_build = 0
 
         self.chronology: list[Building] = []
-        self._buildings: DefaultDict[str, list[Building]] = defaultdict(list)
+        self._buildings: dict[str, list[Building]] = dict()
 
         self._buildings_cache = {}
 
@@ -191,6 +191,10 @@ class Settlement(MutableMapping):
         building.build(plot, self.plot)
 
         self.chronology.append(building)
+
+        if building.name not in self._buildings_cache:
+            self._buildings[building.name] = []
+
         self._buildings[building.name].append(building)
 
         if len(self._buildings) > 1 and not self.chronology[-1].properties.is_extension:
@@ -222,9 +226,10 @@ class Settlement(MutableMapping):
                 # add extra value if you don't want to go out of food immediately
                 food_for_children = self.food_available - self.population
                 k = max(0, min(food_for_children, max_children_amount))
-
-                print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) are born')
                 self.inhabitants.extend([Villager(year) for _ in range(k)])
+
+                if k:
+                    print(f'=> {Fore.CYAN}[{k}]{Fore.WHITE} new villager(s) are born')
 
         self.__fill_houses(year)
         self.__fill_work_places(year)
@@ -265,14 +270,6 @@ class Settlement(MutableMapping):
         for building in random.sample(self.chronology, math.ceil(k)):
             building.grow_old(random.randint(65, 80))
 
-    def villager_die(self, villager: Villager, year: int, cause: str):
-        """"""
-        if 'Graveyard' in self._buildings:
-            graveyard: Graveyard = self['Graveyard']
-            # graveyard.add_tomb(villager, year, cause)
-
-        villager.die(year, cause)
-        self.inhabitants.remove(villager)
 
     def spawn_villagers_and_guards(self):
         """"""
@@ -309,8 +306,8 @@ class Settlement(MutableMapping):
         # Add roads signs
         self.plot.add_roads_signs(10, self.chronology)
 
-        if self['Town Hall']:
-            self['Town Hall'].fill_board()
+        if 'Town hall' in self._buildings:
+            self._buildings['Town Hall'][0].fill_board()
 
         treasure_coords = self.generate_treasure()
         phrase = 'The treasure is located at'
@@ -386,8 +383,7 @@ class Settlement(MutableMapping):
 
     def __getitem__(self, key: str) -> Building | list[Building]:
         """"""
-        value = self._buildings.__getitem__(key)
-        return value[0] if len(value) == 1 else value
+        return self._buildings.__getitem__(key)
 
     def __setitem__(self, key: str, value: Building) -> None:
         """"""

@@ -24,7 +24,7 @@ from src.plots.plot import Plot, CityPlot
 from src.blocks.block import Block
 from src.blocks.structure import Structure, get_structure
 from src.blocks.collections.block_list import BlockList
-from src.blocks.utils.palette import OneBlockPalette, Palette, ColorPalette
+from src.blocks.utils.palette import Palette, ColorPalette
 from src.utils.chest import get_filled_chest_data
 
 from src.utils.criteria import Criteria
@@ -145,7 +145,8 @@ class Blueprint(ABC):
                     facing = random.choice(['north', 'east', 'south', 'west'])
                     half = random.choice(['top', 'bottom'])
                     shape = random.choice(['inner_left', 'inner_right', 'outer_left', 'outer_right', 'straight'])
-                    replacement = replace(replacement, properties=BlockProperties({'facing': facing, 'half': half, 'shape': shape}))
+                    replacement = replace(replacement, properties=BlockProperties(
+                        {'facing': facing, 'half': half, 'shape': shape}))
 
             else:
                 population = (block.name, 'oak_leaves', 'cobweb')
@@ -317,20 +318,17 @@ class Graveyard(BuildingWithSlots):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
-            if self.entrance and self.entrance[0]:
-                sign_angle = slot.coordinates.angle(self.entrance[0].coordinates)
-                slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
-                                                       replace_block=True,
-                                                       rotation=math_utils.radian_to_orientation(sign_angle,
-                                                                                                 -math.pi / 2))
-                x, y, z = slot.coordinates
-                INTERFACE.placeBlock(x, y - 1, z, 'air')
-                INTERFACE.placeBlock(x, y - 2, z, 'air')
-                INTERFACE.sendBlocks()
-                INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
-    def grow_old(self, amount: int) -> None:
-        pass
+            sign_angle = slot.coordinates.angle(self.entrance)
+            slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
+                                                   replace_block=True,
+                                                   rotation=math_utils.radian_to_orientation(sign_angle,
+                                                                                             -math.pi / 2))
+            x, y, z = slot.coordinates
+            INTERFACE.placeBlock(x, y - 1, z, 'air')
+            INTERFACE.placeBlock(x, y - 2, z, 'air')
+            INTERFACE.sendBlocks()
+            INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
 
 class WeddingTotem(BuildingWithSlots):

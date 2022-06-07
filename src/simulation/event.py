@@ -9,11 +9,9 @@ from typing import Any
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
-from gdpc import interface
-
-from src import env
+from src import env, view
 from src.simulation.settlement import Settlement
-from src.simulation.buildings.building import Blueprint, WeddingTotem
+from src.simulation.buildings.building import Blueprint, Graveyard, WeddingTotem
 
 
 @dataclass(kw_only=True, slots=True)
@@ -33,7 +31,7 @@ class Event(ABC):
         return constructor(_description=_description, **data)
 
     @abstractmethod
-    def resolve(self, settlement: Settlement) -> str:
+    def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are strongly
         encouraged to use the provided _format_description method to to so"""
@@ -57,8 +55,7 @@ class Event(ABC):
 
         # Reduce the number of victims if at least 1 watch tower has been
         # built in the given settlement
-        modificator = 0
-        # modificator = -2 if 'Watch tower' in settlement else 0
+        modificator = -2 if 'Watch tower' in settlement else 0
 
         # Maximum number of villagers that can be killed so that it remains
         # at least 2 villagers alive in the settlement
@@ -66,10 +63,17 @@ class Event(ABC):
 
         return max(1, true_maximum + modificator)
 
-    def _kill_villagers(self, settlement: Settlement, number: int) -> None:
-        """Kill [number] villager in the given [settlement]"""
+    def _kill_villagers(self, settlement: Settlement, number: int, year: int, cause: str) -> None:
+        """Kill [number] villager in the given [settlement] on year [year] from [cause]"""
+        graveyard: list[Graveyard] | None = settlement.get('Graveyard', None)
+        view.print_kills(number, cause)
+
         for villager in random.sample(settlement.inhabitants, k=number):
-            settlement.villager_die(villager, 0, 'death')
+            villager.die(year, cause)
+            settlement.inhabitants.remove(villager)
+
+            if graveyard:
+                graveyard[0].add_tomb(villager, year, cause)
 
 
 # Dictionary mapping tags to their Event class. The is used to match
@@ -93,13 +97,13 @@ def register(tag: str) -> None:
 class PillagerAttack(Event):
     """Represents a hord of pillagers attacking the settlement"""
 
-    def resolve(self, settlement: Settlement) -> str:
+    def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are strongly
         encouraged to use the provided description property to to so"""
         victims = self._get_victims(settlement, random.randint(4, 6))
 
-        self._kill_villagers(settlement, victims)
+        self._kill_villagers(settlement, victims, year, cause='an attack of pillagers')
         self.replacements['victims'] = victims
 
         if 'tower' in self._description:
@@ -118,26 +122,30 @@ class PillagerAttack(Event):
         if 'Watch tower' not in settlement:
             self._description += 'Unfortunately, we did not find a place to build it'
 
+        return self.description
+
 
 @register('wolf-attack')
 @dataclass(kw_only=True)
 class WolfAttack(Event):
     """Represents a pack of wolves attacking the settlement"""
 
-    def resolve(self, settlement: Settlement) -> str:
+    def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are strongly
         encouraged to use the provided description property to to so"""
         victims = self._get_victims(settlement, random.randint(2, 4))
 
-        self._kill_villagers(settlement, victims)
+        self._kill_villagers(settlement, victims, year, 'a wolf attack')
         self.replacements['victims'] = victims
 
         position = random.choice(settlement.chronology).entrance
 
-        for i in range(random.randint(5, 20)):
+        for _ in range(random.randint(5, 20)):
             env.summon('minecraft:wolf', position.shift(y=1),
-                       name=random.choice(env.WOLF_NAMES))
+                       name=random.choice(env.WOLF_NAMES). capitalize())
+
+        return self.description
 
 
 @register('fire')
@@ -146,15 +154,18 @@ class Fire(Event):
     """Represents a fire starting in the settlement, burning buildings and killing
     villagers"""
 
-    def resolve(self, settlement: Settlement) -> str:
+    def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are strongly
         encouraged to use the provided description property to to so"""
         victims = self._get_victims(settlement, random.randint(2, 4))
 
-        self._kill_villagers(settlement, victims)
+        self._kill_villagers(settlement, victims, year, 'a fire')
 
         building = random.choice(settlement.chronology)
+        building.history.append(
+            f'Year {year}\nThis building caught fire unexpectedly, killing {victims} villagers that were here at the moment!')
+
         self.replacements['building'] = building.name.lower()
         self.replacements['victims'] = victims
 
@@ -169,14 +180,22 @@ class Fire(Event):
 class Wedding(Event):
     """Represents a wedding between two villagers of the settlement"""
 
-    def resolve(self, settlement: Settlement) -> str:
+    def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are striongly
         encouraged to use the provided _format_description method to to so"""
-        if 'Wedding Totem' in settlement:
-            totem: WeddingTotem = settlement['Wedding Totem']
-            # totem.add_wedding()
-            print('IMPLEMENT WEDDING')
+        if 'Wedding totem' in settlement:
+            totem: WeddingTotem = settlement['Wedding totem'][0]
+            # TODO pass the year and add thing to history
+            totem.add_wedding()
+
+            husband, wife = random.sample(settlement.inhabitants, 2)
+            self.replacements['husband'] = husband
+            self.replacements['wife'] = wife
+
+            totem.history.append(f'Year {year}\nCongratulations to {husband} and {wife} for their wonderfull wedding!')
+
+        return self.description
 
 
 # List of the different events available in the simulation. Please note that

@@ -116,7 +116,7 @@ class Simulation:
         event = get_event(self.current_year)
 
         if event is not None:  # TODO do something with the history
-            chronicle = event.resolve(settlement)
+            chronicle = event.resolve(settlement, self.current_year)
             settlement.city_history.append(chronicle)
 
         settlement.update(self.current_year)

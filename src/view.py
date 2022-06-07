@@ -5,6 +5,11 @@ from src.simulation.settlement import Settlement
 from src.simulation.buildings.building import Building
 
 
+def print_kills(number: int, cause: str) -> None:
+    """Display the [number] of killed villagers and the [cause] of their death"""
+    print(f'{Fore.RED}[{number}]{Fore.WHITE} villagers died in {cause}')
+
+
 def display_constructible_buildings(buildings: list[Building]) -> None:
     """"""
     formatted = textwrap.fill(", ".join(str(building) for building in buildings), width=80, subsequent_indent=' ' * 26)
@@ -22,5 +27,7 @@ def display_settlement(settlement: Settlement) -> None:
     print(f'\n   Buildings {Fore.GREEN}[{len(settlement._buildings)}]{Fore.WHITE}')
 
     buildings = textwrap.fill(
-        ", ".join([f"{building.name}: {Fore.GREEN}{settlement._counter[building.name]}/{building.properties.maximum}{Fore.WHITE}" for building in settlement.chronology]), subsequent_indent=' ' * 6)
+        ", ".join([f"{name}: {Fore.GREEN}{settlement._counter[name]}/{buildings[0].properties.maximum}{Fore.WHITE}" for name,
+                  buildings in settlement._buildings.items()]),
+        subsequent_indent=' ' * 6)
     print(f'\n      {buildings}')
