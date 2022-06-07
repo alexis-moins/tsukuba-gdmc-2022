@@ -317,20 +317,17 @@ class Graveyard(BuildingWithSlots):
         slot = super().get_free_slot()
         if slot:
             INTERFACE.placeBlock(*slot.coordinates, 'stone_bricks')
-            if self.entrance and self.entrance[0]:
-                sign_angle = slot.coordinates.angle(self.entrance[0].coordinates)
-                slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
-                                                       replace_block=True,
-                                                       rotation=math_utils.radian_to_orientation(sign_angle,
-                                                                                                 -math.pi / 2))
-                x, y, z = slot.coordinates
-                INTERFACE.placeBlock(x, y - 1, z, 'air')
-                INTERFACE.placeBlock(x, y - 2, z, 'air')
-                INTERFACE.sendBlocks()
-                INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
-    def grow_old(self, amount: int) -> None:
-        pass
+            sign_angle = slot.coordinates.angle(self.entrance)
+            slot.coordinates.shift(y=1).place_sign(f'{villager.name} died of {cause} {villager.birth_year}-{year}',
+                                                   replace_block=True,
+                                                   rotation=math_utils.radian_to_orientation(sign_angle,
+                                                                                             -math.pi / 2))
+            x, y, z = slot.coordinates
+            INTERFACE.placeBlock(x, y - 1, z, 'air')
+            INTERFACE.placeBlock(x, y - 2, z, 'air')
+            INTERFACE.sendBlocks()
+            INTERFACE.runCommand(f'summon zombie {x} {y - 2} {z} {{CustomName:"\\"{villager.name}\\""}}')
 
 
 class WeddingTotem(BuildingWithSlots):

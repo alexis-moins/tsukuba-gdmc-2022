@@ -5,6 +5,11 @@ from src.simulation.settlement import Settlement
 from src.simulation.buildings.building import Building
 
 
+def print_kills(number: int, cause: str) -> None:
+    """Display the [number] of killed villagers and the [cause] of their death"""
+    print(f'{Fore.RED}[{number}]{Fore.WHITE} villagers died in {cause}')
+
+
 def display_constructible_buildings(buildings: list[Building]) -> None:
     """"""
     formatted = textwrap.fill(", ".join(str(building) for building in buildings), width=80, subsequent_indent=' ' * 26)

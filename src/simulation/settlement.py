@@ -30,7 +30,7 @@ class Settlement(MutableMapping):
         self._consecutive_years_without_build = 0
 
         self.chronology: list[Building] = []
-        self._buildings: DefaultDict[str, list[Building]] = defaultdict(list)
+        self._buildings: dict[str, list[Building]] = dict()
 
         self._buildings_cache = {}
 
@@ -187,6 +187,10 @@ class Settlement(MutableMapping):
         building.build(plot, self.plot)
 
         self.chronology.append(building)
+
+        if building.name not in self._buildings_cache:
+            self._buildings[building.name] = []
+
         self._buildings[building.name].append(building)
 
         if len(self._buildings) > 1 and not self.chronology[-1].properties.is_extension:
@@ -261,17 +265,6 @@ class Settlement(MutableMapping):
         for building in random.sample(self.chronology, math.ceil(k)):
             building.grow_old(random.randint(65, 80))
 
-    def villager_die(self, villager: Villager, year: int, cause: str):
-        """"""
-        if 'Graveyard' in self._buildings:
-            graveyard: Graveyard = self['Graveyard']
-            # graveyard.add_tomb(villager, year, cause)
-            # TODO
-            print('IMPLEMENT GRAVEYARD')
-
-        villager.die(year, cause)
-        self.inhabitants.remove(villager)
-
     def spawn_villagers_and_guards(self):
         """"""
         x, y, z = self.chronology[0].entrance
@@ -333,10 +326,9 @@ class Settlement(MutableMapping):
         interface.runCommand(f'data merge block {coord.x} {coord.y} {coord.z} {chest_data}')
         return coord
 
-    def __getitem__(self, key: str) -> Building | list[Building]:
+    def __getitem__(self, key: str) -> list[Building]:
         """"""
-        value = self._buildings.__getitem__(key)
-        return value[0] if len(value) == 1 else value
+        return self._buildings.__getitem__(key)
 
     def __setitem__(self, key: str, value: Building) -> None:
         """"""
