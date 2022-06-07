@@ -224,6 +224,13 @@ class Plot:
             for z in range(-padding, self.size.z + padding):
                 yield self.start.shift(x, 0, z)
 
+    def random_coord_3d(self):
+        start_x, start_y, start_z = self.start
+        end_x, end_y, end_z = self.end
+        x, y, z = random.randint(start_x, end_x), random.randint(start_y, end_y), random.randint(start_z, end_z)
+        y = min(max(y, 10), self.get_blocks(Criteria.MOTION_BLOCKING_NO_TREES).find(Coordinates(x, 0, z)).coordinates.y - 5)
+        return Coordinates(x, y, z)
+
 
 class LogicPlot(Plot):
     def __init__(self, x: int, y: int, z: int, size: Size):

@@ -2,28 +2,40 @@ import random
 from typing import Iterator
 
 from src import env
-from src.simulation.buildings.utils.building_type import BuildingType
 
 
-class ItemLoot:
-    def __init__(self, item: str, max_amount: int, chance: float, repetition: int = 1):
-        self.repetition = repetition
-        self.chance = chance
-        self.max_amount = max_amount
-        self.name = item
+class MinecraftItem:
+    def __init__(self, name: str, tag_data: str = None):
+        self.tag_data = tag_data
+        self.name = name
 
-    @staticmethod
-    def deserialize(data: dict[str, str]):
-        return ItemLoot(data['item'], int(data['max_amount']), float(data['chance']), int(data['repetition']))
-
-    def to_minecraft_data(self, slot: int):
-        return f'{{Slot:{slot}b,id:"{self._mc_name()}",Count:{random.randint(1, self.max_amount)}}}'
+    def to_minecraft_data(self, slot: int, count: int = 1):
+        if self.tag_data is None:
+            return f'{{Slot:{slot}b,id:"{self._mc_name()}",Count:{count}}}'
+        else:
+            return f'{{Slot:{slot}b,id:"{self._mc_name()}",Count:{count},tag:{{{self.tag_data}}}}}'
 
     def _mc_name(self):
         if 'minecraft:' in self.name:
             return self.name
         else:
             return 'minecraft:' + self.name
+
+
+class ItemLoot(MinecraftItem):
+    def __init__(self, name: str, max_amount: int, chance: float, repetition: int = 1):
+        super().__init__(name)
+        self.repetition = repetition
+        self.chance = chance
+        self.max_amount = max_amount
+
+    @staticmethod
+    def deserialize(data: dict[str, str]):
+        return ItemLoot(data['item'], int(data['max_amount']), float(data['chance']), int(data['repetition']))
+
+    def to_minecraft_data(self, slot: int, count=None):
+        count = random.randint(1, self.max_amount)
+        return super().to_minecraft_data(slot, count)
 
 
 class LootTable:
@@ -45,5 +57,5 @@ class LootTable:
         return LootTable([ItemLoot.deserialize(item_data) for item_data in data])
 
 
-Building_type_loot_table = {BuildingType[name]: LootTable.deserialize(content)
-                            for name, content in env.get_content('loot_table.yaml').items()}
+LOOT_TABLES = {name: LootTable.deserialize(content)
+               for name, content in env.get_content('loot_table.yaml').items()}
