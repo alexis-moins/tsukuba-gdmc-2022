@@ -232,7 +232,7 @@ class Blueprint(ABC):
     def _place_sign(self):
         """Place a sign indicating informations about the building"""
         first_structure = self.structures[0]
-        signs = self.blocks[first_structure].filter(('oak_wall_sign', 'oak_sign'))
+        signs = self.blocks[first_structure].filter(('sign'))
 
         if not signs:
             return
