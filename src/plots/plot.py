@@ -432,6 +432,8 @@ class BuildPlacementPlot(LogicPlot):
             if min_score < max_score:
                 break
 
+            batch_amount -= 1
+
         if min_score >= max_score:
             return None
 
