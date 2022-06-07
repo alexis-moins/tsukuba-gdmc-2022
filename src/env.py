@@ -56,7 +56,7 @@ class BuildArea:
 
 def get_build_area(auto_build_area: bool = False) -> BuildArea:
     """Get the BUILD_AREA"""
-    x1, y1, z1, x2, y2, z2 = INTERFACE.requestPlayerArea(250, 250) if auto_build_area else INTERFACE.requestBuildArea()
+    x1, y1, z1, x2, y2, z2 = interface.requestPlayerArea(250, 250) if auto_build_area else interface.requestBuildArea()
     return BuildArea(Coordinates(x1, y1, z1), Coordinates(x2, y2, z2)).max_size(250)  # Prevent from huge size input
 
 
