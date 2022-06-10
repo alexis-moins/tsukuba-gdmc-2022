@@ -19,8 +19,8 @@ from src.utils.criteria import Criteria
 @click.option('--debug', is_flag=True, default=False, help='Launch the simulation in debug mode')
 @click.option('--no-buffering', is_flag=True, default=False, help='Send blocks one at a time, without using a buffer')
 @click.option('--tp/--no-tp', default=True, show_default=True, help='Teleport the player to the start of the building area')
-@click.option('--drops', is_flag=True, default=False, help='Enable drops from entities (may cause issues)')
-@click.option('-y', '--years', default=40, type=str, show_default=True, help='The number of years during which the simulation will run')
+@click.option('--drops', is_flag=True, default=False, help='Enable drops from entities (may cause performance issues)')
+@click.option('-y', '--years', default=40, type=str, show_default=True, help='The number of years during which the simulation will run. Setting this option to \'auto\' will run the simulation until no buildings have been placed for five consecutive years')
 @click.option('-d', '--deterioration', default=5, type=int, show_default=True, help='The percentage of blocks in a building that will suffer from the passing of time')
 @click.option('-a', '--auto-build-area', default=False, is_flag=True, type=bool, show_default=True, help='Automatically set the build area around the player\'s current position')
 @click.option('--show-time', default=False, is_flag=True, type=bool, show_default=True,
