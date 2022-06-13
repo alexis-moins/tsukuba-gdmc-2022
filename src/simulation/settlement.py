@@ -327,7 +327,7 @@ class Settlement(MutableMapping):
         chest_data = chest.get_filled_chest_data([], loot_table.LOOT_TABLES['TREASURE'], fill_amount=20)
         chest_string = f'minecraft:chest'
         interface.placeBlock(*coord, chest_string)
-        print(f'Chest at {coord}')
+        print(f'Treasure Chest at {coord}')
         interface.sendBlocks()
         interface.runCommand(f'data merge block {coord.x} {coord.y} {coord.z} {chest_data}')
         return coord
@@ -346,8 +346,6 @@ class Settlement(MutableMapping):
             book_data = BookMaker(f'{general_data}\n\n' + '\n\n'.join(building.history),
                                   title=f'Year {year}\'s report',
                                   author='Settlement Construction Community (SCC)').write_book()
-            print(f'{building.name} : {building.history}')
-            # input(book_data)
             lectern_list = building.blocks[building.structures[0]].filter('lectern')
 
             interface.sendBlocks()
@@ -359,7 +357,6 @@ class Settlement(MutableMapping):
 
         # make a book
         text = '\n\n'.join(self.city_history)
-        print(f'text = {text}')
         book_data = BookMaker(text, title='City history', author='The Mayor').write_book()
         lectern_list = self._buildings['Town Hall'][0].blocks[self._buildings['Town Hall'][0].structures[0]].filter('lectern')
         if len(lectern_list):
