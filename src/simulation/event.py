@@ -125,12 +125,13 @@ class PillagerAttack(Event):
             for _ in range(random.randint(2, 5)):
 
                 tower = Blueprint.deserialize(data)
-                settlement.add_building(tower)
+                added = settlement.add_building(tower)
 
-                position = tower.entrance
+                if added:
+                    position = tower.entrance
 
-                for _ in range(random.randint(3, 10)):
-                    env.summon('minecraft:iron_golem', position.shift(y=10), name='Watcher Guard')
+                    for _ in range(random.randint(3, 10)):
+                        env.summon('minecraft:iron_golem', position.shift(y=10), name='Watcher Guard')
 
         if 'Watch tower' not in settlement:
             self._description += 'Unfortunately, we did not find a place to build it'
@@ -200,11 +201,12 @@ class Wedding(Event):
         husband, wife = random.sample(settlement.inhabitants, 2)
         self.replacements['husband'] = husband.name
         self.replacements['wife'] = wife.name
+
         if 'Wedding totem' in settlement:
             totem: WeddingTotem = settlement['Wedding totem'][0]
             totem.add_wedding()
-            totem.history.append(
-                f'Year {year}\nCongratulations to {husband.name} and {wife.name} for their wonderfull wedding!')
+
+            totem.history.append(f'Year {year}\nCongratulations to {husband.name} and {wife.name} for their wonderfull wedding!')
 
         return self.description
 

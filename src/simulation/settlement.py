@@ -126,6 +126,7 @@ class Settlement(MutableMapping):
             return self.__add_building(building, max_score=max_score)
 
         self.__add_no_build()
+        return False
 
     def deserialize_and_add_building(self, building: str, *, queue: list[str] = None, max_score: int = None) -> bool:
         """Deserialize the given [building] and try to add it to the settlement. If no available plot is
