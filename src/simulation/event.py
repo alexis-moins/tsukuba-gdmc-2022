@@ -197,15 +197,14 @@ class Wedding(Event):
         """Resolve this event, producing effects on the given [settlement] and
         return the formatted description of the event. Note that you are strongly
         encouraged to use the provided 'description' method to to so"""
+        husband, wife = random.sample(settlement.inhabitants, 2)
+        self.replacements['husband'] = husband.name
+        self.replacements['wife'] = wife.name
         if 'Wedding totem' in settlement:
             totem: WeddingTotem = settlement['Wedding totem'][0]
             totem.add_wedding()
-
-            husband, wife = random.sample(settlement.inhabitants, 2)
-            self.replacements['husband'] = husband
-            self.replacements['wife'] = wife
-
-            totem.history.append(f'Year {year}\nCongratulations to {husband} and {wife} for their wonderfull wedding!')
+            totem.history.append(
+                f'Year {year}\nCongratulations to {husband.name} and {wife.name} for their wonderfull wedding!')
 
         return self.description
 

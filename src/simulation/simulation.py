@@ -75,27 +75,8 @@ class Simulation:
             self.current_year += 1
 
         for settlement in self.settlements:
-            settlement.build_roads()
-            settlement.grow_old()
-            settlement.generate_history(self.current_year)
-            settlement.add_flowers()
+            settlement.end_simulation(self.current_year)
 
-        # TODO move in decoration logic in settlement ?
-
-        # decoration_buildings = [building for building in env.BUILDINGS.values()
-        #                         if building.properties.building_type is BuildingType.DECORATION]
-        #
-        # # print('\nAdding decorations:')
-        # for decoration in random.choices(decoration_buildings, k=len(self.settlements.buildings) // 2):
-        #     rotation = self.choose_building.get_rotation()
-        #     plot = self.settlements.plot.get_subplot(decoration, rotation)
-        #
-        #     if plot is not None:
-        #         if plot.water_mode:
-        #             continue
-        #         else:
-        #             self.settlements.add_building(decoration, plot, rotation)
-        #
         print(
             f'\n{Fore.YELLOW}***{Fore.WHITE} Simulation ended at year {Fore.RED}{self.current_year}/{self.simulation_end}{Fore.WHITE} {Fore.YELLOW}***{Fore.WHITE}')
 

@@ -22,6 +22,7 @@ class Settlement(MutableMapping):
     """Represents a settlement, with villagers and buildings. This object behaves like
         a dictionary (keys, valyes, etc...) while also providing a chronology of the buildings
         added to the settlement"""
+    MAX_CONSECUTIVE_YEARS_WITHOUT_BUILDING = 15
 
     def __init__(self, plot: CityPlot, *, population: int = 5, food: int = 5):
         """Creates a new settlement on the given [plot]. The settlement starts with a
@@ -114,7 +115,7 @@ class Settlement(MutableMapping):
     def __add_no_build(self) -> None:
         """TODO write documentation"""
         self._consecutive_years_without_build += 1
-        self.is_running = (self._consecutive_years_without_build < 5)
+        self.is_running = (self._consecutive_years_without_build < Settlement.MAX_CONSECUTIVE_YEARS_WITHOUT_BUILDING)
 
     def add_building(self, building: Building | None, *, max_score: int = None) -> None:
         """Add the given [building] to this settlement. If no available plot is found, the function
@@ -300,11 +301,17 @@ class Settlement(MutableMapping):
 
         self.plot.build_roads(road_pattern, slab_pattern)
 
-        # Spawn villagers
-        self.spawn_villagers_and_guards()
-
         # Add roads signs
         self.plot.add_roads_signs(10, self.chronology)
+
+    def end_simulation(self, end_year: int):
+        self.build_roads()
+        self.grow_old()
+        self.generate_history(end_year)
+        self.add_flowers()
+
+        # Spawn villagers
+        self.spawn_villagers_and_guards()
 
         if 'Town hall' in self._buildings:
             self._buildings['Town Hall'][0].fill_board()
