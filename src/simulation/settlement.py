@@ -313,7 +313,7 @@ class Settlement(MutableMapping):
         # Spawn villagers
         self.spawn_villagers_and_guards()
 
-        if 'Town hall' in self._buildings:
+        if 'Town Hall' in self._buildings:
             self._buildings['Town Hall'][0].fill_board()
 
         treasure_coords = self.generate_treasure()
@@ -325,9 +325,8 @@ class Settlement(MutableMapping):
         treasure_finders = [x_indicator, y_indicator, z_indicator]
 
         # Fill the buildings chests
-        for type_of_building in self._buildings.values():
-            for building in type_of_building:
-                building.fill_chests(treasure_finders)
+        for building in self.chronology:
+            building.fill_chests(treasure_finders)
 
     def generate_treasure(self):
         coord = self.plot.random_coord_3d()
