@@ -364,28 +364,19 @@ class Farm(Building):
                     continue
 
                 if block.name not in (
-                        'minecraft:grass_block', 'minecraft:sand', 'minecraft:stone', 'minecraft:dirt', 'minecraft:podzol'):
+                        'minecraft:grass_block', 'minecraft:sand',
+                        'minecraft:stone', 'minecraft:dirt',
+                        'minecraft:podzol'):
                     continue
 
                 farm_field.add(block.coordinates)
-                block_name = random.choices(['farmland[moisture=7]', 'lapis_block'], [90, 10])[0]
+                block_name = random.choices(['farmland[moisture=7]', 'cauldron[level=3]'], [90, 10])[0]
                 INTERFACE.placeBlock(*block.coordinates, f'minecraft:{block_name}')
 
                 if 'farmland' in block_name:
                     INTERFACE.placeBlock(*block.coordinates.shift(y=1), random.choice(LOOKUP.CROPS))
 
         INTERFACE.sendBlocks()
-
-        for coordinates in farm_field:
-            block = plot.get_block_at(*coordinates)
-            # print(block.name)
-            if block.is_one_of('lapis'):
-                for c in block.neighbouring_coordinates(
-                        (Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN)):
-                    if settlement.get_block_at(*c).name in LOOKUP.AIR + LOOKUP.PLANTS + ('minecraft:snow',):
-                        INTERFACE.placeBlock(*block.coordinates, 'redstone_lamp[lit=true]')
-                    else:
-                        INTERFACE.placeBlock(*block.coordinates, 'water')
 
 
 class Mine(Building):

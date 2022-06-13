@@ -1,4 +1,6 @@
 from __future__ import annotations
+"""Main entry-point to manage CLI options and start a custom simulation.
+Type `python main.py --help` to see the list of available options"""
 
 import time
 
@@ -10,7 +12,6 @@ from src import env
 from src.blocks.block import Block
 from src.plots.plot import Plot
 from src.simulation.simulation import Simulation
-from src.utils.coordinates import Size
 from src.utils.criteria import Criteria
 
 

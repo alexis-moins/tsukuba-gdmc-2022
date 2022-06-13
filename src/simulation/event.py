@@ -1,11 +1,13 @@
 from __future__ import annotations
-"""Manage events used in the simulation. Provides:
+"""
+Manage events used in the simulation. Provides:
 - a get_event function to randomly return an event (with a 1/4 chance)
 - an Event abstract base class you can use to define your own custom events
-- a register decorator to use your custom events"""
+- a register decorator to use your custom events
+"""
 
 import random
-from typing import Any
+from typing import Any, Callable
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
@@ -16,7 +18,9 @@ from src.simulation.buildings.building import Blueprint, Graveyard, WeddingTotem
 
 @dataclass(kw_only=True, slots=True)
 class Event(ABC):
-    """Represents any generic abstract event"""
+    """
+    Represents any generic abstract event
+    """
     _description: str
     year: int = 0
     replacements: dict[str, list[str]] = field(default_factory=dict)
@@ -32,17 +36,22 @@ class Event(ABC):
 
     @abstractmethod
     def resolve(self, settlement: Settlement, year: int) -> str:
-        """Resolve this event, producing effects on the given [settlement] and
-        return the formatted description of the event. Note that you are strongly
-        encouraged to use the provided _format_description method to to so"""
+        """
+        Resolve this event, producing effects on the given |settlement| and
+        return the formatted description of the event. Note that you are
+        strongly encouraged to use the provided |description| method to to
+        so
+        """
         pass
 
     @property
     def description(self) -> str:
-        """Return the formatted description of the event. You should not call
+        """
+        Return the formatted description of the event. You should not call
         this property yourself but rather call the resolve method of an event
         subclass which wraps it into another layer of logic, by adding the
-        missing replacements for instance"""
+        missing replacements for instance
+        """
         replacements = {key: random.choice(value)
                         if type(value) is list else value
                         for key, value in self.replacements.items()}
@@ -63,8 +72,12 @@ class Event(ABC):
 
         return max(1, true_maximum + modificator)
 
-    def _kill_villagers(self, settlement: Settlement, number: int, year: int, cause: str) -> None:
-        """Kill [number] villager in the given [settlement] on year [year] from [cause]"""
+    def _kill_villagers(self, settlement: Settlement, number: int,
+                        year: int, cause: str) -> None:
+        """
+        Kill [number] villager in the given [settlement] on year [year]
+        from [cause]
+        """
         graveyard: list[Graveyard] | None = settlement.get('Graveyard', None)
         view.print_kills(number, cause)
 
@@ -81,11 +94,11 @@ class Event(ABC):
 _handlers: dict[str, Event] = dict()
 
 
-def register(tag: str) -> None:
+def register(tag: str) -> Callable[..., Event]:
     """Add the given [tag] to the 'handlers' dictionary as key and map it to
     the decorated class. This is the way to go if you want to define new events
     and use them in the handler field of the events.yaml configuration file"""
-    def decorator(constructor: Event) -> None:
+    def decorator(constructor: Event) -> Event:
         _handlers[tag] = constructor
 
         return constructor
@@ -182,11 +195,10 @@ class Wedding(Event):
 
     def resolve(self, settlement: Settlement, year: int) -> str:
         """Resolve this event, producing effects on the given [settlement] and
-        return the formatted description of the event. Note that you are striongly
-        encouraged to use the provided _format_description method to to so"""
+        return the formatted description of the event. Note that you are strongly
+        encouraged to use the provided 'description' method to to so"""
         if 'Wedding totem' in settlement:
             totem: WeddingTotem = settlement['Wedding totem'][0]
-            # TODO pass the year and add thing to history
             totem.add_wedding()
 
             husband, wife = random.sample(settlement.inhabitants, 2)
