@@ -2,9 +2,9 @@
 
 This repository is an entry for the annual GDMC competition of 2022.
 
-![](C:\Users\itrot\PycharmProjects\tsukuba-gdmc-2022\screenshots\city1.png)
-![](C:\Users\itrot\PycharmProjects\tsukuba-gdmc-2022\screenshots\city2.png)
-![](C:\Users\itrot\PycharmProjects\tsukuba-gdmc-2022\screenshots\city3.png)
+![Image](screenshots/city1.png)
+![Image](screenshots/city2.png)
+![Image](screenshots/city3.png)
 
 ## How to use
 
