@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "tsukuba-gdmc-2022"
 version = "0.1.0"
-description = "Participation at the Generative Design in Minecraft Challenge (GDMC) in 2022 👺"
+description = "2022 participation in the Generative Design in Minecraft Challenge (GDMC) 👺"
 authors = ["Alexis Moins <moinsalexis@gmail.com>", "Youri Chancrin <yrus.chan@gmail.com>"]
 
 [tool.poetry.dependencies]
