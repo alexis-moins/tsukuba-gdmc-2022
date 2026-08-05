@@ -107,3 +107,14 @@ class BlockList(Sequence):
 
     def random_elements(self, amount=1) -> BlockList:
         return BlockList(random.choices(self.__blocks, k=amount))
+
+    def replace_ground_with_most_common(self) -> BlockList:
+        """Get ground blocks in plot and replace it by the most used ground blocks in the plot"""
+        ground_patterns = ('grass_block', 'sand', 'stone', 'dirt', 'podzol')
+        ground_blocks = self.filter(ground_patterns)
+        if not ground_blocks:
+            return self
+        most_common = ground_blocks.most_common
+        return BlockList([
+            block.with_name(most_common) if block.is_one_of(ground_patterns) else block for block in self
+        ])
